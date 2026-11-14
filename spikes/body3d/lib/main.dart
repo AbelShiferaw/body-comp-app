@@ -1,5 +1,8 @@
 import 'dart:math' as math;
 
+import 'dart:ui' show FrameTiming;
+
+import 'package:flutter/scheduler.dart' show SchedulerBinding;
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:flutter_scene/scene.dart';
 import 'package:material_ui/material_ui.dart';
@@ -50,6 +53,7 @@ class _BodyPageState extends State<BodyPage>
   @override
   void initState() {
     super.initState();
+    SchedulerBinding.instance.addTimingsCallback(_onTimings);
     _load();
   }
 
@@ -68,8 +72,34 @@ class _BodyPageState extends State<BodyPage>
     }
   }
 
+  // Frame stats for the spike: frames per second and average raster time
+  // over the last second, shown in the corner and printed to the log.
+  final List<FrameTiming> _timings = [];
+  DateTime _statsAt = DateTime.now();
+  final ValueNotifier<String> _fps = ValueNotifier('');
+
+  void _onTimings(List<FrameTiming> timings) {
+    _timings.addAll(timings);
+    final now = DateTime.now();
+    final secs = now.difference(_statsAt).inMilliseconds / 1000;
+    if (secs < 1) return;
+    final n = _timings.length;
+    double avg(Duration Function(FrameTiming) f) => n == 0
+        ? 0
+        : _timings.fold<int>(0, (s, t) => s + f(t).inMicroseconds) / n / 1000;
+    final text =
+        '${(n / secs).toStringAsFixed(0)} fps · '
+        'ui ${avg((t) => t.buildDuration).toStringAsFixed(1)} ms · '
+        'raster ${avg((t) => t.rasterDuration).toStringAsFixed(1)} ms';
+    debugPrint('FRAMESTATS $text');
+    _fps.value = text;
+    _timings.clear();
+    _statsAt = now;
+  }
+
   @override
   void dispose() {
+    SchedulerBinding.instance.removeTimingsCallback(_onTimings);
     _play.dispose();
     super.dispose();
   }
@@ -132,6 +162,20 @@ class _BodyPageState extends State<BodyPage>
                         child: Stack(
                           children: [
                             Positioned.fill(child: _sceneView(body)),
+                            Positioned(
+                              left: 12,
+                              top: 4,
+                              child: ValueListenableBuilder(
+                                valueListenable: _fps,
+                                builder: (_, v, _) => Text(
+                                  v,
+                                  style: TextStyle(
+                                    color: fg.withValues(alpha: 0.5),
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                            ),
                             if (body.selected != null)
                               Positioned(
                                 left: 16,
