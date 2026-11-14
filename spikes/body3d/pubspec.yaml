@@ -62,6 +62,7 @@ flutter:
   assets:
     - flutter_scene_generated/
     - data/
+    - data/local/
     - path: flutter_scene_generated/metal_ios/
       platforms:
         - ios

@@ -13,6 +13,12 @@ import 'dexa_scan.dart';
 /// The visual styles Abel can try.
 enum BodyStyle { studio, heatmap, midnight }
 
+/// What the heatmap colours show.
+enum HeatMetric { fatPct, fatChange, leanChange }
+
+/// One stop of a heatmap legend.
+typedef LegendStop = ({String label, double r, double g, double b});
+
 /// The flutter_scene side: one node per region (so each region can carry its
 /// own colour and be told apart when tapped), each a morphed mesh with a
 /// single target that blends scan A into scan B.
@@ -29,6 +35,10 @@ class BodyScene {
   final Map<Region, Uint32List> _regionVerts = {}; // local -> global vertex
   final Map<Region, Uint32List> _regionIndices = {}; // local triangles
   final Map<Region, PhysicallyBasedMaterial> _materials = {};
+  final Map<Region, Float32List> _vbs = {}; // interleaved vertex data
+  final Map<Region, Geometry> _geoms = {};
+  HeatMetric _metric = HeatMetric.fatPct;
+  double _gain = 1;
   late Float32List _triRegion; // region index per triangle, for picking
 
   DexaScan? _a, _b;
@@ -38,6 +48,8 @@ class BodyScene {
   Region? _selected;
 
   double get t => _t;
+  HeatMetric get metric => _metric;
+  double get gain => _gain;
   BodyStyle get style => _style;
   Region? get selected => _selected;
 
@@ -108,7 +120,9 @@ class BodyScene {
     _a = a;
     _b = b;
     final posA = shaper.positionsFor(a);
-    final posB = identical(a, b) ? posA : shaper.positionsFor(b);
+    final posB = identical(a, b)
+        ? posA
+        : shaper.positionsFor(b, relativeTo: a, gain: _gain);
     final nA = shaper.normalsFor(posA);
     final nB = identical(a, b) ? nA : shaper.normalsFor(posB);
     _posA = posA;
@@ -154,6 +168,8 @@ class BodyScene {
         indexType: gpu.IndexType.int32,
       );
 
+      _vbs[r] = vb;
+      _geoms[r] = geometry;
       final material = _materials.putIfAbsent(r, PhysicallyBasedMaterial.new);
       final old = _nodes[r];
       if (old != null) scene.remove(old);
@@ -170,7 +186,20 @@ class BodyScene {
   set t(double value) {
     _t = value.clamp(0.0, 1.0);
     _applyT();
-    if (_style == BodyStyle.heatmap) _applyStyle();
+    if (_style == BodyStyle.heatmap && _metric == HeatMetric.fatPct) {
+      _writeColors();
+    }
+  }
+
+  set metric(HeatMetric m) {
+    _metric = m;
+    if (_style == BodyStyle.heatmap) _writeColors();
+  }
+
+  /// Multiplies the shape change between the two scans (1 = true to scan).
+  set gain(double g) {
+    _gain = g;
+    if (_a != null) setScans(_a!, _b!);
   }
 
   set style(BodyStyle s) {
@@ -193,33 +222,6 @@ class BodyScene {
   double fatPctAt(Region r) {
     final a = _a!.regions[r]!, b = _b!.regions[r]!;
     return a.fatPct + (b.fatPct - a.fatPct) * _t;
-  }
-
-  static vm.Vector3 _heat(double fatPct) {
-    // 8% teal -> 18% amber -> 30% coral.
-    const stops = [
-      (8.0, (0.10, 0.72, 0.66)),
-      (18.0, (0.98, 0.74, 0.20)),
-      (30.0, (0.93, 0.28, 0.24)),
-    ];
-    if (fatPct <= stops.first.$1) {
-      final c = stops.first.$2;
-      return vm.Vector3(c.$1, c.$2, c.$3);
-    }
-    for (var i = 0; i < stops.length - 1; i++) {
-      final (x0, c0) = stops[i];
-      final (x1, c1) = stops[i + 1];
-      if (fatPct <= x1) {
-        final f = (fatPct - x0) / (x1 - x0);
-        return vm.Vector3(
-          c0.$1 + (c1.$1 - c0.$1) * f,
-          c0.$2 + (c1.$2 - c0.$2) * f,
-          c0.$3 + (c1.$3 - c0.$3) * f,
-        );
-      }
-    }
-    final c = stops.last.$2;
-    return vm.Vector3(c.$1, c.$2, c.$3);
   }
 
   static vm.Vector4 _lin(double r, double g, double b) {
@@ -251,14 +253,8 @@ class BodyScene {
           intensity: 1.8,
         );
         scene.environmentIntensity = 0.9;
-        for (final e in _materials.entries) {
-          final m = e.value;
-          if (e.key == Region.head) {
-            m.baseColorFactor = _lin(0.62, 0.64, 0.68);
-          } else {
-            final c = _heat(fatPctAt(e.key));
-            m.baseColorFactor = _lin(c.x, c.y, c.z);
-          }
+        for (final m in _materials.values) {
+          m.baseColorFactor = vm.Vector4(1, 1, 1, 1); // vertex colours carry it
           m.metallicFactor = 0;
           m.roughnessFactor = 0.5;
           m.clearcoat = 0;
@@ -279,6 +275,171 @@ class BodyScene {
           m.clearcoatRoughness = 0.15;
           m.emissiveFactor = vm.Vector4.zero();
         }
+    }
+    _writeColors();
+  }
+
+  // --- Heatmap -----------------------------------------------------------
+
+  static (double, double, double) _ramp(
+    double x,
+    List<(double, (double, double, double))> stops,
+  ) {
+    if (x <= stops.first.$1) return stops.first.$2;
+    for (var i = 0; i < stops.length - 1; i++) {
+      final (x0, c0) = stops[i];
+      final (x1, c1) = stops[i + 1];
+      if (x <= x1) {
+        final f = (x - x0) / (x1 - x0);
+        return (
+          c0.$1 + (c1.$1 - c0.$1) * f,
+          c0.$2 + (c1.$2 - c0.$2) * f,
+          c0.$3 + (c1.$3 - c0.$3) * f,
+        );
+      }
+    }
+    return stops.last.$2;
+  }
+
+  static const _grey = (0.70, 0.72, 0.75);
+  static const _fatStops = [
+    (4.0, (0.10, 0.72, 0.66)),
+    (12.0, (0.98, 0.74, 0.20)),
+    (25.0, (0.93, 0.28, 0.24)),
+  ];
+  static const _fatChangeStops = [
+    (-0.3, (0.20, 0.78, 0.45)),
+    (0.0, _grey),
+    (0.3, (0.92, 0.30, 0.26)),
+  ];
+  static const _leanChangeStops = [
+    (-0.05, (0.95, 0.55, 0.20)),
+    (0.0, _grey),
+    (0.05, (0.25, 0.55, 0.98)),
+  ];
+
+  /// Legend for the current heatmap metric.
+  List<LegendStop> get legend {
+    LegendStop st(String l, (double, double, double) c) =>
+        (label: l, r: c.$1, g: c.$2, b: c.$3);
+    return switch (_metric) {
+      HeatMetric.fatPct => [
+        st('4% fat', _fatStops[0].$2),
+        st('12%', _fatStops[1].$2),
+        st('25%+', _fatStops[2].$2),
+      ],
+      HeatMetric.fatChange => [
+        st('fat -30%', _fatChangeStops[0].$2),
+        st('no change', _grey),
+        st('fat +30%', _fatChangeStops[2].$2),
+      ],
+      HeatMetric.leanChange => [
+        st('lean -5%', _leanChangeStops[0].$2),
+        st('no change', _grey),
+        st('lean +5%', _leanChangeStops[2].$2),
+      ],
+    };
+  }
+
+  (double, double, double) _colorFor(
+    double fatA,
+    double leanA,
+    double fatB,
+    double leanB,
+  ) {
+    switch (_metric) {
+      case HeatMetric.fatPct:
+        final fa = 100 * fatA / (fatA + leanA),
+            fb = 100 * fatB / (fatB + leanB);
+        return _ramp(fa + (fb - fa) * _t, _fatStops);
+      case HeatMetric.fatChange:
+        return _ramp((fatB - fatA) / fatA, _fatChangeStops);
+      case HeatMetric.leanChange:
+        return _ramp((leanB - leanA) / leanA, _leanChangeStops);
+    }
+  }
+
+  /// Bakes per-vertex colours from the soft region masks, so colours blend
+  /// across region borders, and the belly (android) and hip (gynoid) bands
+  /// get their own colour on top.
+  void _writeColors() {
+    final a = _a, b = _b;
+    if (a == null || b == null) return;
+    final heat = _style == BodyStyle.heatmap;
+    final cols = <(double, double, double)>[
+      for (final r in Region.values)
+        r == Region.head
+            ? _grey
+            : _colorFor(
+                a.regions[r]!.fatKg,
+                a.regions[r]!.leanKg,
+                b.regions[r]!.fatKg,
+                b.regions[r]!.leanKg,
+              ),
+    ];
+    (double, double, double)? band(
+      double fa,
+      double? la,
+      double fb,
+      double? lb,
+    ) => la == null || lb == null ? null : _colorFor(fa, la, fb, lb);
+    final android = band(
+      a.androidFatKg,
+      a.androidLeanKg,
+      b.androidFatKg,
+      b.androidLeanKg,
+    );
+    final gynoid = band(
+      a.gynoidFatKg,
+      a.gynoidLeanKg,
+      b.gynoidFatKg,
+      b.gynoidLeanKg,
+    );
+    double lin(double c) => math.pow(c, 2.2).toDouble();
+    final masks = asset.masks;
+    for (final r in Region.values) {
+      final vb = _vbs[r]!;
+      final verts = _regionVerts[r]!;
+      for (var i = 0; i < verts.length; i++) {
+        final o = i * 18 + 10;
+        if (!heat) {
+          vb[o] = vb[o + 1] = vb[o + 2] = vb[o + 3] = 1;
+          continue;
+        }
+        final m = verts[i] * 8;
+        var cr = 0.0, cg = 0.0, cb = 0.0, sum = 0.0;
+        for (var k = 0; k < 6; k++) {
+          final w = masks[m + k];
+          cr += w * cols[k].$1;
+          cg += w * cols[k].$2;
+          cb += w * cols[k].$3;
+          sum += w;
+        }
+        if (sum > 0) {
+          cr /= sum;
+          cg /= sum;
+          cb /= sum;
+        }
+        for (final (c, w) in [
+          (android, masks[m + 6]),
+          (gynoid, masks[m + 7]),
+        ]) {
+          if (c == null || w <= 0) continue;
+          cr += (c.$1 - cr) * w;
+          cg += (c.$2 - cg) * w;
+          cb += (c.$3 - cb) * w;
+        }
+        vb[o] = lin(cr);
+        vb[o + 1] = lin(cg);
+        vb[o + 2] = lin(cb);
+        vb[o + 3] = 1;
+      }
+      _geoms[r]!.uploadVertexData(
+        vb,
+        verts.length,
+        _regionIndices[r]!,
+        indexType: gpu.IndexType.int32,
+      );
     }
   }
 

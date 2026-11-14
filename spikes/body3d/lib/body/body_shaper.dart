@@ -112,10 +112,33 @@ class BodyShaper {
   }
 
   /// Vertex positions (xyz, metres) for [scan], scaled to its height.
-  Float32List positionsFor(DexaScan scan) {
+  ///
+  /// With [relativeTo] and [gain], the change from [relativeTo] to [scan] is
+  /// multiplied by [gain] (an optional "exaggerate change" view; gain 1 is
+  /// true to the scan).
+  Float32List positionsFor(
+    DexaScan scan, {
+    DexaScan? relativeTo,
+    double gain = 1,
+  }) {
     final a = asset;
     final sex = scan.sex == Sex.male ? 'male' : 'female';
-    final w = weightsFor(scan);
+    var w = weightsFor(scan);
+    if (relativeTo != null && gain != 1) {
+      final w0 = weightsFor(relativeTo);
+      double g(double a, double b) => a + (b - a) * gain;
+      w = (
+        regions: {
+          for (final e in w.regions.entries)
+            e.key: RegionWeights(
+              g(w0.regions[e.key]!.fat, e.value.fat),
+              g(w0.regions[e.key]!.muscle, e.value.muscle),
+            ),
+        },
+        android: g(w0.android, w.android),
+        gynoid: g(w0.gynoid, w.gynoid),
+      );
+    }
     final fu = a.targets['${sex}_fat_up']!;
     final fd = a.targets['${sex}_fat_down']!;
     final mu = a.targets['${sex}_muscle_up']!;

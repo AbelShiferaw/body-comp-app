@@ -20,6 +20,9 @@ class DexaScan {
     required this.androidFatKg,
     required this.gynoidFatKg,
     required this.boneKg,
+    this.androidLeanKg,
+    this.gynoidLeanKg,
+    this.label,
     required this.visceralFatG,
   });
 
@@ -30,6 +33,52 @@ class DexaScan {
   final double androidFatKg;
   final double gynoidFatKg;
   final double boneKg;
+
+  /// Lean mass in the android (belly) and gynoid (hip) bands, when known.
+  final double? androidLeanKg, gynoidLeanKg;
+
+  /// Where the scan came from, e.g. "BodySpec" or "sample".
+  final String? label;
+
+  double? get androidFatPct => androidLeanKg == null
+      ? null
+      : 100 * androidFatKg / (androidFatKg + androidLeanKg!);
+  double? get gynoidFatPct => gynoidLeanKg == null
+      ? null
+      : 100 * gynoidFatKg / (gynoidFatKg + gynoidLeanKg!);
+
+  /// Reads one scan from the app's own JSON (see tool/import_bodyspec.py).
+  factory DexaScan.fromJson(Map<String, dynamic> j) {
+    RegionComp rc(String k) {
+      final r =
+          (j['regions'] as Map<String, dynamic>)[k] as Map<String, dynamic>;
+      return RegionComp(
+        (r['lean_kg'] as num).toDouble(),
+        (r['fat_kg'] as num).toDouble(),
+      );
+    }
+
+    return DexaScan(
+      date: DateTime.parse(j['date'] as String),
+      sex: j['sex'] == 'female' ? Sex.female : Sex.male,
+      heightCm: (j['height_cm'] as num).toDouble(),
+      regions: {
+        Region.armL: rc('left_arm'),
+        Region.armR: rc('right_arm'),
+        Region.legL: rc('left_leg'),
+        Region.legR: rc('right_leg'),
+        Region.trunk: rc('trunk'),
+        Region.head: rc('head'),
+      },
+      androidFatKg: rc('android').fatKg,
+      androidLeanKg: rc('android').leanKg,
+      gynoidFatKg: rc('gynoid').fatKg,
+      gynoidLeanKg: rc('gynoid').leanKg,
+      boneKg: (j['bone_kg'] as num).toDouble(),
+      visceralFatG: (j['visceral_fat_g'] as num).toDouble(),
+      label: j['source'] as String?,
+    );
+  }
 
   /// Visceral adipose tissue mass. Shown as a number only, never as shape.
   final double visceralFatG;

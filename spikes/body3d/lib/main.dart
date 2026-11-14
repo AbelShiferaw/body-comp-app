@@ -1,9 +1,10 @@
 import 'dart:math' as math;
 
+import 'dart:convert';
 import 'dart:ui' show FrameTiming;
 
 import 'package:flutter/scheduler.dart' show SchedulerBinding;
-import 'package:flutter/services.dart' show SystemUiOverlayStyle;
+import 'package:flutter/services.dart' show SystemUiOverlayStyle, rootBundle;
 import 'package:flutter_scene/scene.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:vector_math/vector_math.dart' as vm;
@@ -11,6 +12,22 @@ import 'package:vector_math/vector_math.dart' as vm;
 import 'body/body_asset.dart';
 import 'body/body_scene.dart';
 import 'body/dexa_scan.dart';
+
+/// Scans shown in the app: the real ones from data/local/scans.json when
+/// present (gitignored), otherwise the fake samples.
+List<DexaScan> scans = sampleScans;
+
+Future<void> _loadScans() async {
+  try {
+    final text = await rootBundle.loadString('data/local/scans.json');
+    final list = ((jsonDecode(text) as Map<String, dynamic>)['scans'] as List)
+        .map((e) => DexaScan.fromJson(e as Map<String, dynamic>))
+        .toList();
+    if (list.length >= 2) scans = list;
+  } catch (_) {
+    // No local scans: keep the samples.
+  }
+}
 
 void main() => runApp(const Body3dApp());
 
@@ -37,7 +54,7 @@ class _BodyPageState extends State<BodyPage>
   BodyScene? _body;
   String? _error;
   int _from = 0;
-  int _to = sampleScans.length - 1;
+  int _to = scans.length - 1;
   double _azimuth = 0; // radians, 0 = facing the camera
   Camera? _camera;
   Size _viewSize = Size.zero;
@@ -60,9 +77,12 @@ class _BodyPageState extends State<BodyPage>
   Future<void> _load() async {
     try {
       await Scene.initializeStaticResources();
+      await _loadScans();
+      _from = 0;
+      _to = scans.length - 1;
       final asset = await BodyAsset.load();
       final body = BodyScene(asset)
-        ..setScans(sampleScans[_from], sampleScans[_to])
+        ..setScans(scans[_from], scans[_to])
         ..t = 1;
       _play.value = 1;
       setState(() => _body = body);
@@ -108,7 +128,7 @@ class _BodyPageState extends State<BodyPage>
     setState(() {
       _from = from;
       _to = to;
-      _body!.setScans(sampleScans[from], sampleScans[to]);
+      _body!.setScans(scans[from], scans[to]);
     });
   }
 
@@ -153,8 +173,8 @@ class _BodyPageState extends State<BodyPage>
                 : Column(
                     children: [
                       _StatsHeader(
-                        a: sampleScans[_from],
-                        b: sampleScans[_to],
+                        a: scans[_from],
+                        b: scans[_to],
                         t: body.t,
                         color: fg,
                       ),
@@ -162,6 +182,15 @@ class _BodyPageState extends State<BodyPage>
                         child: Stack(
                           children: [
                             Positioned.fill(child: _sceneView(body)),
+                            Positioned(
+                              right: 10,
+                              top: 4,
+                              child: _ViewOptions(
+                                body: body,
+                                dark: dark,
+                                onChanged: () => setState(() {}),
+                              ),
+                            ),
                             Positioned(
                               left: 12,
                               top: 4,
@@ -183,8 +212,8 @@ class _BodyPageState extends State<BodyPage>
                                 bottom: 8,
                                 child: _RegionCard(
                                   region: body.selected!,
-                                  a: sampleScans[_from],
-                                  b: sampleScans[_to],
+                                  a: scans[_from],
+                                  b: scans[_to],
                                   t: body.t,
                                   dark: dark,
                                   onClose: () =>
@@ -492,11 +521,8 @@ class _Controls extends StatelessWidget {
           style: TextStyle(color: fg, fontSize: 13),
           iconEnabledColor: fg,
           items: [
-            for (var i = 0; i < sampleScans.length; i++)
-              DropdownMenuItem(
-                value: i,
-                child: Text(_date(sampleScans[i].date)),
-              ),
+            for (var i = 0; i < scans.length; i++)
+              DropdownMenuItem(value: i, child: Text(_date(scans[i].date))),
           ],
           onChanged: (i) {
             if (i != null) onChanged(i);
@@ -563,6 +589,93 @@ class _Controls extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Top-right options: exaggerate toggle, and heatmap metric with a legend.
+class _ViewOptions extends StatelessWidget {
+  const _ViewOptions({
+    required this.body,
+    required this.dark,
+    required this.onChanged,
+  });
+  final BodyScene body;
+  final bool dark;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = dark ? Colors.white : const Color(0xFF15171A);
+    Widget chip(String label, bool on, VoidCallback tap) => Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: GestureDetector(
+        onTap: tap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: on ? fg : fg.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: on ? (dark ? Colors.black : Colors.white) : fg,
+            ),
+          ),
+        ),
+      ),
+    );
+    final heat = body.style == BodyStyle.heatmap;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        chip('Exaggerate change ×3', body.gain != 1, () {
+          body.gain = body.gain == 1 ? 3 : 1;
+          onChanged();
+        }),
+        if (heat) ...[
+          const SizedBox(height: 6),
+          for (final (m, label) in const [
+            (HeatMetric.fatPct, 'Fat %'),
+            (HeatMetric.fatChange, 'Fat change'),
+            (HeatMetric.leanChange, 'Lean change'),
+          ])
+            chip(label, body.metric == m, () {
+              body.metric = m;
+              onChanged();
+            }),
+          const SizedBox(height: 6),
+          for (final s in body.legend)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  s.label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: fg.withValues(alpha: 0.75),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Color.from(
+                      alpha: 1,
+                      red: s.r,
+                      green: s.g,
+                      blue: s.b,
+                    ),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ],
     );
   }
 }
