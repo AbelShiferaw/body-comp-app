@@ -1,0 +1,13 @@
+photo_date,session,method,repeat,bf_pct
+2026-05-11,may,navy_silhouette,1,14.1
+2026-05-11,may,navy_silhouette,2,14.7
+2026-08-11,aug,navy_silhouette,1,12.6
+2026-08-11,aug,navy_silhouette,2,12.0
+2026-11-15,nov,navy_silhouette,1,11.4
+2026-11-15,nov,navy_silhouette,2,10.8
+2026-05-11,may,llm_vision,1,13
+2026-05-11,may,llm_vision,2,15
+2026-08-11,aug,llm_vision,1,12
+2026-08-11,aug,llm_vision,2,11
+2026-11-15,nov,llm_vision,1,10
+2026-11-15,nov,llm_vision,2,12

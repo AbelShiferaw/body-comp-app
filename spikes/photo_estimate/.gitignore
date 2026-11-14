@@ -1,0 +1,8 @@
+# Abel's photos and DEXA numbers are private: never commit them.
+data/*
+!data/example_*.csv
+photos/
+models/
+out/
+__pycache__/
+.pytest_cache/
