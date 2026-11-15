@@ -1,0 +1,17 @@
+name: body_comp_workspace
+description: Pub workspace root. Holds the app and its modules; run `flutter pub get` here.
+publish_to: none
+
+environment:
+  sdk: ^3.14.0
+
+workspace:
+  - app
+  - packages/app_core
+  - packages/app_ui
+  - packages/app_auth
+  - packages/app_payments
+  - packages/app_feedback
+
+dev_dependencies:
+  very_good_analysis: ^11.0.0

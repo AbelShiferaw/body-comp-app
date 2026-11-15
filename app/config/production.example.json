@@ -1,0 +1,6 @@
+{
+  "FLAVOR": "production",
+  "SUPABASE_URL": "https://YOUR-PROJECT-REF.supabase.co",
+  "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_...",
+  "LOG_LEVEL": "INFO"
+}

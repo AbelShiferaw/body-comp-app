@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.50.0"
+  SUPABASE_CLI_VERSION: "3.1.0"
+
+jobs:
+  lint-and-test:
+    name: Lint and unit/widget tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Format
+        run: dart format --output=none --set-exit-if-changed app packages
+      - name: Analyze (infos fail the build)
+        run: flutter analyze --fatal-infos --fatal-warnings app packages
+      - name: Unit and widget tests
+        run: tool/test_all.sh --coverage
+
+  supabase:
+    name: Database and integration tests (local Supabase)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+      - name: Start local Supabase (database, auth, REST only)
+        run: supabase start -x studio,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,realtime,storage-api,postgres-meta
+      - name: Lint database schema
+        run: supabase db lint --level warning --fail-on warning
+      - name: Database tests (pgTAP, RLS)
+        run: supabase test db
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Integration tests against local Supabase
+        run: |
+          source tool/local_env.sh
+          cd packages/app_auth
+          flutter test --run-skipped --tags integration
+
+  build-android:
+    name: Build Android (development)
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Build debug APK with example config (no secrets in CI)
+        working-directory: app
+        run: |
+          flutter build apk --debug --flavor development \
+            -t lib/main_development.dart \
+            --dart-define-from-file=config/development.example.json
+
+  build-ios:
+    # macOS runners cost 10x minutes on private repos, so iOS builds only on main.
+    name: Build iOS (development, no codesign)
+    if: github.event_name == 'push'
+    needs: lint-and-test
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - working-directory: app
+        run: |
+          flutter build ios --debug --no-codesign --flavor development \
+            -t lib/main_development.dart \
+            --dart-define-from-file=config/development.example.json

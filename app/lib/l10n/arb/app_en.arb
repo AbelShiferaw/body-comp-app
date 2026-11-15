@@ -1,0 +1,16 @@
+{
+    "@@locale": "en",
+    "appTitle": "Body Comp",
+    "@appTitle": { "description": "App name. Working title until branding is decided." },
+    "homeTitle": "Your body",
+    "@homeTitle": { "description": "Title of the home screen that shows the 3D body" },
+    "homeBodyPlaceholder": "Your 3D body appears here after your first DEXA scan",
+    "@homeBodyPlaceholder": { "description": "Shown where the 3D body will render" },
+    "metricBodyFat": "Body fat",
+    "metricLeanMass": "Lean mass",
+    "metricFatMass": "Fat mass",
+    "metricVisceralFat": "Visceral fat",
+    "signOut": "Sign out",
+    "startupErrorTitle": "The app could not start",
+    "@startupErrorTitle": { "description": "Shown when configuration is missing or invalid at launch" }
+}
