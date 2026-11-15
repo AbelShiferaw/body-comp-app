@@ -13,7 +13,7 @@ permissions:
 
 env:
   SKILLS_REPO: AbelShiferaw/agent-skills
-  PLUGINS: "core mobile-dev" # plugins this project wants
+  PLUGINS: "core mobile-dev supabase" # plugins this project wants (supabase needs agent-skills PR #1 merged)
 
 jobs:
   sync:
