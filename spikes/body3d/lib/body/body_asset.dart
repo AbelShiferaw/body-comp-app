@@ -20,7 +20,12 @@ class BodyAsset {
     required this.indices,
     required this.masks,
     required this.targets,
+    required this.joints,
   });
+
+  /// Joint rings by name (shoulder_l, elbow_l, wrist_l, hip_l, knee_l,
+  /// ankle_l and the _r ones): vertex indices around each joint.
+  final Map<String, List<int>> joints;
 
   /// xyz per vertex.
   final Float32List positions;
@@ -160,6 +165,11 @@ class BodyAsset {
       indices: indices,
       masks: masks,
       targets: targets,
+      joints: {
+        for (final e
+            in (((json['extras'] as Map)['joints'] as Map?) ?? {}).entries)
+          e.key as String: (e.value as List).cast<int>(),
+      },
     );
   }
 }

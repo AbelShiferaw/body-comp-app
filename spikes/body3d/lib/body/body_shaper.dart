@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'body_asset.dart';
 import 'dexa_scan.dart';
+import 'measurements.dart';
 
 /// How strongly each region's fat and muscle shapes are applied.
 /// Positive `fat` uses the fat_up target, negative uses fat_down; same for
@@ -116,7 +117,53 @@ class BodyShaper {
   /// With [relativeTo] and [gain], the change from [relativeTo] to [scan] is
   /// multiplied by [gain] (an optional "exaggerate change" view; gain 1 is
   /// true to the scan).
+  ///
+  /// [proportions] are signed weights for the measurement shapes (see
+  /// [Proportion]), usually from [solveProportions]. [heightCm] overrides the
+  /// scan's height (e.g. a measured height).
   Float32List positionsFor(
+    DexaScan scan, {
+    DexaScan? relativeTo,
+    double gain = 1,
+    Map<Proportion, double> proportions = const {},
+    double? heightCm,
+  }) {
+    final x = composeUnscaled(scan, relativeTo: relativeTo, gain: gain);
+    addProportions(x, proportions);
+    scaleToHeight(x, heightCm ?? scan.heightCm);
+    return x;
+  }
+
+  /// Adds the measurement shapes to [x] in place.
+  void addProportions(Float32List x, Map<Proportion, double> weights) {
+    for (final e in weights.entries) {
+      final w = e.value;
+      if (w == 0) continue;
+      for (final name in e.key.targets) {
+        final t = asset.targets['prop_${name}_${w > 0 ? 'incr' : 'decr'}']!;
+        final k = w.abs();
+        for (var i = 0; i < x.length; i++) {
+          x[i] += k * t[i];
+        }
+      }
+    }
+  }
+
+  /// Uniformly scales [x] so the body is [heightCm] tall, feet at y = 0.
+  static void scaleToHeight(Float32List x, double heightCm) {
+    var lo = double.infinity, hi = -double.infinity;
+    for (var i = 1; i < x.length; i += 3) {
+      lo = math.min(lo, x[i]);
+      hi = math.max(hi, x[i]);
+    }
+    final s = heightCm / 100 / (hi - lo);
+    for (var i = 0; i < x.length; i++) {
+      x[i] *= s;
+    }
+  }
+
+  /// Base body plus sex and DEXA fat/muscle shapes, at the mesh's own size.
+  Float32List composeUnscaled(
     DexaScan scan, {
     DexaScan? relativeTo,
     double gain = 1,
@@ -160,10 +207,6 @@ class BodyShaper {
     set(6, w.android, 0); // android band (fat only)
     set(7, w.gynoid, 0); // gynoid band (fat only)
 
-    final ref = scan.sex == Sex.male
-        ? ShapeReference.male
-        : ShapeReference.female;
-    final s = scan.heightCm / ref.heightCm;
     final n = a.vertexCount;
     final out = Float32List(n * 3);
     for (var v = 0; v < n; v++) {
@@ -179,13 +222,12 @@ class BodyShaper {
       for (var j = 0; j < 3; j++) {
         final i = v * 3 + j;
         out[i] =
-            s *
             (a.positions[i] +
-                sexT[i] +
-                cfu * fu[i] +
-                cfd * fd[i] +
-                cmu * mu[i] +
-                cmd * md[i]);
+            sexT[i] +
+            cfu * fu[i] +
+            cfd * fd[i] +
+            cmu * mu[i] +
+            cmd * md[i]);
       }
     }
     return out;
@@ -226,4 +268,47 @@ class BodyShaper {
     }
     return out;
   }
+}
+
+/// Fits the measurement shapes so the body matches [targets] (cm).
+///
+/// Works on [base] (an unscaled composite from [BodyShaper.composeUnscaled]),
+/// scaled to [heightCm]. Each measurement is matched by its own shape with a
+/// few Newton steps; the shapes barely interact, so this converges fast.
+/// Returns the weights and the measurements the fitted body ends up with.
+({Map<Proportion, double> weights, Map<Measure, double> achieved})
+solveProportions(
+  BodyShaper shaper,
+  BodyMeasurer measurer,
+  Float32List base,
+  double heightCm,
+  Map<Measure, double> targets,
+) {
+  final weights = <Proportion, double>{};
+  Float32List build(Map<Proportion, double> w) {
+    final x = Float32List.fromList(base);
+    shaper.addProportions(x, w);
+    BodyShaper.scaleToHeight(x, heightCm);
+    return x;
+  }
+
+  for (var iter = 0; iter < 4; iter++) {
+    for (final p in Proportion.values) {
+      final target = targets[p.measure];
+      if (target == null) continue;
+      final w0 = weights[p] ?? 0;
+      final m0 = measurer.measure(build(weights), p.measure);
+      const h = 0.15;
+      final probe = (w0 + (target > m0 ? h : -h)).clamp(-1.5, 1.5);
+      final m1 = measurer.measure(build({...weights, p: probe}), p.measure);
+      final slope = (m1 - m0) / (probe - w0);
+      if (slope.abs() < 1e-3) continue;
+      weights[p] = (w0 + (target - m0) / slope).clamp(-1.5, 1.5);
+    }
+  }
+  final x = build(weights);
+  return (
+    weights: weights,
+    achieved: measurer.measureAll(x)..[Measure.height] = heightCm,
+  );
 }

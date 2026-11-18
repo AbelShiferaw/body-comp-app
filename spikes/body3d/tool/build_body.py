@@ -28,6 +28,22 @@ import numpy as np
 KEEP_GROUPS = {"body", "helper-l-eye", "helper-r-eye"}
 RACES = ["african", "asian", "caucasian"]
 
+# Proportion shapes (MakeHuman measure targets, CC0), driven by measurements.
+PROPORTIONS = ["shoulder-dist", "bust-circ", "waist-circ", "hips-circ", "upperarm-circ",
+               "thigh-circ", "calf-circ", "upperarm-length", "lowerarm-length",
+               "upperleg-height", "lowerleg-height"]
+
+# Joint rings: vertices weighted to both bones of a joint. The app takes each
+# ring's centroid as the joint centre for length measurements.
+JOINTS = {
+    "shoulder": ("shoulder01", "upperarm01"),
+    "elbow": ("upperarm02", "lowerarm01"),
+    "wrist": ("lowerarm02", "wrist"),
+    "hip": ("pelvis", "upperleg01"),
+    "knee": ("upperleg02", "lowerleg01"),
+    "ankle": ("lowerleg02", "foot"),
+}
+
 
 def load_obj(path):
     verts, faces = [], []
@@ -165,6 +181,10 @@ def main(src, out):
         shapes[f"{sex}_muscle_up"] = tgt(f"{u}-maxmuscle-averageweight")
         shapes[f"{sex}_muscle_down"] = tgt(f"{u}-minmuscle-averageweight")
 
+    for prop in PROPORTIONS:
+        for d in ("incr", "decr"):
+            shapes[f"prop_{prop}_{d}"] = tgt(f"measure-{prop}-{d}")
+
     weights = json.load(open(src / "default_weights.mhw"))["weights"]
     masks_all = region_masks(weights, n_all, pos_all + shapes["male"])
 
@@ -178,6 +198,19 @@ def main(src, out):
     # Soften region edges so a regional shape blends into its neighbour.
     masks = smooth(masks, faces, 4)
     deltas = {k: v[used] for k, v in shapes.items()}
+
+    def bone_w(bone):
+        w = np.zeros(n_all, np.float32)
+        for vi, x in weights.get(bone, []):
+            w[vi] = x
+        return w
+
+    joints = {}
+    for name, (a, b) in JOINTS.items():
+        for side in ("L", "R"):
+            ring = np.nonzero((bone_w(f"{a}.{side}") > 0.15) & (bone_w(f"{b}.{side}") > 0.15))[0]
+            ring = remap[ring]
+            joints[f"{name}_{side.lower()}"] = [int(i) for i in ring if i >= 0]
 
     # Right-handed (MakeHuman, +Z front) -> flutter_scene left-handed:
     # negate z and swap winding so the body faces the default camera at -Z.
@@ -194,6 +227,7 @@ def main(src, out):
     a_rb = g.dense(q(masks[:, 4:8]), 5121, "VEC4", normalized=True)
     order = ["male", "female"] + [f"{s}_{k}" for s in ("male", "female")
                                   for k in ("fat_up", "fat_down", "muscle_up", "muscle_down")]
+    order += [f"prop_{p}_{d}" for p in PROPORTIONS for d in ("incr", "decr")]
     targets = [{"POSITION": g.sparse_vec3(deltas[k])} for k in order]
 
     gltf = {
@@ -208,7 +242,8 @@ def main(src, out):
         "accessors": g.accessors, "bufferViews": g.views,
         "buffers": [{"byteLength": len(g.bin)}],
         "extras": {"regions": ["arm_l", "arm_r", "leg_l", "leg_r", "trunk", "head",
-                               "android", "gynoid"], "units": "decimeters"},
+                               "android", "gynoid"], "units": "decimeters",
+                   "joints": joints},
     }
     js = json.dumps(gltf, separators=(",", ":")).encode()
     js += b" " * (-len(js) % 4)
@@ -228,6 +263,8 @@ def main(src, out):
         sel = hard == r
         print(f"  {names[r]:6s} {sel.sum():6d} verts, mean x {pos[sel,0].mean():+.2f}")
     print(f"  android verts>0.5: {(masks[:,6]>0.5).sum()}, gynoid verts>0.5: {(masks[:,7]>0.5).sum()}")
+    for k, v in joints.items():
+        print(f"  joint {k}: {len(v)} verts")
     print(f"  height {pos[:,1].max()-pos[:,1].min():.2f} units")
 
 

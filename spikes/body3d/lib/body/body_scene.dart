@@ -9,6 +9,7 @@ import 'package:vector_math/vector_math.dart' as vm;
 import 'body_asset.dart';
 import 'body_shaper.dart';
 import 'dexa_scan.dart';
+import 'measurements.dart';
 
 /// The visual styles Abel can try.
 enum BodyStyle { studio, heatmap, midnight }
@@ -23,12 +24,21 @@ typedef LegendStop = ({String label, double r, double g, double b});
 /// own colour and be told apart when tapped), each a morphed mesh with a
 /// single target that blends scan A into scan B.
 class BodyScene {
-  BodyScene(this.asset) : shaper = BodyShaper(asset) {
+  BodyScene(this.asset)
+    : shaper = BodyShaper(asset),
+      measurer = BodyMeasurer(asset) {
     _splitRegions();
   }
 
   final BodyAsset asset;
   final BodyShaper shaper;
+  final BodyMeasurer measurer;
+
+  /// Measurement shape weights, shared by every scan (the body's frame), and
+  /// the measurements they were fitted to.
+  Map<Proportion, double> _proportions = const {};
+  Map<Measure, double> _measureTargets = const {};
+  Map<Measure, double> get measureTargets => _measureTargets;
   final Scene scene = Scene();
 
   final Map<Region, Node> _nodes = {};
@@ -119,10 +129,17 @@ class BodyScene {
   void setScans(DexaScan a, DexaScan b) {
     _a = a;
     _b = b;
-    final posA = shaper.positionsFor(a);
+    final h = _measureTargets[Measure.height];
+    final posA = shaper.positionsFor(a, proportions: _proportions, heightCm: h);
     final posB = identical(a, b)
         ? posA
-        : shaper.positionsFor(b, relativeTo: a, gain: _gain);
+        : shaper.positionsFor(
+            b,
+            relativeTo: a,
+            gain: _gain,
+            proportions: _proportions,
+            heightCm: h,
+          );
     final nA = shaper.normalsFor(posA);
     final nB = identical(a, b) ? nA : shaper.normalsFor(posB);
     _posA = posA;
@@ -189,6 +206,30 @@ class BodyScene {
     if (_style == BodyStyle.heatmap && _metric == HeatMetric.fatPct) {
       _writeColors();
     }
+  }
+
+  /// The shown body's measurements (cm) at the later scan.
+  Map<Measure, double> currentMeasurements() => measurer.measureAll(_posB!);
+
+  /// Fits the body's proportions to [targets] (cm) on the later scan and
+  /// redraws. An empty map goes back to average proportions.
+  Map<Measure, double> setMeasurements(Map<Measure, double> targets) {
+    _measureTargets = Map.of(targets);
+    if (targets.isEmpty) {
+      _proportions = const {};
+    } else {
+      final b = _b!;
+      final r = solveProportions(
+        shaper,
+        measurer,
+        shaper.composeUnscaled(b),
+        targets[Measure.height] ?? b.heightCm,
+        targets,
+      );
+      _proportions = r.weights;
+    }
+    setScans(_a!, _b!);
+    return currentMeasurements();
   }
 
   set metric(HeatMetric m) {

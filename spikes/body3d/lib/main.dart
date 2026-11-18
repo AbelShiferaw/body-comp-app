@@ -12,6 +12,7 @@ import 'package:vector_math/vector_math.dart' as vm;
 import 'body/body_asset.dart';
 import 'body/body_scene.dart';
 import 'body/dexa_scan.dart';
+import 'body/measurements.dart';
 
 /// Scans shown in the app: the real ones from data/local/scans.json when
 /// present (gitignored), otherwise the fake samples.
@@ -631,6 +632,19 @@ class _ViewOptions extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
+        chip(
+          body.measureTargets.isEmpty ? 'My measurements' : 'My measurements ✓',
+          body.measureTargets.isNotEmpty,
+          () async {
+            await showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: dark ? const Color(0xFF1E2632) : Colors.white,
+              builder: (_) => _MeasurementsSheet(body: body, dark: dark),
+            );
+            onChanged();
+          },
+        ),
         chip('Exaggerate change ×3', body.gain != 1, () {
           body.gain = body.gain == 1 ? 3 : 1;
           onChanged();
@@ -676,6 +690,157 @@ class _ViewOptions extends StatelessWidget {
             ),
         ],
       ],
+    );
+  }
+}
+
+/// Type in tape measurements; the body is fitted to them.
+class _MeasurementsSheet extends StatefulWidget {
+  const _MeasurementsSheet({required this.body, required this.dark});
+  final BodyScene body;
+  final bool dark;
+  @override
+  State<_MeasurementsSheet> createState() => _MeasurementsSheetState();
+}
+
+class _MeasurementsSheetState extends State<_MeasurementsSheet> {
+  late Map<Measure, double> _model = widget.body.currentMeasurements();
+  late final Map<Measure, TextEditingController> _ctl = {
+    for (final m in Measure.values)
+      m: TextEditingController(
+        text: widget.body.measureTargets[m]?.toStringAsFixed(1) ?? '',
+      ),
+  };
+  String? _status;
+
+  @override
+  void dispose() {
+    for (final c in _ctl.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _fit() {
+    final targets = <Measure, double>{};
+    for (final e in _ctl.entries) {
+      final v = double.tryParse(e.value.text.replaceAll(',', '.'));
+      if (v != null && v > 0) targets[e.key] = v;
+    }
+    final sw = Stopwatch()..start();
+    final got = widget.body.setMeasurements(targets);
+    setState(() {
+      _model = got;
+      _status = targets.isEmpty
+          ? 'Back to average proportions.'
+          : 'Fitted ${targets.length} measurements in ${sw.elapsedMilliseconds} ms.';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = widget.dark ? Colors.white : const Color(0xFF15171A);
+    final dim = fg.withValues(alpha: 0.6);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        12,
+        16,
+        16 + MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'My measurements',
+              style: TextStyle(
+                color: fg,
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Type what your tape says (cm). Leave blank to keep the model value. '
+              'In the app these will come from photos; here you can enter them by hand.',
+              style: TextStyle(color: dim, fontSize: 12),
+            ),
+            const SizedBox(height: 10),
+            for (final m in Measure.values)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            m.label,
+                            style: TextStyle(color: fg, fontSize: 14),
+                          ),
+                          Text(
+                            m.hint,
+                            style: TextStyle(color: dim, fontSize: 10),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        'model ${_model[m]!.toStringAsFixed(1)}',
+                        style: TextStyle(color: dim, fontSize: 11),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 72,
+                      child: TextField(
+                        controller: _ctl[m],
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        style: TextStyle(color: fg, fontSize: 14),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          hintText: 'cm',
+                          hintStyle: TextStyle(color: dim),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (_status != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  _status!,
+                  style: TextStyle(color: dim, fontSize: 12),
+                ),
+              ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                TextButton(
+                  onPressed: () {
+                    for (final c in _ctl.values) {
+                      c.clear();
+                    }
+                    _fit();
+                  },
+                  child: const Text('Reset'),
+                ),
+                const Spacer(),
+                FilledButton(onPressed: _fit, child: const Text('Fit my body')),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
