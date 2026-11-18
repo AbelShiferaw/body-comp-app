@@ -1,0 +1,27 @@
+# Shared strict lints for every package in the workspace.
+# Packages include this file; do not loosen rules per package without a comment saying why.
+include: package:very_good_analysis/analysis_options.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    # Warnings fail CI (flutter analyze --fatal-infos), these are promoted to errors
+    # so they also show red in the IDE.
+    missing_required_param: error
+    missing_return: error
+    unawaited_futures: error
+    avoid_print: error
+  exclude:
+    - spikes/**
+    - "**/build/**"
+    - "**/*.g.dart"
+    - "**/l10n/gen/**"
+
+linter:
+  rules:
+    # Docs on every public member is too noisy for app code; packages meant for
+    # extraction document their public API anyway.
+    public_member_api_docs: false

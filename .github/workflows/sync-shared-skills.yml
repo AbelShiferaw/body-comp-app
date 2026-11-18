@@ -1,0 +1,42 @@
+# Pulls shared skills from AbelShiferaw/agent-skills into .claude/skills/ and opens a PR when they change.
+# Needs Settings > Actions > General > "Allow GitHub Actions to create and approve pull requests".
+name: Sync shared skills
+
+on:
+  schedule:
+    - cron: "0 15 * * 1" # Mondays
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  SKILLS_REPO: AbelShiferaw/agent-skills
+  PLUGINS: "core mobile-dev supabase" # plugins this project wants (supabase needs agent-skills PR #1 merged)
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ env.SKILLS_REPO }}
+          path: .agent-skills
+          # Only needed if agent-skills is private: a fine-grained token with read access to it.
+          token: ${{ secrets.AGENT_SKILLS_TOKEN || github.token }}
+
+      - name: Sync skills
+        run: |
+          bash .agent-skills/scripts/sync-skills.sh .agent-skills . $PLUGINS
+          rm -rf .agent-skills
+
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/sync-shared-skills
+          commit-message: "chore: sync shared skills from agent-skills"
+          title: "Sync shared skills"
+          body: "Automated copy of the latest skills from `${{ env.SKILLS_REPO }}` (plugins: `${{ env.PLUGINS }}`)."
+          add-paths: .claude/skills

@@ -1,0 +1,16 @@
+name: app_core
+description: App-agnostic foundations shared by every module, config, errors and logging. Pure Dart, no Flutter.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.14.0
+
+dependencies:
+  logging: ^1.3.0
+  meta: ^1.17.0
+
+dev_dependencies:
+  test: ^1.26.0
+  very_good_analysis: ^11.0.0

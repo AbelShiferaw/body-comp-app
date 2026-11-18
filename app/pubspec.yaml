@@ -1,0 +1,38 @@
+name: body_comp
+description: 3D body composition tracking from DEXA scans
+version: 0.1.0+1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.14.0
+  flutter: ^3.50.0
+
+dependencies:
+  app_auth: any
+  app_core: any
+  app_feedback: any
+  app_payments: any
+  app_ui: any
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: ^3.5.0
+  go_router: ^18.1.0
+  intl: ^0.20.2
+  logging: ^1.3.0
+  material_ui: ^1.11.0
+  supabase_flutter: ^2.18.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  mocktail: ^1.0.5
+  very_good_analysis: ^11.0.0
+
+flutter:
+  generate: true
+  uses-material-design: true
