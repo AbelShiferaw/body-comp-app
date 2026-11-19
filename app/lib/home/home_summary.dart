@@ -60,11 +60,16 @@ class HomeSummary {
       return HeadlineStat(value: value, change: change, trend: trend);
     }
 
-    final days = now.difference(latest.scannedAt).inHours / 24;
+    // The bar tracks the next DEXA scan, so photo estimates do not reset it.
+    final dexa = scans.where((s) => !s.isEstimate).toList();
+    final lastDexa = dexa.lastOrNull;
+    final days = lastDexa == null
+        ? double.infinity
+        : now.difference(lastDexa.scannedAt).inHours / 24;
     return HomeSummary(
       latest: latest,
       first: first,
-      level: scans.where((s) => !s.isEstimate).length,
+      level: dexa.length,
       nextScanProgress: (days / scanIntervalDays).clamp(0, 1).toDouble(),
       // "Flat" below the precision each number is shown at.
       bodyFat: stat((s) => s.bodyFatPct, lowerIsBetter: true, flatBelow: 0.05),
@@ -83,7 +88,8 @@ class HomeSummary {
   /// The avatar's level: one per DEXA scan.
   final int level;
 
-  /// 0 right after a scan, 1 when the next one is due.
+  /// 0 right after a DEXA scan, 1 when the next one is due (or there has
+  /// been none yet).
   final double nextScanProgress;
 
   final HeadlineStat bodyFat;

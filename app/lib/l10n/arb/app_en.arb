@@ -52,8 +52,7 @@
         "description": "After a change, e.g. '▼ 3.8 pts since May'",
         "placeholders": {
             "date": {
-                "type": "DateTime",
-                "format": "MMM"
+                "type": "String"
             }
         }
     },
@@ -61,8 +60,7 @@
     "@homeNoChange": {
         "placeholders": {
             "date": {
-                "type": "DateTime",
-                "format": "MMM"
+                "type": "String"
             }
         }
     },

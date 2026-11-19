@@ -11,6 +11,7 @@ import 'package:body_comp/profile/presentation/profile_providers.dart';
 import 'package:body_comp/router/router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Home: the user's 3D body as the hero, with the level badge, the latest
@@ -274,13 +275,13 @@ class _ScanChip extends StatelessWidget {
     return Container(
       key: const Key('home_scanChip'),
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm + 2,
-        vertical: AppSpacing.xs + 2,
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
         color: tokens.surface,
         border: Border.all(color: tokens.border),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         latest.isEstimate
@@ -404,17 +405,24 @@ class _Stat extends StatelessWidget {
     final value = stat.value;
     final change = stat.change;
 
+    // A change that rounds to zero at the shown precision reads as flat,
+    // whatever the unit.
+    final shown = change == null
+        ? null
+        : (change.abs() * scale).toStringAsFixed(digits);
+    final flat =
+        stat.trend == Trend.flat || (shown != null && double.parse(shown) == 0);
+    final sinceText = _monthOf(context, since);
     final String? changeText;
     if (change != null) {
-      changeText = stat.trend == Trend.flat
-          ? l10n.homeNoChange(since)
-          : '${change < 0 ? '▼' : '▲'} '
-                '${(change.abs() * scale).toStringAsFixed(digits)} '
-                '$changeUnit ${l10n.homeSince(since)}';
+      changeText = flat
+          ? l10n.homeNoChange(sinceText)
+          : '${change < 0 ? '▼' : '▲'} $shown $changeUnit '
+                '${l10n.homeSince(sinceText)}';
     } else {
       changeText = compare ? null : l10n.homeFirstScan;
     }
-    final changeColor = switch (stat.trend) {
+    final changeColor = switch (flat ? Trend.flat : stat.trend) {
       Trend.better => tokens.lean,
       Trend.worse => tokens.fat,
       Trend.flat => tokens.textSecondary,
@@ -470,6 +478,14 @@ class _Stat extends StatelessWidget {
       ],
     );
   }
+}
+
+/// "May", or "May 2025" when it is not this year's May.
+String _monthOf(BuildContext context, DateTime date) {
+  final locale = Localizations.localeOf(context).toLanguageTag();
+  return date.year == DateTime.now().year
+      ? DateFormat.MMM(locale).format(date)
+      : DateFormat.yMMM(locale).format(date);
 }
 
 class _EmptyState extends StatelessWidget {

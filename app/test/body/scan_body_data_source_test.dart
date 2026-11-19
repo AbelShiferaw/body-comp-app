@@ -121,7 +121,7 @@ void main() {
   group('ScanBodyDataSource', () {
     ScanBodyDataSource source(
       List<db.Scan> scans, {
-      pf.Profile? profile = const pf.Profile(sex: pf.Sex.male, heightCm: 175),
+      BodyProfile profile = (sex: pf.Sex.male, heightCm: 175),
       Map<db.MeasurementKind, db.BodyMeasurement> measurements = const {},
     }) => ScanBodyDataSource(
       scans: Future.value(scans),
@@ -139,9 +139,10 @@ void main() {
     });
 
     test('draws nothing until the profile has a sex', () async {
-      final scans = await source([
-        row(),
-      ], profile: const pf.Profile()).watchScans().single;
+      final scans = await source(
+        [row()],
+        profile: (sex: null, heightCm: null),
+      ).watchScans().single;
       expect(scans, isEmpty);
     });
 

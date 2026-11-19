@@ -16,10 +16,16 @@ final _log = AppLogger('body');
 final scanBodyDataSourceProvider = Provider<BodyDataSource>(
   (ref) => ScanBodyDataSource(
     scans: ref.watch(db.drawableScansProvider.future),
-    profile: ref.watch(profileProvider.future),
+    // Only what the body needs, so a units change does not reload it.
+    profile: ref.watch(
+      profileProvider.selectAsync((p) => (sex: p?.sex, heightCm: p?.heightCm)),
+    ),
     measurements: ref.watch(db.currentMeasurementsProvider.future),
   ),
 );
+
+/// The profile fields the body uses.
+typedef BodyProfile = ({pf.Sex? sex, double? heightCm});
 
 /// Adapts `app_scans` rows (grams) to body_mapping's [BodyScan] (kg).
 class ScanBodyDataSource implements BodyDataSource {
@@ -31,7 +37,7 @@ class ScanBodyDataSource implements BodyDataSource {
 
   /// Drawable scan rows, any order.
   final Future<List<db.Scan>> scans;
-  final Future<pf.Profile?> profile;
+  final Future<BodyProfile> profile;
   final Future<Map<db.MeasurementKind, db.BodyMeasurement>> measurements;
 
   @override
@@ -40,7 +46,7 @@ class ScanBodyDataSource implements BodyDataSource {
   Future<List<BodyScan>> _load() async {
     final rows = await scans;
     final p = await profile;
-    final sex = switch (p?.sex) {
+    final sex = switch (p.sex) {
       pf.Sex.male => Sex.male,
       pf.Sex.female => Sex.female,
       // The router keeps users without a complete profile out of home.
@@ -54,7 +60,7 @@ class ScanBodyDataSource implements BodyDataSource {
     }
     final out = <BodyScan>[];
     for (final row in rows) {
-      final scan = toBodyScan(row, sex: sex, profileHeightCm: p?.heightCm);
+      final scan = toBodyScan(row, sex: sex, profileHeightCm: p.heightCm);
       if (scan == null) {
         _log.warning('Scan ${row.id} is missing data the body needs; skipped');
       } else {

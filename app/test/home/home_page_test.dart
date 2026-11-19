@@ -121,6 +121,28 @@ void main() {
     );
   });
 
+  testWidgets('a change that rounds to zero reads as no change', (
+    tester,
+  ) async {
+    // 2 g of visceral fat is 0.00 lb at two decimals.
+    final scans = [
+      first.copyWith(visceralFatG: 400),
+      latest.copyWith(visceralFatG: 402),
+    ];
+    await tester.pumpApp(
+      user: user,
+      scans: scans,
+      profile: completeProfile.copyWith(units: Units.imperial),
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('home_visceral')),
+        matching: find.textContaining('no change since'),
+      ),
+      findsOne,
+    );
+  });
+
   testWidgets('refresh reloads and keeps the body', (tester) async {
     await tester.pumpApp(user: user, scans: sampleTimeline);
     await tester.tap(find.byKey(const Key('home_refresh')));

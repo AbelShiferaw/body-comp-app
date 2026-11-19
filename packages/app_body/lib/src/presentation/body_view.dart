@@ -754,8 +754,9 @@ class ScannerPadPainter extends CustomPainter {
     // half-width 0.47 body heights, whichever needs the wider view.
     final aspect = size.width / size.height;
     final fit = math.max(0.53, 0.47 / aspect);
-    final feetY = size.height * (0.5 + 0.5 * zoom * 0.5 / fit);
-    final bodyPx = size.height * zoom / (2 * fit);
+    final z = zoom.clamp(1, 3);
+    final feetY = size.height * (0.5 + 0.5 * z * 0.5 / fit);
+    final bodyPx = size.height * z / (2 * fit);
     final center = Offset(size.width / 2, feetY);
     final rx = bodyPx * 0.36;
     Rect ellipse(double scale) => Rect.fromCenter(
