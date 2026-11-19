@@ -63,6 +63,7 @@ jobs:
           for pkg in app_auth app_scans; do
             (cd "packages/$pkg" && flutter test --run-skipped --tags integration)
           done
+          (cd app && flutter test --run-skipped --tags integration)
 
   build-android:
     name: Build Android (development)

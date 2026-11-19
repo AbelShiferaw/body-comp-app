@@ -4,13 +4,17 @@ import 'package:app_auth/app_auth.dart';
 
 /// In-memory [AuthRepository] for widget and controller tests.
 class FakeAuthRepository implements AuthRepository {
-  new({this._user});
+  new({this._user, this.methods = const {SignInMethod.email}});
 
   final _changes = StreamController<AuthUser?>.broadcast();
   AuthUser? _user;
+  Set<SignInMethod> methods;
 
-  /// When set, the next sign-in or sign-up throws it.
+  /// When set, the next call that can fail throws it.
   Exception? nextError;
+
+  /// What [signUp] returns.
+  SignUpResult signUpResult = SignUpResult.signedIn;
   final calls = <String>[];
 
   @override
@@ -22,9 +26,18 @@ class FakeAuthRepository implements AuthRepository {
     yield* _changes.stream;
   }
 
+  @override
+  Future<Set<SignInMethod>> availableMethods() async => methods;
+
   void _set(AuthUser? user) {
     _user = user;
     _changes.add(user);
+  }
+
+  void _maybeThrow() {
+    final error = nextError;
+    nextError = null;
+    if (error != null) throw error;
   }
 
   @override
@@ -33,22 +46,47 @@ class FakeAuthRepository implements AuthRepository {
     required String password,
   }) async {
     calls.add('signIn:$email');
-    final error = nextError;
-    if (error != null) throw error;
+    _maybeThrow();
     _set(AuthUser(id: 'user-1', email: email));
   }
 
   @override
-  Future<void> signUp({required String email, required String password}) async {
+  Future<SignUpResult> signUp({
+    required String email,
+    required String password,
+  }) async {
     calls.add('signUp:$email');
-    final error = nextError;
-    if (error != null) throw error;
-    _set(AuthUser(id: 'user-1', email: email));
+    _maybeThrow();
+    if (signUpResult == SignUpResult.signedIn) {
+      _set(AuthUser(id: 'user-1', email: email));
+    }
+    return signUpResult;
+  }
+
+  @override
+  Future<void> signInWithApple() async {
+    calls.add('apple');
+    _maybeThrow();
+    _set(const AuthUser(id: 'user-1'));
+  }
+
+  @override
+  Future<void> signInWithGoogle() async {
+    calls.add('google');
+    _maybeThrow();
+    _set(const AuthUser(id: 'user-1'));
   }
 
   @override
   Future<void> signOut() async {
     calls.add('signOut');
+    _set(null);
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    calls.add('deleteAccount');
+    _maybeThrow();
     _set(null);
   }
 }

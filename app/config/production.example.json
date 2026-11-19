@@ -2,5 +2,7 @@
   "FLAVOR": "production",
   "SUPABASE_URL": "https://YOUR-PROJECT-REF.supabase.co",
   "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_...",
-  "LOG_LEVEL": "INFO"
+  "LOG_LEVEL": "INFO",
+  "GOOGLE_IOS_CLIENT_ID": "",
+  "GOOGLE_WEB_CLIENT_ID": ""
 }

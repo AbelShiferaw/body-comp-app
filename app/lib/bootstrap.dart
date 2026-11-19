@@ -5,6 +5,8 @@ import 'package:app_auth/app_auth.dart';
 import 'package:app_core/app_core.dart';
 import 'package:app_scans/app_scans.dart';
 import 'package:body_comp/app/app.dart';
+import 'package:body_comp/profile/data/supabase_profile_repository.dart';
+import 'package:body_comp/profile/presentation/profile_providers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
@@ -57,7 +59,7 @@ Future<void> bootstrap(Flavor expected) async {
     debug: false,
   );
   log.info('Supabase ready');
-  final supabase = Supabase.instance.client;
+  final client = Supabase.instance.client;
 
   runApp(
     ProviderScope(
@@ -65,16 +67,26 @@ Future<void> bootstrap(Flavor expected) async {
         appConfigProvider.overrideWithValue(config),
         crashReporterProvider.overrideWithValue(crashReporter),
         authRepositoryProvider.overrideWithValue(
-          SupabaseAuthRepository(supabase.auth),
+          SupabaseAuthRepository(
+            client,
+            apple: const AppleIdTokenProvider(),
+            google: GoogleIdTokenProvider(
+              webClientId: config.googleWebClientId,
+              iosClientId: config.googleIosClientId,
+            ),
+          ),
+        ),
+        profileRepositoryProvider.overrideWithValue(
+          SupabaseProfileRepository(client),
         ),
         scanRepositoryProvider.overrideWithValue(
-          SupabaseScanRepository(supabase),
+          SupabaseScanRepository(client),
         ),
         measurementsRepositoryProvider.overrideWithValue(
-          SupabaseMeasurementsRepository(supabase),
+          SupabaseMeasurementsRepository(client),
         ),
         consentsRepositoryProvider.overrideWithValue(
-          SupabaseConsentsRepository(supabase),
+          SupabaseConsentsRepository(client),
         ),
       ],
       observers: [_ProviderErrorLogger(crashReporter)],

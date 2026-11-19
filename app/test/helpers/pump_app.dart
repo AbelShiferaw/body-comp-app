@@ -1,21 +1,46 @@
 import 'package:app_auth/app_auth.dart';
 import 'package:body_comp/app/app.dart';
+import 'package:body_comp/profile/domain/profile.dart';
+import 'package:body_comp/profile/presentation/profile_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'fake_auth_repository.dart';
+import 'fake_profile_repository.dart';
+
+const completeProfile = Profile(sex: Sex.male, birthYear: 1994, heightCm: 180);
+
+typedef Fakes = ({FakeAuthRepository auth, FakeProfileRepository profiles});
 
 extension PumpApp on WidgetTester {
-  /// Pumps the real [App] with an in-memory auth backend.
-  Future<FakeAuthRepository> pumpApp({AuthUser? user}) async {
-    final repo = FakeAuthRepository(user: user);
+  /// A tall phone-width screen, so whole forms fit without scrolling.
+  void useTallPhone() {
+    view
+      ..physicalSize = const Size(1290, 4200)
+      ..devicePixelRatio = 3;
+    addTearDown(view.reset);
+  }
+
+  /// Pumps the real [App] with in-memory auth and profile backends. A signed-in
+  /// [user] gets [profile], complete by default.
+  Future<Fakes> pumpApp({
+    AuthUser? user,
+    Profile profile = completeProfile,
+  }) async {
+    useTallPhone();
+    final auth = FakeAuthRepository(user: user);
+    final profiles = FakeProfileRepository({?user?.id: profile});
     await pumpWidget(
       ProviderScope(
-        overrides: [authRepositoryProvider.overrideWithValue(repo)],
+        overrides: [
+          authRepositoryProvider.overrideWithValue(auth),
+          profileRepositoryProvider.overrideWithValue(profiles),
+        ],
         child: const App(),
       ),
     );
     await pumpAndSettle();
-    return repo;
+    return (auth: auth, profiles: profiles);
   }
 }
