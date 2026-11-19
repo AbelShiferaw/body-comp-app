@@ -60,8 +60,9 @@ jobs:
       - name: Integration tests against local Supabase
         run: |
           source tool/local_env.sh
-          cd packages/app_auth
-          flutter test --run-skipped --tags integration
+          for pkg in app_auth app_scans; do
+            (cd "packages/$pkg" && flutter test --run-skipped --tags integration)
+          done
 
   build-android:
     name: Build Android (development)

@@ -16,6 +16,7 @@ packages/
   app_auth/             # Module: AuthRepository, Supabase implementation, providers, SignInPage
   app_payments/         # Module: PaymentsService + Entitlements (RevenueCat plugs in here)
   app_feedback/         # Module: FeedbackService
+  app_scans/            # Module: DEXA scans + regions, body measurements, photo sessions, consents (read under RLS)
 supabase/               # Local Supabase: config.toml, migrations/, tests/ (pgTAP)
 tool/                   # local_env.sh, test_all.sh, release/ (signing setup scripts)
 spikes/                 # Throwaway spike apps. Not part of the workspace; never import from them.
@@ -43,6 +44,8 @@ The repo is a Dart pub workspace: run `flutter pub get` once at the root.
    Token values are placeholders until the UI design is approved; change values in `app_tokens.dart`, not at call sites.
 9. **Imports:** Flutter 3.50 deprecates `package:flutter/material.dart`; import `package:material_ui/material_ui.dart`.
 10. **Database:** every table gets RLS enabled in the migration that creates it, per-operation policies on `auth.uid()`, and a pgTAP test in `supabase/tests/` proving one user cannot read or change another's rows. The service key is never in the app.
+    Every user-owned table references `auth.users (id) on delete cascade`. Child rows carry `user_id` and a composite foreign key `(parent_id, user_id)` so they cannot point at another user's parent.
+    Scans, regions and raw payloads are written only by `ingest_normalized_scan` (service role, from the ingest-scan edge function); the app can read them, set `photo_pair_status` and delete. Column-level grants restrict what the app may update.
 11. **Strings** shown to users go in `app/lib/l10n/arb/app_en.arb` (modules: a TODO until modules share l10n).
 
 ## Commands
@@ -57,7 +60,7 @@ supabase start                                    # local Supabase (needs Docker
 supabase test db                                  # pgTAP / RLS tests
 supabase db lint --level warning
 source tool/local_env.sh                          # exports SUPABASE_URL/KEY, writes app/config/local.json
-(cd packages/app_auth && flutter test --run-skipped --tags integration)   # Dart integration tests vs local Supabase
+(cd packages/app_auth && flutter test --run-skipped --tags integration)   # Dart integration tests vs local Supabase (also app_scans)
 
 cd app
 flutter run --flavor development -t lib/main_development.dart --dart-define-from-file=config/local.json
