@@ -277,6 +277,21 @@ void main() {
     expect(requests, isEmpty);
   });
 
+  test("a new user never gets the previous user's access token", () async {
+    respond = (_) => json({'results': <Object>[]});
+    final p = make();
+    await p.connect();
+    await p.listScans();
+    expect(requests.last.headers['Authorization'], 'Bearer access-0');
+
+    // User 2 signs in on the same phone and has their own stored token.
+    userId = 'user-2';
+    tokens.values['bodyspec/user-2'] = 'refresh-user-2';
+    await p.listScans();
+    expect(requests.last.headers['Authorization'], 'Bearer access-1');
+    expect(oauth.refreshCalls, 1);
+  });
+
   test('signed out: no token checks', () async {
     userId = null;
     await expectLater(make().hasToken(), throwsA(isA<UnauthorizedException>()));

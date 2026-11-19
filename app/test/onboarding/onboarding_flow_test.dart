@@ -165,6 +165,36 @@ void main() {
     );
   });
 
+  testWidgets('a failed import after consent does not ask again', (
+    tester,
+  ) async {
+    final dexa = FakeDexa()..connectError = const NetworkException('offline');
+    await start(tester, dexa: dexa);
+    await pickGoals(tester);
+    await tap(tester, 'source_dexa');
+    await tap(tester, 'consent_agree');
+    await tap(tester, 'consent_continue');
+    expect(find.text('Step 2 of 3'), findsOneWidget);
+    expect(find.byKey(const Key('onboarding_error')), findsOneWidget);
+
+    await tap(tester, 'source_dexa');
+    expect(find.text('Meet your body'), findsOneWidget);
+    expect(dexa.consents.versions, hasLength(1));
+  });
+
+  testWidgets('a failed finish on the reveal says so', (tester) async {
+    final dexa = FakeDexa()..consents.granted.add(ConsentKind.healthData);
+    final fakes = await start(tester, dexa: dexa);
+    await pickGoals(tester);
+    await tap(tester, 'source_dexa');
+    fakes.profiles.nextError = const NetworkException('offline');
+    await tap(tester, 'reveal_finish');
+    expect(find.text('Meet your body'), findsOneWidget);
+    expect(find.byKey(const Key('onboarding_error')), findsOneWidget);
+    await tap(tester, 'reveal_finish');
+    expect(find.byType(HomePage), findsOneWidget);
+  });
+
   testWidgets('outside the beta, DEXA is explained and photos still work', (
     tester,
   ) async {

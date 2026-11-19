@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:app_core/app_core.dart';
 import 'package:app_dexa_sync/app_dexa_sync.dart';
 import 'package:app_scans/app_scans.dart';
+import 'package:body_comp/app/app.dart';
 import 'package:body_comp/profile/domain/profile.dart';
 import 'package:body_comp/profile/presentation/profile_providers.dart';
 import 'package:flutter/foundation.dart';
@@ -142,8 +145,10 @@ class OnboardingController extends Notifier<OnboardingState> {
   void choosePhotos() =>
       state = state.copyWith(step: OnboardingStep.photos, error: () => null);
 
+  /// On failure the user goes back to the choice; consent, once given, is
+  /// not asked again (chooseDexa sees it).
   Future<void> _connect() async {
-    final from = state.step;
+    const from = OnboardingStep.source;
     state = state.copyWith(step: OnboardingStep.connecting);
     try {
       final result = await ref
@@ -176,19 +181,25 @@ class OnboardingController extends Notifier<OnboardingState> {
   Future<bool> _busy(Future<void> Function() body) async {
     if (state.busy) return false;
     state = state.copyWith(busy: true, error: () => null);
+    AppException? failure;
     try {
       await body();
-      state = state.copyWith(busy: false);
       return true;
     } on AppException catch (e) {
       if (e is! CancelledException) {
         _log.warning('Onboarding step failed (${e.code ?? e.kind})');
+        failure = e;
       }
-      state = state.copyWith(
-        busy: false,
-        error: () => e is CancelledException ? null : e,
-      );
       return false;
+    } on Object catch (e, s) {
+      // A bug, not a user-facing failure: report it, show a generic error.
+      unawaited(ref.read(crashReporterProvider).recordError(e, s));
+      failure = UnexpectedException('$e', cause: e, stackTrace: s);
+      return false;
+    } finally {
+      if (ref.mounted) {
+        state = state.copyWith(busy: false, error: () => failure);
+      }
     }
   }
 }

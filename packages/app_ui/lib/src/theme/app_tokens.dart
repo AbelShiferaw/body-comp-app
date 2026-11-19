@@ -18,6 +18,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     required this.fat,
     required this.lean,
     required this.border,
+    required this.accentSoft,
   });
 
   // Body-composition colors (fat, lean) are tokens too, so the 3D heatmap and
@@ -34,6 +35,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     fat: Color(0xFFE08A2E),
     lean: Color(0xFF2FA88A),
     border: Color(0xFFD9DEE3),
+    accentSoft: Color(0xFFE3EEFB),
   );
 
   static const dark = AppTokens(
@@ -48,6 +50,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     fat: Color(0xFFFFB36B),
     lean: Color(0xFF63D9B9),
     border: Color(0xFF2C3138),
+    accentSoft: Color(0xFF1B2A3A),
   );
 
   final Color background;
@@ -62,6 +65,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
   final Color lean;
   final Color border;
 
+  /// A quiet accent fill, for selected cards and chips.
+  final Color accentSoft;
+
   @override
   AppTokens copyWith({
     Color? background,
@@ -75,6 +81,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     Color? fat,
     Color? lean,
     Color? border,
+    Color? accentSoft,
   }) => AppTokens(
     background: background ?? this.background,
     surface: surface ?? this.surface,
@@ -87,6 +94,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     fat: fat ?? this.fat,
     lean: lean ?? this.lean,
     border: border ?? this.border,
+    accentSoft: accentSoft ?? this.accentSoft,
   );
 
   @override
@@ -105,6 +113,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
       fat: l(fat, other.fat),
       lean: l(lean, other.lean),
       border: l(border, other.border),
+      accentSoft: l(accentSoft, other.accentSoft),
     );
   }
 }

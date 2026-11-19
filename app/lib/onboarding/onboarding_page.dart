@@ -213,9 +213,7 @@ class _ChoiceCard extends StatelessWidget {
       button: true,
       enabled: enabled,
       child: Material(
-        color: selected
-            ? tokens.accent.withValues(alpha: 0.12)
-            : tokens.surfaceRaised,
+        color: selected ? tokens.accentSoft : tokens.surfaceRaised,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
           side: BorderSide(
@@ -290,7 +288,7 @@ class _Badge extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.sm,
-          vertical: 2,
+          vertical: AppSpacing.xs / 2,
         ),
         child: Text(
           label,
@@ -649,6 +647,20 @@ class _RevealStep extends ConsumerWidget {
           ),
         ),
         Expanded(child: body),
+        if (state.error case final e?)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              0,
+            ),
+            child: Text(
+              errorText(l10n, e),
+              key: const Key('onboarding_error'),
+              style: TextStyle(color: tokens.danger),
+            ),
+          ),
         Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: AppButton(

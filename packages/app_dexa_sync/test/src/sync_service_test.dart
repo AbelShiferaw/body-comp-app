@@ -81,6 +81,17 @@ void main() {
       expect(backend.ingested, hasLength(3));
     });
 
+    test('undated scans sort first, so the newest is still newest', () async {
+      provider.scans = [
+        ref('z', 20),
+        const RemoteScanRef(id: 'm'),
+        ref('a', 3),
+      ];
+      final r = await service.refresh();
+      expect(backend.ingested, ['m', 'a', 'z']);
+      expect(r.newestScanId, 'scan-z');
+    });
+
     test('a scan that needs review is counted, not the newest', () async {
       backend.reviewIds.add('c');
       final r = await service.refresh();
