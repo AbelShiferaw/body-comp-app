@@ -1,5 +1,7 @@
 import 'package:app_auth/app_auth.dart';
 import 'package:app_body/app_body.dart';
+import 'package:app_dexa_sync/app_dexa_sync.dart';
+import 'package:app_scans/app_scans.dart' show ConsentKind;
 import 'package:app_ui/app_ui.dart';
 import 'package:body_comp/home/home_page.dart';
 import 'package:body_comp/profile/domain/profile.dart';
@@ -7,6 +9,7 @@ import 'package:body_mapping/fixtures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../helpers/fake_sync.dart';
 import '../helpers/pump_app.dart';
 
 void main() {
@@ -149,6 +152,28 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(BodyView), findsOne);
     expect(find.byType(SnackBar), findsNothing);
+  });
+
+  testWidgets('a linked phone imports new scans on refresh', (tester) async {
+    final dexa = FakeDexa()
+      ..consents.granted.add(ConsentKind.healthData)
+      ..tokenOnPhone = true
+      ..connection = ProviderConnection(
+        id: 'conn-1',
+        provider: DexaProvider.bodyspec,
+        status: ConnectionStatus.active,
+        linkedAt: DateTime.utc(2026, 11),
+        externalSubject: 'bs-1',
+      );
+    await tester.pumpApp(user: user, scans: sampleTimeline, dexa: dexa);
+    await tester.tap(find.byKey(const Key('home_refresh')));
+    await tester.pumpAndSettle();
+    expect(dexa.scans.rows, hasLength(2));
+    expect(find.text('2 new scans'), findsOne);
+
+    await tester.tap(find.byKey(const Key('home_refresh')));
+    await tester.pumpAndSettle();
+    expect(find.text('No new scans'), findsOne);
   });
 
   testWidgets('fits a small phone without overflow', (tester) async {

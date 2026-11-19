@@ -4,11 +4,13 @@ import 'dart:developer' as developer;
 import 'package:app_auth/app_auth.dart';
 import 'package:app_body/app_body.dart';
 import 'package:app_core/app_core.dart';
+import 'package:app_dexa_sync/app_dexa_sync.dart';
 import 'package:app_scans/app_scans.dart';
 import 'package:body_comp/app/app.dart';
 import 'package:body_comp/body/scan_body_data_source.dart';
 import 'package:body_comp/profile/data/supabase_profile_repository.dart';
 import 'package:body_comp/profile/presentation/profile_providers.dart';
+import 'package:body_comp/sync/sync_wiring.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
@@ -62,6 +64,12 @@ Future<void> bootstrap(Flavor expected) async {
   );
   log.info('Supabase ready');
   final client = Supabase.instance.client;
+  final tokens = SecureTokenStore();
+  // Before anything reads a provider token (iOS keeps Keychain items after
+  // an uninstall).
+  await guard(tokens.clearAfterReinstall).catchError((Object e) {
+    log.warning('Provider token cleanup failed', e);
+  });
 
   runApp(
     ProviderScope(
@@ -81,6 +89,7 @@ Future<void> bootstrap(Flavor expected) async {
         profileRepositoryProvider.overrideWithValue(
           SupabaseProfileRepository(client),
         ),
+        ...dexaSyncOverrides(config: config, client: client, tokens: tokens),
         scanRepositoryProvider.overrideWithValue(
           SupabaseScanRepository(client),
         ),

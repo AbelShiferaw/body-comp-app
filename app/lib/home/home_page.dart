@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:app_body/app_body.dart';
 import 'package:app_core/app_core.dart';
+import 'package:app_dexa_sync/app_dexa_sync.dart';
 import 'package:app_scans/app_scans.dart';
 import 'package:app_ui/app_ui.dart';
 import 'package:body_comp/home/home_summary.dart';
@@ -33,23 +34,47 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   bool _refreshing = false;
 
+  /// Imports new scans from the linked DEXA provider when this phone can,
+  /// then reloads. Without a link it just reloads what is stored.
   Future<void> _refresh() async {
     setState(() => _refreshing = true);
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    void say(String text, {SnackBarAction? action}) => messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(text), action: action));
     try {
-      ref
-        ..invalidate(scansProvider)
-        ..invalidate(currentMeasurementsProvider);
+      final link = await ref.read(dexaSyncProvider.future);
+      if (link.canRefresh) {
+        // A run that changed scans reloads them app-wide (sync wiring).
+        final result = await ref.read(dexaSyncProvider.notifier).refresh();
+        say(
+          result.added > 0
+              ? l10n.homeNewScans(result.added)
+              : l10n.homeNoNewScans,
+        );
+      } else {
+        ref
+          ..invalidate(scansProvider)
+          ..invalidate(currentMeasurementsProvider);
+      }
       await ref.read(bodyScansProvider.future);
     } on AppException catch (e) {
       if (!mounted) return;
-      final l10n = context.l10n;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e is NetworkException ? l10n.errorNetwork : l10n.errorGeneric,
+      final signIn =
+          e.code == SyncErrorCodes.providerReauth ||
+          e.code == SyncErrorCodes.notLinkedOnThisPhone;
+      if (signIn) {
+        say(
+          l10n.homeSignInAgain,
+          action: SnackBarAction(
+            label: l10n.homeSignInAction,
+            onPressed: () => context.push(Routes.onboarding),
           ),
-        ),
-      );
+        );
+      } else {
+        say(e is NetworkException ? l10n.errorNetwork : l10n.errorGeneric);
+      }
     } finally {
       if (mounted) setState(() => _refreshing = false);
     }
@@ -57,6 +82,8 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Kept alive so Refresh knows at once whether this phone can sync.
+    ref.watch(dexaSyncProvider);
     final scans = ref.watch(bodyScansProvider);
     final units =
         ref.watch(profileProvider.select((p) => p.value?.units)) ??
@@ -76,7 +103,8 @@ class _HomePageState extends ConsumerState<HomePage> {
           children: [
             _Header(
               summary: summary,
-              refreshing: _refreshing,
+              refreshing:
+                  _refreshing || ref.watch(syncRunProvider) is SyncRunning,
               onRefresh: () => unawaited(_refresh()),
             ),
             if (summary != null)

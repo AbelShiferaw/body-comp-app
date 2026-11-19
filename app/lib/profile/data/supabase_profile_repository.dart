@@ -12,7 +12,8 @@ class SupabaseProfileRepository implements ProfileRepository {
   final SupabaseClient _client;
   final AppLogger _log;
 
-  static const _columns = 'sex, birth_year, height_cm, units';
+  static const _columns =
+      'sex, birth_year, height_cm, units, goals, body_source, onboarded_at';
 
   @override
   Future<Profile> fetch(String userId) => guard(() async {
@@ -47,6 +48,19 @@ Profile profileFromRow(Map<String, dynamic> row) => Profile(
   birthYear: row['birth_year'] as int?,
   heightCm: (row['height_cm'] as num?)?.toDouble(),
   units: row['units'] == 'imperial' ? Units.imperial : Units.metric,
+  goals: {
+    for (final String key in (row['goals'] as List?)?.cast<String>() ?? [])
+      ?Goal.fromKey(key),
+  },
+  bodySource: switch (row['body_source']) {
+    'dexa' => BodySource.dexa,
+    'photos' => BodySource.photos,
+    _ => null,
+  },
+  onboardedAt: switch (row['onboarded_at']) {
+    final String s => DateTime.parse(s),
+    _ => null,
+  },
 );
 
 Map<String, Object?> profileToRow(Profile profile) => {
@@ -54,6 +68,9 @@ Map<String, Object?> profileToRow(Profile profile) => {
   'birth_year': profile.birthYear,
   'height_cm': profile.heightCm,
   'units': profile.units.name,
+  'goals': [for (final g in profile.goals) g.key],
+  'body_source': profile.bodySource?.name,
+  'onboarded_at': profile.onboardedAt?.toUtc().toIso8601String(),
 };
 
 /// Maps PostgREST and network errors to the app's error taxonomy.

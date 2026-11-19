@@ -45,8 +45,8 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
-      - name: Start local Supabase (database, auth, REST only)
-        run: supabase start -x studio,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,realtime,storage-api,postgres-meta
+      - name: Start local Supabase (database, auth, REST, edge functions)
+        run: supabase start -x studio,imgproxy,mailpit,logflare,vector,supavisor,realtime,storage-api,postgres-meta
       - name: Lint database schema
         run: supabase db lint --level warning --fail-on warning
       - name: Database tests (pgTAP, RLS)
@@ -60,10 +60,27 @@ jobs:
       - name: Integration tests against local Supabase
         run: |
           source tool/local_env.sh
-          for pkg in app_auth app_scans; do
+          for pkg in app_auth app_scans app_dexa_sync; do
             (cd "packages/$pkg" && flutter test --run-skipped --tags integration)
           done
           (cd app && flutter test --run-skipped --tags integration)
+
+  edge-functions:
+    name: Edge functions (Deno fmt, lint, check, tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: supabase/functions/ingest-scan
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.5.x
+      - run: deno fmt --check .
+      - run: deno lint
+      - run: deno check index.ts
+      - run: deno test --allow-read
 
   build-android:
     name: Build Android (development)
