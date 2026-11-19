@@ -26,8 +26,9 @@ abstract interface class ScanProvider {
   /// Revokes the token where the provider allows it and deletes it here.
   Future<void> disconnect();
 
-  /// Deletes this phone's token without touching the provider, for sign-out.
-  Future<void> forget();
+  /// Deletes [userId]'s token on this phone without touching the provider,
+  /// for sign-out (the user is already signed out, so it is passed in).
+  Future<void> forget(String userId);
 }
 
 /// Our side of syncing: connection and run bookkeeping under RLS, and the

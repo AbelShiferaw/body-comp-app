@@ -142,9 +142,8 @@ class BodySpecScanProvider implements ScanProvider {
   });
 
   @override
-  Future<void> forget() => guard(() async {
-    final id = _currentUserId();
-    if (id != null) await _tokens.delete(provider.key, id);
+  Future<void> forget(String userId) => guard(() async {
+    await _tokens.delete(provider.key, userId);
     _clearAccess();
   });
 

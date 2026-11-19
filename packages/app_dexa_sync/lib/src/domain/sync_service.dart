@@ -27,6 +27,9 @@ class SyncService {
 
   DexaProvider get provider => _provider.provider;
 
+  /// Whether this phone holds the provider token for the current user.
+  Future<bool> hasToken() => _provider.hasToken();
+
   /// Signs in to the provider and records the link. Throws a
   /// `ValidationException` ([SyncErrorCodes.notInBeta]) outside the beta.
   ///
@@ -53,15 +56,11 @@ class SyncService {
   /// finished; the next Refresh picks up the rest.
   Future<SyncResult> refresh() async {
     final connection = await _backend.connection(provider);
-    if (connection == null || connection.status == ConnectionStatus.revoked) {
+    if (connection == null ||
+        connection.status == ConnectionStatus.revoked ||
+        !await _provider.hasToken()) {
       throw const UnauthorizedException(
-        'No provider link',
-        code: SyncErrorCodes.notLinkedOnThisPhone,
-      );
-    }
-    if (!await _provider.hasToken()) {
-      throw const UnauthorizedException(
-        'Provider token not on this phone',
+        'Not linked on this phone',
         code: SyncErrorCodes.notLinkedOnThisPhone,
       );
     }

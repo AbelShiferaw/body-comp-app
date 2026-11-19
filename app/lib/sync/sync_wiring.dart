@@ -35,13 +35,7 @@ List<Override> dexaSyncOverrides({
       clientId: bodySpec.clientId,
     );
   }),
-  syncTokenStoreProvider.overrideWithValue(tokens),
 ];
-
-/// The phone's provider token store, so sign-out can delete the token.
-final syncTokenStoreProvider = Provider<TokenStore>(
-  (ref) => throw UnimplementedError('Override syncTokenStoreProvider'),
-);
 
 /// App-level effects of syncing, kept alive by `App`:
 /// - a run that changed scans reloads them, so home redraws the body;
@@ -57,13 +51,11 @@ final syncEffectsProvider = Provider<void>((ref) {
     ..listen(authUserProvider, (previous, next) async {
       final before = previous?.value?.id;
       if (before != null && next.value?.id != before) {
-        final tokens = ref.read(syncTokenStoreProvider);
-        for (final p in DexaProvider.values) {
-          await guard(() => tokens.delete(p.key, before))
-              .catchError((Object e) {
-                AppLogger('dexa_sync').warning('Token cleanup failed', e);
-              });
-        }
+        await ref.read(scanProviderProvider)?.forget(before).catchError((
+          Object e,
+        ) {
+          AppLogger('dexa_sync').warning('Token cleanup failed', e);
+        });
       }
     });
 });

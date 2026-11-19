@@ -8,7 +8,7 @@
 
 export const BODYSPEC_NORMALIZER = "bodyspec-n1";
 
-export const REGION_KEYS = [
+const REGION_KEYS = [
   "left_arm",
   "right_arm",
   "left_leg",
@@ -200,8 +200,10 @@ export function normalizeBodySpec(
     const headFat = totalFatG - partsFat;
     const offBy = (parts: number, total: number) =>
       parts > total * 1.02 || parts < total * 0.75;
-    if (headLean < 0 || headFat < 0) reasons.push("regions_do_not_sum");
-    else if (offBy(partsLean, totalLeanG) || offBy(partsFat, totalFatG)) {
+    if (
+      headLean < 0 || headFat < 0 ||
+      offBy(partsLean, totalLeanG) || offBy(partsFat, totalFatG)
+    ) {
       reasons.push("regions_do_not_sum");
     } else {
       regions.push({

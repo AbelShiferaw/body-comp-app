@@ -85,7 +85,7 @@ class OnboardingController extends Notifier<OnboardingState> {
 
   @override
   OnboardingState build() {
-    final profile = ref.read(profileProvider).value ?? const Profile();
+    final profile = _profile;
     return OnboardingState(
       step: profile.isOnboarded ? OnboardingStep.source : OnboardingStep.goals,
       returning: profile.isOnboarded,
@@ -145,20 +145,17 @@ class OnboardingController extends Notifier<OnboardingState> {
   void choosePhotos() =>
       state = state.copyWith(step: OnboardingStep.photos, error: () => null);
 
-  /// On failure the user goes back to the choice; consent, once given, is
-  /// not asked again (chooseDexa sees it).
+  /// On failure or cancel the user goes back to the choice; consent, once
+  /// given, is not asked again (chooseDexa sees it).
   Future<void> _connect() async {
-    const from = OnboardingStep.source;
     state = state.copyWith(step: OnboardingStep.connecting);
     try {
       final result = await ref
           .read(dexaSyncProvider.notifier)
           .connectAndImport();
       state = state.copyWith(step: OnboardingStep.reveal, result: result);
-    } on CancelledException {
-      state = state.copyWith(step: from);
     } on AppException {
-      state = state.copyWith(step: from);
+      state = state.copyWith(step: OnboardingStep.source);
       rethrow;
     }
   }

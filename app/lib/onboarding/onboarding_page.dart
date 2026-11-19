@@ -126,7 +126,7 @@ class _StepScaffold extends StatelessWidget {
   final String? subtitle;
   final List<Widget> children;
   final Widget? action;
-  final String? error;
+  final AppException? error;
 
   @override
   Widget build(BuildContext context) {
@@ -166,11 +166,7 @@ class _StepScaffold extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (error case final e?) ...[
-                  Text(
-                    e,
-                    key: const Key('onboarding_error'),
-                    style: TextStyle(color: tokens.danger),
-                  ),
+                  _ErrorText(e),
                   const SizedBox(height: AppSpacing.sm),
                 ],
                 ?action,
@@ -332,7 +328,7 @@ class _GoalsStep extends ConsumerWidget {
     return _StepScaffold(
       title: l10n.goalsTitle,
       subtitle: l10n.goalsSubtitle,
-      error: state.error == null ? null : errorText(l10n, state.error!),
+      error: state.error,
       action: AppButton(
         key: const Key('goals_continue'),
         label: l10n.onboardingContinue,
@@ -369,18 +365,18 @@ class _SourceStep extends ConsumerWidget {
     final link = ref.watch(dexaSyncProvider);
     final value = link.value;
     final dexaOpen = value != null && value.configured && value.allowed;
-    final note = switch (value) {
-      _ when link.isLoading => null,
-      null => null,
-      DexaLink(configured: false) => l10n.sourceDexaUnavailable,
-      DexaLink(allowed: false) => l10n.sourceDexaInviteOnly,
-      _ => null,
-    };
+    final note = value == null || link.isLoading
+        ? null
+        : !value.configured
+        ? l10n.sourceDexaUnavailable
+        : !value.allowed
+        ? l10n.sourceDexaInviteOnly
+        : null;
 
     return _StepScaffold(
       title: l10n.sourceTitle,
       subtitle: l10n.sourceSubtitle,
-      error: state.error == null ? null : errorText(l10n, state.error!),
+      error: state.error,
       children: [
         _ChoiceCard(
           key: const Key('source_dexa'),
@@ -454,7 +450,7 @@ class _ConsentStepState extends ConsumerState<_ConsentStep> {
     return _StepScaffold(
       title: l10n.consentTitle,
       subtitle: l10n.consentIntro,
-      error: state.error == null ? null : errorText(l10n, state.error!),
+      error: state.error,
       action: AppButton(
         key: const Key('consent_continue'),
         label: l10n.consentContinue,
@@ -577,30 +573,20 @@ class _RevealStep extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: Row(
+              spacing: AppSpacing.sm,
               children: [
-                Expanded(
-                  child: MetricTile(
-                    label: l10n.metricBodyFat,
-                    value: fmt(latest.bodyFatPct, 1),
-                    unit: l10n.unitPercent,
+                for (final (label, value, unit) in [
+                  (l10n.metricBodyFat, latest.bodyFatPct, l10n.unitPercent),
+                  (l10n.metricLeanMass, _kg(latest.leanG), l10n.unitKg),
+                  (l10n.metricFatMass, _kg(latest.fatG), l10n.unitKg),
+                ])
+                  Expanded(
+                    child: MetricTile(
+                      label: label,
+                      value: fmt(value, 1),
+                      unit: unit,
+                    ),
                   ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: MetricTile(
-                    label: l10n.metricLeanMass,
-                    value: fmt(_kg(latest.leanG), 1),
-                    unit: l10n.unitKg,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: MetricTile(
-                    label: l10n.metricFatMass,
-                    value: fmt(_kg(latest.fatG), 1),
-                    unit: l10n.unitKg,
-                  ),
-                ),
               ],
             ),
           ),
@@ -655,11 +641,7 @@ class _RevealStep extends ConsumerWidget {
               AppSpacing.lg,
               0,
             ),
-            child: Text(
-              errorText(l10n, e),
-              key: const Key('onboarding_error'),
-              style: TextStyle(color: tokens.danger),
-            ),
+            child: _ErrorText(e),
           ),
         Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -689,7 +671,7 @@ class _PhotosStep extends StatelessWidget {
     final tokens = context.tokens;
     return _StepScaffold(
       title: l10n.photosTitle,
-      error: state.error == null ? null : errorText(l10n, state.error!),
+      error: state.error,
       action: AppButton(
         key: const Key('photos_finish'),
         label: l10n.photosFinish,
@@ -708,6 +690,20 @@ class _PhotosStep extends StatelessWidget {
 }
 
 /// One plain message per failure (LLD "Errors"); never `error.toString()`.
+/// A failure in the danger color, keyed for tests.
+class _ErrorText extends StatelessWidget {
+  const new(this.error);
+
+  final AppException error;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    errorText(context.l10n, error),
+    key: const Key('onboarding_error'),
+    style: TextStyle(color: context.tokens.danger),
+  );
+}
+
 String errorText(AppLocalizations l10n, AppException error) =>
     switch (error.code) {
       SyncErrorCodes.notInBeta => l10n.syncErrorNotInBeta,
