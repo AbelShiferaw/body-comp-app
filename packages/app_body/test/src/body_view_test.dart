@@ -61,7 +61,8 @@ void main() {
     expect(renderer.shapeUploads, greaterThan(0));
     expect(renderer.t, 1);
     expect(renderer.colors, isNull);
-    expect(renderer.style, BodyStyle.studio);
+    expect(renderer.style, BodyStyle.hologram);
+    expect(find.byKey(const Key('body_pad')), findsOneWidget);
     expect(find.text('Jul 2, 2026'), findsOneWidget);
     expect(find.text('Nov 7, 2026'), findsOneWidget);
   });
@@ -148,6 +149,8 @@ void main() {
     await pump(tester, theme: AppTheme.dark);
     expect(renderer.style, BodyStyle.midnight);
     expect(renderer.brightness, Brightness.dark);
+    // The scanner pad belongs to the hologram look only.
+    expect(find.byKey(const Key('body_pad')), findsNothing);
   });
 
   testWidgets('style setting saves the choice', (tester) async {

@@ -25,7 +25,7 @@ class FlutterSceneBodyRenderer implements BodyRenderer {
   BodyGeometry? _b;
   Float32List? _rgba;
   double _t = 1;
-  BodyStyle _style = BodyStyle.studio;
+  BodyStyle _style = BodyStyle.hologram;
   Brightness _brightness = Brightness.light;
   CameraPose _pose = (azimuth: 0, zoom: 1);
   double _aspect = 0;
@@ -174,7 +174,7 @@ class FlutterSceneBodyRenderer implements BodyRenderer {
         ..roughnessFactor = look.roughness
         ..clearcoat = look.clearcoat
         ..clearcoatRoughness = 0.15
-        ..emissiveFactor = vm.Vector4.zero();
+        ..emissiveFactor = look.emissive ?? vm.Vector4.zero();
     }
     highlight(_highlighted);
   }
@@ -185,7 +185,8 @@ class FlutterSceneBodyRenderer implements BodyRenderer {
   @override
   void highlight(BodyPart? part) {
     _highlighted = part;
-    final color = _style == BodyStyle.studio && _brightness == Brightness.light
+    final light = _brightness == Brightness.light;
+    final color = _style != BodyStyle.midnight && light
         ? vm.Vector4(0.15, 0.45, 1, 1)
         : vm.Vector4(1, 1, 1, 1);
     for (final e in _pieces.entries) {
@@ -265,8 +266,7 @@ class _Piece {
   Node? node;
 }
 
-/// Light and material for a style in light or dark mode. Values are
-/// placeholders until the UI design is approved (like the app tokens).
+/// Light and material for a style in light or dark mode.
 class _Look {
   const new({
     required this.baseColor,
@@ -276,6 +276,7 @@ class _Look {
     required this.lightColor,
     required this.lightIntensity,
     required this.environment,
+    this.emissive,
   });
 
   factory of(BodyStyle style, Brightness b, {required bool heat}) {
@@ -283,6 +284,20 @@ class _Look {
     // Heatmap colors come in as vertex colors; the material stays white.
     final white = vm.Vector4(1, 1, 1, 1);
     switch (style) {
+      // Dark: a glowing Ice avatar (emissive tint plus a cool, glossy
+      // light). Light: porcelain, like the studio body.
+      case BodyStyle.hologram when dark:
+        return _Look(
+          baseColor: heat ? white : _lin(0.10, 0.22, 0.34),
+          roughness: heat ? 0.45 : 0.3,
+          clearcoat: heat ? 0 : 1,
+          lightDirection: vm.Vector3(-0.35, -0.5, 0.8),
+          lightColor: vm.Vector3(0.62, 0.86, 1),
+          lightIntensity: 2.6,
+          environment: 0.6,
+          emissive: heat ? null : _lin(0.05, 0.22, 0.38),
+        );
+      case BodyStyle.hologram:
       case BodyStyle.studio:
         return _Look(
           baseColor: heat
@@ -315,6 +330,7 @@ class _Look {
   final vm.Vector3 lightColor;
   final double lightIntensity;
   final double environment;
+  final vm.Vector4? emissive;
 
   /// sRGB authoring color to linear.
   static vm.Vector4 _lin(double r, double g, double b) {

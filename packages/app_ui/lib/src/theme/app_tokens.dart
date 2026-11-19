@@ -1,7 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 
-/// Design tokens. PLACEHOLDER values until the UI design review lands; swap the
-/// values in [AppTokens.light] and [AppTokens.dark], not the call sites.
+/// Design tokens: direction A "Graphite + Ice" from the launch design (two data
+/// colors only: Ice = lean and primary, Ember = fat). Change the values in
+/// [AppTokens.light] and [AppTokens.dark], not the call sites.
 ///
 /// Read them in widgets with `context.tokens`.
 @immutable
@@ -21,33 +22,35 @@ class AppTokens extends ThemeExtension<AppTokens> {
   });
 
   // Body-composition colors (fat, lean) are tokens too, so the 3D heatmap and
-  // charts stay consistent with the rest of the UI in both modes.
+  // charts stay consistent with the rest of the UI in both modes. A change is
+  // colored by what it means: less fat or more lean is [lean], the opposite
+  // is [fat].
   static const light = AppTokens(
-    background: Color(0xFFF6F7F9),
+    background: Color(0xFFF4F5F7),
     surface: Color(0xFFFFFFFF),
-    surfaceRaised: Color(0xFFEEF1F4),
-    textPrimary: Color(0xFF14171A),
-    textSecondary: Color(0xFF5B6570),
-    accent: Color(0xFF2F7FD8),
+    surfaceRaised: Color(0xFFEBEDF0),
+    textPrimary: Color(0xFF111317),
+    textSecondary: Color(0xFF555B66),
+    accent: Color(0xFF1F6FC5),
     onAccent: Color(0xFFFFFFFF),
     danger: Color(0xFFC6383B),
-    fat: Color(0xFFE08A2E),
-    lean: Color(0xFF2FA88A),
-    border: Color(0xFFD9DEE3),
+    fat: Color(0xFFB34E0C),
+    lean: Color(0xFF1F6FC5),
+    border: Color(0xFFD9DCE1),
   );
 
   static const dark = AppTokens(
-    background: Color(0xFF0E1013),
-    surface: Color(0xFF171A1F),
-    surfaceRaised: Color(0xFF20242A),
-    textPrimary: Color(0xFFF1F3F5),
-    textSecondary: Color(0xFF9AA4AE),
-    accent: Color(0xFF8CC8FF),
-    onAccent: Color(0xFF06223D),
+    background: Color(0xFF0B0C0E),
+    surface: Color(0xFF15171B),
+    surfaceRaised: Color(0xFF1E2126),
+    textPrimary: Color(0xFFF2F3F5),
+    textSecondary: Color(0xFFA3A9B4),
+    accent: Color(0xFF7CC4FF),
+    onAccent: Color(0xFF0B0C0E),
     danger: Color(0xFFFF7A7D),
-    fat: Color(0xFFFFB36B),
-    lean: Color(0xFF63D9B9),
-    border: Color(0xFF2C3138),
+    fat: Color(0xFFFF8A3D),
+    lean: Color(0xFF7CC4FF),
+    border: Color(0xFF2A2E35),
   );
 
   final Color background;

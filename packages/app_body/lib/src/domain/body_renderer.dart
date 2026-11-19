@@ -7,7 +7,10 @@ import 'package:material_ui/material_ui.dart' show BuildContext, Widget;
 /// The look of the body. Studio is the default; Midnight is a Settings
 /// option. Fat and Change are view modes on either style, not styles. Both
 /// follow the phone's light or dark mode.
-enum BodyStyle { studio, midnight }
+/// How the body looks. [hologram] is the launch look: a glowing game-style
+/// avatar on a scanner pad in dark mode, a porcelain body on an Ice ring in
+/// light mode.
+enum BodyStyle { hologram, studio, midnight }
 
 /// Where the camera looks from: `azimuth` in radians around the body (0 is
 /// facing it), `zoom` 1 frames the whole body, 2 is twice as close.
