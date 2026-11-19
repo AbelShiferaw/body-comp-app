@@ -16,6 +16,8 @@ class AppConfig {
     required this.supabaseUrl,
     required this.supabasePublishableKey,
     this.logLevel = 'INFO',
+    this.googleIosClientId,
+    this.googleWebClientId,
   });
 
   /// Builds the config from `--dart-define` values and validates it.
@@ -29,6 +31,8 @@ class AppConfig {
       'SUPABASE_PUBLISHABLE_KEY',
     ),
     'LOG_LEVEL': String.fromEnvironment('LOG_LEVEL'),
+    'GOOGLE_IOS_CLIENT_ID': String.fromEnvironment('GOOGLE_IOS_CLIENT_ID'),
+    'GOOGLE_WEB_CLIENT_ID': String.fromEnvironment('GOOGLE_WEB_CLIENT_ID'),
   });
 
   /// Builds the config from raw values. Used by [AppConfig.fromEnvironment]
@@ -56,7 +60,14 @@ class AppConfig {
       supabaseUrl: url.toString(),
       supabasePublishableKey: values['SUPABASE_PUBLISHABLE_KEY']!,
       logLevel: logLevel.isEmpty ? 'INFO' : logLevel.toUpperCase(),
+      googleIosClientId: _optional(values['GOOGLE_IOS_CLIENT_ID']),
+      googleWebClientId: _optional(values['GOOGLE_WEB_CLIENT_ID']),
     );
+  }
+
+  static String? _optional(String? value) {
+    final trimmed = value?.trim() ?? '';
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   final Flavor flavor;
@@ -65,6 +76,13 @@ class AppConfig {
 
   /// A `package:logging` level name, such as `FINE`, `INFO` or `WARNING`.
   final String logLevel;
+
+  /// Google OAuth client ids for Sign in with Google. Publishable by design.
+  /// The iOS client signs the user in on iPhone; the web client id is the
+  /// "server client id" whose audience Supabase Auth verifies, and Android
+  /// needs it too. Google sign-in is hidden while [googleWebClientId] is unset.
+  final String? googleIosClientId;
+  final String? googleWebClientId;
 
   @override
   String toString() =>

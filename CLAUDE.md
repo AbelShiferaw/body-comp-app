@@ -58,6 +58,7 @@ supabase test db                                  # pgTAP / RLS tests
 supabase db lint --level warning
 source tool/local_env.sh                          # exports SUPABASE_URL/KEY, writes app/config/local.json
 (cd packages/app_auth && flutter test --run-skipped --tags integration)   # Dart integration tests vs local Supabase
+(cd app && flutter test --run-skipped --tags integration)                 # same, for the app's repositories (profile)
 
 cd app
 flutter run --flavor development -t lib/main_development.dart --dart-define-from-file=config/local.json

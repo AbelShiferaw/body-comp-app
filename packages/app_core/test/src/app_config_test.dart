@@ -16,6 +16,18 @@ void main() {
       expect(config.flavor, Flavor.development);
       expect(config.supabaseUrl, 'http://127.0.0.1:54321');
       expect(config.logLevel, 'INFO');
+      expect(config.googleWebClientId, isNull);
+      expect(config.googleIosClientId, isNull);
+    });
+
+    test('reads optional Google client ids and treats blanks as unset', () {
+      final config = AppConfig.fromMap({
+        ...valid,
+        'GOOGLE_WEB_CLIENT_ID': 'web.apps.googleusercontent.com',
+        'GOOGLE_IOS_CLIENT_ID': '  ',
+      });
+      expect(config.googleWebClientId, 'web.apps.googleusercontent.com');
+      expect(config.googleIosClientId, isNull);
     });
 
     test('lists every missing key', () {

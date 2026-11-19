@@ -1,0 +1,5 @@
+tags:
+  # Needs a running local Supabase (`supabase start`). Skipped by default;
+  # run with `flutter test --tags integration` (see CLAUDE.md).
+  integration:
+    skip: "Needs local Supabase. Run: flutter test --run-skipped --tags integration"

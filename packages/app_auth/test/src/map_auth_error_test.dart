@@ -32,6 +32,44 @@ void main() {
       );
     });
 
+    test('maps invalid credentials to UnauthorizedException with its code', () {
+      expect(
+        mapAuthError(
+          const AuthException(
+            'Invalid login credentials',
+            statusCode: '400',
+            code: 'invalid_credentials',
+          ),
+          StackTrace.empty,
+        ),
+        isA<UnauthorizedException>().having(
+          (e) => e.code,
+          'code',
+          'invalid_credentials',
+        ),
+      );
+    });
+
+    test('keeps the auth error code on ValidationException', () {
+      expect(
+        mapAuthError(
+          const AuthException('weak', statusCode: '422', code: 'weak_password'),
+          StackTrace.empty,
+        )?.code,
+        'weak_password',
+      );
+    });
+
+    test('maps an RLS denial to UnauthorizedException', () {
+      expect(
+        mapAuthError(
+          const PostgrestException(message: 'denied', code: '42501'),
+          StackTrace.empty,
+        ),
+        isA<UnauthorizedException>(),
+      );
+    });
+
     test('leaves unknown errors to guard', () {
       expect(mapAuthError(StateError('x'), StackTrace.empty), isNull);
     });

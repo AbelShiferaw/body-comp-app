@@ -1,16 +1,16 @@
-import 'package:app_auth/app_auth.dart';
 import 'package:app_ui/app_ui.dart';
 import 'package:body_comp/l10n/l10n.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:body_comp/router/router.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Placeholder home. The 3D body and real metrics replace the placeholder
 /// once the body feature lands.
-class HomePage extends ConsumerWidget {
+class HomePage extends StatelessWidget {
   const new({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
     final tokens = context.tokens;
     return Scaffold(
@@ -18,9 +18,10 @@ class HomePage extends ConsumerWidget {
         title: Text(l10n.homeTitle),
         actions: [
           IconButton(
-            tooltip: l10n.signOut,
-            icon: const Icon(Icons.logout),
-            onPressed: () => ref.read(authRepositoryProvider).signOut(),
+            key: const Key('home_settings'),
+            tooltip: l10n.settingsTitle,
+            icon: const Icon(Icons.person_outline),
+            onPressed: () => context.push(Routes.settings),
           ),
         ],
       ),
