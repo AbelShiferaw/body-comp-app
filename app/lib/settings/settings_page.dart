@@ -1,4 +1,5 @@
 import 'package:app_auth/app_auth.dart';
+import 'package:app_body/app_body.dart';
 import 'package:app_core/app_core.dart';
 import 'package:app_ui/app_ui.dart';
 import 'package:body_comp/l10n/l10n.dart';
@@ -97,6 +98,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               ),
               _ => const LoadingView(),
             },
+            const SizedBox(height: AppSpacing.lg),
+            const BodyStyleSetting(),
             const SizedBox(height: AppSpacing.xl),
             Text(l10n.settingsAccountSection, style: textTheme.titleMedium),
             if (email != null) ...[

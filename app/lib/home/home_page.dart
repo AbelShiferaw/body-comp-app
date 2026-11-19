@@ -1,18 +1,21 @@
+import 'package:app_body/app_body.dart';
 import 'package:app_ui/app_ui.dart';
 import 'package:body_comp/l10n/l10n.dart';
 import 'package:body_comp/router/router.dart';
+import 'package:body_mapping/body_mapping.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Placeholder home. The 3D body and real metrics replace the placeholder
-/// once the body feature lands.
-class HomePage extends StatelessWidget {
+/// Home: the 3D body from the user's scans, with the headline numbers of
+/// the latest scan below it.
+class HomePage extends ConsumerWidget {
   const new({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final tokens = context.tokens;
+    final latest = ref.watch(bodyScansProvider).value?.lastOrNull;
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.homeTitle),
@@ -25,45 +28,55 @@ class HomePage extends StatelessWidget {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        children: [
-          AspectRatio(
-            aspectRatio: 3 / 4,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: tokens.surfaceRaised,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-              ),
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Text(
-                    l10n.homeBodyPlaceholder,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: tokens.textSecondary),
-                  ),
-                ),
-              ),
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Expanded(child: BodyView(emptyMessage: l10n.homeBodyPlaceholder)),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              child: _Metrics(scan: latest),
             ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: AppSpacing.sm,
-            crossAxisSpacing: AppSpacing.sm,
-            childAspectRatio: 1.6,
-            children: [
-              MetricTile(label: l10n.metricBodyFat, value: '–', unit: '%'),
-              MetricTile(label: l10n.metricLeanMass, value: '–', unit: 'kg'),
-              MetricTile(label: l10n.metricFatMass, value: '–', unit: 'kg'),
-              MetricTile(label: l10n.metricVisceralFat, value: '–', unit: 'g'),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+}
+
+class _Metrics extends StatelessWidget {
+  const new({required this.scan});
+
+  final BodyScan? scan;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final s = scan;
+    String v(double? x, int digits) =>
+        x == null ? '–' : x.toStringAsFixed(digits);
+    return Row(
+      children:
+          [
+              for (final tile in [
+                MetricTile(
+                  label: l10n.metricBodyFat,
+                  value: v(s?.bodyFatPct, 1),
+                  unit: '%',
+                ),
+                MetricTile(
+                  label: l10n.metricLeanMass,
+                  value: v(s?.totalLeanKg, 1),
+                  unit: 'kg',
+                ),
+                MetricTile(
+                  label: l10n.metricVisceralFat,
+                  value: v(s?.visceralFatG, 0),
+                  unit: 'g',
+                ),
+              ]) ...[Expanded(child: tile)],
+            ].expand((w) => [w, const SizedBox(width: AppSpacing.sm)]).toList()
+            ..removeLast(),
     );
   }
 }

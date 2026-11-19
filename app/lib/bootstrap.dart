@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:app_auth/app_auth.dart';
+import 'package:app_body/app_body.dart';
 import 'package:app_core/app_core.dart';
 import 'package:app_scans/app_scans.dart';
 import 'package:body_comp/app/app.dart';
@@ -88,6 +89,9 @@ Future<void> bootstrap(Flavor expected) async {
         consentsRepositoryProvider.overrideWithValue(
           SupabaseConsentsRepository(client),
         ),
+        // Made-up scans until the scan data model lands; then this becomes
+        // the adapter from scan rows to BodyScan.
+        bodyDataSourceProvider.overrideWithValue(FixtureBodyDataSource()),
       ],
       observers: [_ProviderErrorLogger(crashReporter)],
       child: const App(),

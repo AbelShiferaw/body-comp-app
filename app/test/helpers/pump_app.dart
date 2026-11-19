@@ -1,4 +1,5 @@
 import 'package:app_auth/app_auth.dart';
+import 'package:app_body/app_body.dart';
 import 'package:body_comp/app/app.dart';
 import 'package:body_comp/profile/domain/profile.dart';
 import 'package:body_comp/profile/presentation/profile_providers.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'fake_auth_repository.dart';
+import 'fake_body_renderer.dart';
 import 'fake_profile_repository.dart';
 
 const completeProfile = Profile(sex: Sex.male, birthYear: 1994, heightCm: 180);
@@ -36,6 +38,11 @@ extension PumpApp on WidgetTester {
         overrides: [
           authRepositoryProvider.overrideWithValue(auth),
           profileRepositoryProvider.overrideWithValue(profiles),
+          bodyDataSourceProvider.overrideWithValue(
+            FixtureBodyDataSource(scans: const []),
+          ),
+          bodyStyleStoreProvider.overrideWithValue(_NoStyleStore()),
+          bodyRendererFactoryProvider.overrideWithValue(FakeBodyRenderer.new),
         ],
         child: const App(),
       ),
@@ -43,4 +50,12 @@ extension PumpApp on WidgetTester {
     await pumpAndSettle();
     return (auth: auth, profiles: profiles);
   }
+}
+
+class _NoStyleStore implements BodyStyleStore {
+  @override
+  Future<BodyStyle?> read() async => null;
+
+  @override
+  Future<void> write(BodyStyle style) async {}
 }

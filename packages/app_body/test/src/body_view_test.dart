@@ -1,0 +1,168 @@
+import 'package:app_body/app_body.dart';
+import 'package:app_ui/app_ui.dart';
+import 'package:body_mapping/body_mapping.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
+
+import 'fake_body_renderer.dart';
+
+void main() {
+  late FakeBodyRenderer renderer;
+  late MemoryBodyStyleStore store;
+
+  setUp(() {
+    renderer = FakeBodyRenderer();
+    store = MemoryBodyStyleStore();
+  });
+
+  Future<ProviderContainer> pump(
+    WidgetTester tester, {
+    List<BodyScan>? scans,
+    ThemeData? theme,
+  }) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          bodyDataSourceProvider.overrideWithValue(
+            FixtureBodyDataSource(scans: scans),
+          ),
+          bodyRendererFactoryProvider.overrideWithValue(() => renderer),
+          bodyStyleStoreProvider.overrideWithValue(store),
+        ],
+        child: MaterialApp(
+          theme: theme ?? AppTheme.light,
+          home: const Scaffold(body: BodyView()),
+        ),
+      ),
+    );
+    // Loading the 2 MB asset is real IO.
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    for (
+      var i = 0;
+      i < 20 && find.byKey(const Key('fake_body')).evaluate().isEmpty;
+      i++
+    ) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump();
+    }
+    await tester.pumpAndSettle();
+    return ProviderScope.containerOf(tester.element(find.byType(BodyView)));
+  }
+
+  testWidgets('draws the latest scan pair, plain body by default', (
+    tester,
+  ) async {
+    await pump(tester);
+    expect(find.byKey(const Key('fake_body')), findsOneWidget);
+    expect(renderer.loaded, isTrue);
+    expect(renderer.shapeUploads, greaterThan(0));
+    expect(renderer.t, 1);
+    expect(renderer.colors, isNull);
+    expect(renderer.style, BodyStyle.studio);
+    expect(find.text('Jul 2, 2026'), findsOneWidget);
+    expect(find.text('Nov 7, 2026'), findsOneWidget);
+  });
+
+  testWidgets('Fat view paints a heatmap with a legend', (tester) async {
+    await pump(tester);
+    await tester.tap(find.text('Fat'));
+    await tester.pumpAndSettle();
+    expect(renderer.colors, isNotNull);
+    expect(find.text('25% fat'), findsOneWidget);
+    expect(find.text('4%'), findsOneWidget);
+  });
+
+  testWidgets('Change view switches between fat and lean change', (
+    tester,
+  ) async {
+    await pump(tester);
+    await tester.tap(find.text('Change'));
+    await tester.pumpAndSettle();
+    final fatColors = renderer.colors;
+    expect(fatColors, isNotNull);
+    expect(find.text('−30% fat'), findsOneWidget);
+    expect(find.text('Jul 2, 2026 → Nov 7, 2026'), findsOneWidget);
+    await tester.tap(find.text('Lean change'));
+    await tester.pumpAndSettle();
+    expect(renderer.colors, isNot(same(fatColors)));
+    expect(find.text('+5% lean'), findsOneWidget);
+  });
+
+  testWidgets('exaggerate reshapes the body and shows the ×3 badge', (
+    tester,
+  ) async {
+    await pump(tester);
+    final uploads = renderer.shapeUploads;
+    expect(find.text('×3'), findsNothing);
+    await tester.tap(find.byKey(const Key('body_exaggerate')));
+    await tester.pumpAndSettle();
+    expect(find.text('×3'), findsOneWidget);
+    expect(renderer.shapeUploads, greaterThan(uploads));
+  });
+
+  testWidgets('scrubbing moves the blend without reshaping', (tester) async {
+    await pump(tester);
+    final uploads = renderer.shapeUploads;
+    await tester.drag(
+      find.byKey(const Key('body_slider')),
+      const Offset(-2000, 0),
+    );
+    await tester.pumpAndSettle();
+    expect(renderer.t, 0);
+    expect(renderer.shapeUploads, uploads);
+  });
+
+  testWidgets('tapping the belly opens its numbers', (tester) async {
+    final container = await pump(tester);
+    // Aim the ray at the belly band of the drawn body (it faces -z).
+    final asset = container.read(bodyAssetProvider).value!;
+    final shape = container.read(bodyShapesProvider).value!.b;
+    var y = 0.0;
+    var n = 0;
+    for (var v = 0; v < asset.vertexCount; v++) {
+      if (asset.mask(v, MaskSlot.android) < 0.9) continue;
+      y += shape.positions[v * 3 + 1];
+      n++;
+    }
+    renderer.nextRay = (ox: 0, oy: y / n, oz: -3, dx: 0, dy: 0, dz: 1);
+    await tester.tap(find.byKey(const Key('body_scene')));
+    await tester.pumpAndSettle();
+    expect(renderer.highlighted, BodyPart.belly);
+    expect(find.byKey(const Key('body_partCard')), findsOneWidget);
+    expect(find.text('Belly'), findsOneWidget);
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
+    expect(renderer.highlighted, isNull);
+  });
+
+  testWidgets('shows the empty message with no scans', (tester) async {
+    await pump(tester, scans: const []);
+    expect(find.textContaining('after your first scan'), findsOneWidget);
+  });
+
+  testWidgets('uses the saved style and follows dark mode', (tester) async {
+    store.saved = BodyStyle.midnight;
+    await pump(tester, theme: AppTheme.dark);
+    expect(renderer.style, BodyStyle.midnight);
+    expect(renderer.brightness, Brightness.dark);
+  });
+
+  testWidgets('style setting saves the choice', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [bodyStyleStoreProvider.overrideWithValue(store)],
+        child: MaterialApp(
+          theme: AppTheme.light,
+          home: const Scaffold(body: BodyStyleSetting()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Midnight'));
+    await tester.pumpAndSettle();
+    expect(store.saved, BodyStyle.midnight);
+  });
+}

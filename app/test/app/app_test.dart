@@ -1,4 +1,5 @@
 import 'package:app_auth/app_auth.dart';
+import 'package:app_body/app_body.dart';
 import 'package:body_comp/home/home_page.dart';
 import 'package:body_comp/profile/domain/profile.dart';
 import 'package:body_comp/profile/presentation/profile_setup_page.dart';
@@ -78,6 +79,15 @@ void main() {
       await tester.pumpAndSettle();
       expect(fakes.auth.calls, ['deleteAccount']);
       expect(find.byType(SignInPage), findsOneWidget);
+    });
+
+    testWidgets('home opens settings with the body style toggle', (
+      tester,
+    ) async {
+      await tester.pumpApp(user: const AuthUser(id: 'u1'));
+      await tester.tap(find.byIcon(Icons.settings_outlined));
+      await tester.pumpAndSettle();
+      expect(find.byType(BodyStyleSetting), findsOneWidget);
     });
 
     testWidgets('follows the phone dark mode', (tester) async {
