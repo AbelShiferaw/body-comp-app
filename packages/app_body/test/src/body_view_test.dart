@@ -61,8 +61,8 @@ void main() {
     expect(renderer.shapeUploads, greaterThan(0));
     expect(renderer.t, 1);
     expect(renderer.colors, isNull);
-    expect(renderer.style, BodyStyle.hologram);
-    expect(find.byKey(const Key('body_pad')), findsOneWidget);
+    expect(renderer.style, BodyStyle.studio);
+    expect(find.byKey(const Key('body_pad')), findsNothing);
     expect(find.text('Jul 2, 2026'), findsOneWidget);
     expect(find.text('Nov 7, 2026'), findsOneWidget);
   });
@@ -142,6 +142,15 @@ void main() {
   testWidgets('shows the empty message with no scans', (tester) async {
     await pump(tester, scans: const []);
     expect(find.textContaining('after your first scan'), findsOneWidget);
+  });
+
+  testWidgets('hologram style stands the body on a scanner pad', (
+    tester,
+  ) async {
+    store.saved = BodyStyle.hologram;
+    await pump(tester, theme: AppTheme.dark);
+    expect(renderer.style, BodyStyle.hologram);
+    expect(find.byKey(const Key('body_pad')), findsOneWidget);
   });
 
   testWidgets('uses the saved style and follows dark mode', (tester) async {

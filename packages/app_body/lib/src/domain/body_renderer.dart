@@ -5,17 +5,17 @@ import 'dart:ui' show Brightness, Offset, Size;
 import 'package:body_mapping/body_mapping.dart';
 import 'package:material_ui/material_ui.dart' show BuildContext, Widget;
 
-/// How the body looks. [hologram] is the launch look and the default: a
-/// glowing game-style avatar on a scanner pad in dark mode, a porcelain body
-/// on an Ice ring in light mode. Studio and Midnight are Settings options.
-/// Fat and Change are view modes on any style, not styles. All follow the
-/// phone's light or dark mode.
+/// How the body looks. Studio is the default (Abel, 3D LLD review, Nov 19).
+/// [hologram] is the launch-direction game look as a Settings option: a
+/// glowing Ice avatar on a scanner pad in dark mode, a porcelain body on an
+/// Ice ring in light mode. Fat and Change are view modes on any style, not
+/// styles. All follow the phone's light or dark mode.
 enum BodyStyle {
   hologram,
   studio,
   midnight;
 
-  static const BodyStyle defaultStyle = hologram;
+  static const BodyStyle defaultStyle = studio;
 }
 
 /// How the camera frames the body, shared by the renderer and anything drawn
