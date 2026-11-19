@@ -109,15 +109,16 @@ class DexaSyncController extends AsyncNotifier<DexaLink> {
       return const DexaLink(configured: false, allowed: false);
     }
     final backend = ref.watch(syncBackendProvider);
-    final provider = ref.watch(scanProviderProvider)!;
-    final allowed = await backend.isAllowed(service.provider);
-    final connection = await backend.connection(service.provider);
-    final token = await provider.hasToken();
+    final answers = await Future.wait<Object?>([
+      backend.isAllowed(service.provider),
+      backend.connection(service.provider),
+      service.hasToken(),
+    ]);
     return DexaLink(
       configured: true,
-      allowed: allowed,
-      connection: connection,
-      tokenOnThisPhone: token,
+      allowed: answers[0]! as bool,
+      connection: answers[1] as ProviderConnection?,
+      tokenOnThisPhone: answers[2]! as bool,
     );
   }
 
@@ -141,8 +142,6 @@ class DexaSyncController extends AsyncNotifier<DexaLink> {
     run.set(const SyncRunning(connecting: true));
     try {
       await _service.connect();
-      ref.invalidateSelf();
-      await future;
     } on CancelledException {
       run.set(const SyncIdle());
       rethrow;

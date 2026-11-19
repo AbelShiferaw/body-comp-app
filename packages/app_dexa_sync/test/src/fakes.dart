@@ -110,7 +110,7 @@ class FakeScanProvider implements ScanProvider {
   }
 
   @override
-  Future<void> forget() async => token = false;
+  Future<void> forget(String userId) async => token = false;
 }
 
 class FakeSyncBackend implements SyncBackend {

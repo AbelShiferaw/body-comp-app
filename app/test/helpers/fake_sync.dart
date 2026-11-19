@@ -62,7 +62,7 @@ class _FakeBodySpec implements ScanProvider {
   Future<void> disconnect() async => _dexa.tokenOnPhone = false;
 
   @override
-  Future<void> forget() async => _dexa.tokenOnPhone = false;
+  Future<void> forget(String userId) async => _dexa.tokenOnPhone = false;
 }
 
 class _FakeBackend implements SyncBackend {

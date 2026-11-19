@@ -5,7 +5,6 @@ import 'package:app_scans/app_scans.dart';
 import 'package:body_comp/app/app.dart';
 import 'package:body_comp/profile/domain/profile.dart';
 import 'package:body_comp/profile/presentation/profile_providers.dart';
-import 'package:body_comp/sync/sync_wiring.dart';
 import 'package:body_mapping/body_mapping.dart' show BodyScan;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -80,7 +79,6 @@ extension PumpApp on WidgetTester {
           syncUserIdProvider.overrideWith(
             (ref) => ref.watch(authUserProvider).value?.id,
           ),
-          syncTokenStoreProvider.overrideWithValue(_NoTokens()),
         ],
         child: const App(),
       ),
@@ -96,15 +94,4 @@ class _NoStyleStore implements BodyStyleStore {
 
   @override
   Future<void> write(BodyStyle style) async {}
-}
-
-class _NoTokens implements TokenStore {
-  @override
-  Future<void> delete(String provider, String userId) async {}
-
-  @override
-  Future<String?> read(String provider, String userId) async => null;
-
-  @override
-  Future<void> write(String provider, String userId, String token) async {}
 }

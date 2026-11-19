@@ -272,7 +272,7 @@ void main() {
   test('forget deletes the token without calling BodySpec', () async {
     final p = make();
     await p.connect();
-    await p.forget();
+    await p.forget(userId!);
     expect(tokens.values, isEmpty);
     expect(requests, isEmpty);
   });

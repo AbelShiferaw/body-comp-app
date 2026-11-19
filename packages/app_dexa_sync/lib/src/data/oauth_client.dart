@@ -64,47 +64,35 @@ class AppAuthOAuthClient implements OAuthClient {
 
   @override
   Future<OAuthTokens> authorize() => guard(() async {
-    final r = await _appAuth.authorizeAndExchangeCode(
-      AuthorizationTokenRequest(
-        _settings.clientId,
-        _settings.redirectUrl,
-        issuer: _settings.issuer,
-        scopes: _settings.scopes,
-      ),
-    );
     return _tokens(
-      r.accessToken,
-      r.refreshToken,
-      r.accessTokenExpirationDateTime,
-      r.idToken,
+      await _appAuth.authorizeAndExchangeCode(
+        AuthorizationTokenRequest(
+          _settings.clientId,
+          _settings.redirectUrl,
+          issuer: _settings.issuer,
+          scopes: _settings.scopes,
+        ),
+      ),
     );
   }, map: mapAppAuthError);
 
   @override
   Future<OAuthTokens> refresh(String refreshToken) => guard(() async {
-    final r = await _appAuth.token(
-      TokenRequest(
-        _settings.clientId,
-        _settings.redirectUrl,
-        issuer: _settings.issuer,
-        refreshToken: refreshToken,
-        scopes: _settings.scopes,
-      ),
-    );
     return _tokens(
-      r.accessToken,
-      r.refreshToken,
-      r.accessTokenExpirationDateTime,
-      r.idToken,
+      await _appAuth.token(
+        TokenRequest(
+          _settings.clientId,
+          _settings.redirectUrl,
+          issuer: _settings.issuer,
+          refreshToken: refreshToken,
+          scopes: _settings.scopes,
+        ),
+      ),
     );
   }, map: mapAppAuthError);
 
-  static OAuthTokens _tokens(
-    String? access,
-    String? refresh,
-    DateTime? expiresAt,
-    String? idToken,
-  ) {
+  static OAuthTokens _tokens(TokenResponse r) {
+    final access = r.accessToken;
     if (access == null) {
       throw const UnauthorizedException(
         'No access token in the token response',
@@ -113,9 +101,9 @@ class AppAuthOAuthClient implements OAuthClient {
     }
     return OAuthTokens(
       accessToken: access,
-      refreshToken: refresh,
-      expiresAt: expiresAt,
-      subject: idTokenSubject(idToken),
+      refreshToken: r.refreshToken,
+      expiresAt: r.accessTokenExpirationDateTime,
+      subject: idTokenSubject(r.idToken),
     );
   }
 }

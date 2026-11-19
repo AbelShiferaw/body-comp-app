@@ -10,9 +10,10 @@ import { normalizeBodySpec } from "./normalize_bodyspec.ts";
 
 export const MAX_BODY_BYTES = 256 * 1024;
 
-/** Sources this function accepts, and the beta flag each one needs. */
-const SOURCES: Record<string, { flag: string }> = {
-  bodyspec: { flag: "bodyspec_sync" },
+/** Sources this function accepts, each with its normalizer. A source's beta
+ * flag is `<source>_sync`, as on the phone (`DexaProvider.betaFlag`). */
+const SOURCES: Record<string, typeof normalizeBodySpec> = {
+  bodyspec: normalizeBodySpec,
 };
 
 export interface IngestOutcome {
@@ -69,7 +70,7 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
   const providerScanId = body["provider_scan_id"];
   const fetchedAt = body["fetched_at"];
   const sections = body["sections"];
-  if (typeof source !== "string" || !(source in SOURCES)) {
+  if (typeof source !== "string" || !Object.hasOwn(SOURCES, source)) {
     return fail(400, "unsupported_source");
   }
   if (
@@ -84,14 +85,14 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
     return fail(400, "invalid_request");
   }
 
-  if (!(await deps.featureEnabled(userId, SOURCES[source].flag))) {
+  if (!(await deps.featureEnabled(userId, `${source}_sync`))) {
     deps.log({ event: "ingest_refused", reason: "not_in_beta", user: userRef });
     return fail(403, "not_in_beta");
   }
 
   const stripped = stripIdentity(sections) as Record<string, unknown>;
   const contentSha256 = await sha256Hex(canonicalJson(stripped));
-  const { scan, reasons } = normalizeBodySpec(
+  const { scan, reasons } = SOURCES[source](
     providerScanId,
     stripped,
     deps.now(),
