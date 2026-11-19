@@ -12,6 +12,7 @@ dependencies:
   app_auth: any
   app_body: any
   app_core: any
+  app_dexa_sync: any
   app_feedback: any
   app_payments: any
   app_scans: any

@@ -7,7 +7,15 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   const user = AsyncData<AuthUser?>(AuthUser(id: 'u1'));
   const signedOut = AsyncData<AuthUser?>(null);
-  const complete = AsyncData<Profile?>(
+  final complete = AsyncData<Profile?>(
+    Profile(
+      sex: Sex.female,
+      birthYear: 1990,
+      heightCm: 165,
+      onboardedAt: DateTime.utc(2026, 11),
+    ),
+  );
+  const notOnboarded = AsyncData<Profile?>(
     Profile(sex: Sex.female, birthYear: 1990, heightCm: 165),
   );
   const empty = AsyncData<Profile?>(Profile());
@@ -16,8 +24,9 @@ void main() {
   String? redirect(
     AsyncValue<AuthUser?> auth,
     String location, {
-    AsyncValue<Profile?> profile = complete,
-  }) => appRedirect(auth: auth, profile: profile, location: location);
+    AsyncValue<Profile?>? profile,
+  }) =>
+      appRedirect(auth: auth, profile: profile ?? complete, location: location);
 
   group('appRedirect', () {
     test('waits on splash while auth is loading', () {
@@ -65,6 +74,26 @@ void main() {
       expect(redirect(user, Routes.profileSetup), Routes.home);
       expect(redirect(user, Routes.home), isNull);
       expect(redirect(user, Routes.settings), isNull);
+    });
+
+    test('sends a complete but new profile to onboarding', () {
+      for (final location in [
+        Routes.signIn,
+        Routes.splash,
+        Routes.profileSetup,
+        Routes.home,
+        Routes.settings,
+      ]) {
+        expect(
+          redirect(user, location, profile: notOnboarded),
+          Routes.onboarding,
+        );
+      }
+      expect(redirect(user, Routes.onboarding, profile: notOnboarded), isNull);
+    });
+
+    test('lets onboarded users come back to onboarding to connect DEXA', () {
+      expect(redirect(user, Routes.onboarding), isNull);
     });
 
     test('does not bounce users inside the app while the profile reloads', () {

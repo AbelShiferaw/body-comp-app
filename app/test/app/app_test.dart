@@ -1,6 +1,7 @@
 import 'package:app_auth/app_auth.dart';
 import 'package:app_body/app_body.dart';
 import 'package:body_comp/home/home_page.dart';
+import 'package:body_comp/onboarding/onboarding_page.dart';
 import 'package:body_comp/profile/domain/profile.dart';
 import 'package:body_comp/profile/presentation/profile_setup_page.dart';
 import 'package:body_comp/settings/settings_page.dart';
@@ -23,7 +24,7 @@ void main() {
       expect(find.byType(HomePage), findsOneWidget);
     });
 
-    testWidgets('new account goes through profile setup to home', (
+    testWidgets('new account goes through profile setup to onboarding', (
       tester,
     ) async {
       final fakes = await tester.pumpApp();
@@ -40,7 +41,7 @@ void main() {
       await tester.tap(find.byKey(const Key('profile_submit')));
       await tester.pumpAndSettle();
 
-      expect(find.byType(HomePage), findsOneWidget);
+      expect(find.byType(OnboardingPage), findsOneWidget);
       expect(
         fakes.profiles.saved.single,
         const Profile(sex: Sex.female, birthYear: 1990, heightCm: 168),

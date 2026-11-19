@@ -49,11 +49,14 @@ void main() {
     });
 
     test('maps to and from a database row', () {
-      const profile = Profile(
+      final profile = Profile(
         sex: Sex.female,
         birthYear: 1990,
         heightCm: 168.5,
         units: Units.imperial,
+        goals: const {Goal.loseFat, Goal.trackHealth},
+        bodySource: BodySource.dexa,
+        onboardedAt: DateTime.utc(2026, 11, 19, 12),
       );
       final row = profileToRow(profile);
       expect(row, {
@@ -61,8 +64,31 @@ void main() {
         'birth_year': 1990,
         'height_cm': 168.5,
         'units': 'imperial',
+        'goals': ['lose_fat', 'track_health'],
+        'body_source': 'dexa',
+        'onboarded_at': '2026-11-19T12:00:00.000Z',
       });
       expect(profileFromRow(row), profile);
+    });
+
+    test('ignores goals a newer app version added', () {
+      expect(
+        profileFromRow({
+          'goals': ['build_muscle', 'run_a_marathon'],
+        }).goals,
+        {Goal.buildMuscle},
+      );
+    });
+
+    test('copyWith keeps the onboarding answers', () {
+      final onboarded = Profile(
+        sex: Sex.male,
+        goals: const {Goal.buildMuscle},
+        onboardedAt: DateTime.utc(2026),
+      );
+      final edited = onboarded.copyWith(heightCm: 181);
+      expect(edited.goals, {Goal.buildMuscle});
+      expect(edited.isOnboarded, isTrue);
     });
 
     test('reads an empty row as an incomplete metric profile', () {

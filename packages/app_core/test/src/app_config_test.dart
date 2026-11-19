@@ -63,5 +63,63 @@ void main() {
     test('toString never includes the key', () {
       expect(AppConfig.fromMap(valid).toString(), isNot(contains('anon')));
     });
+
+    group('BodySpec', () {
+      const bodySpec = {
+        'BODYSPEC_CLIENT_ID': 'client-1',
+        'BODYSPEC_REDIRECT_URL': 'com.abelshiferaw.bodycomp.dev:/oauthredirect',
+        'BODYSPEC_ISSUER': 'https://auth.example.test/realms/x',
+        'BODYSPEC_API_URL': 'https://app.example.test/api/v1',
+      };
+
+      test('is off while the client id is unset', () {
+        expect(AppConfig.fromMap(valid).bodySpec, isNull);
+        expect(
+          AppConfig.fromMap({...valid, ...bodySpec, 'BODYSPEC_CLIENT_ID': ' '})
+              .bodySpec,
+          isNull,
+        );
+      });
+
+      test('reads a full config', () {
+        final c = AppConfig.fromMap({...valid, ...bodySpec}).bodySpec!;
+        expect(c.clientId, 'client-1');
+        expect(c.redirectUrl, 'com.abelshiferaw.bodycomp.dev:/oauthredirect');
+        expect(c.issuer.host, 'auth.example.test');
+        expect(c.apiUrl.path, '/api/v1');
+      });
+
+      test('names the missing keys of a partial config', () {
+        expect(
+          () => AppConfig.fromMap({...valid, 'BODYSPEC_CLIENT_ID': 'client-1'}),
+          throwsA(
+            isA<ConfigException>().having(
+              (e) => e.message,
+              'message',
+              allOf(contains('BODYSPEC_ISSUER'), contains('BODYSPEC_API_URL')),
+            ),
+          ),
+        );
+      });
+
+      test('requires https and a custom-scheme redirect', () {
+        expect(
+          () => AppConfig.fromMap({
+            ...valid,
+            ...bodySpec,
+            'BODYSPEC_API_URL': 'http://app.example.test',
+          }),
+          throwsA(isA<ConfigException>()),
+        );
+        expect(
+          () => AppConfig.fromMap({
+            ...valid,
+            ...bodySpec,
+            'BODYSPEC_REDIRECT_URL': 'oauthredirect',
+          }),
+          throwsA(isA<ConfigException>()),
+        );
+      });
+    });
   });
 }

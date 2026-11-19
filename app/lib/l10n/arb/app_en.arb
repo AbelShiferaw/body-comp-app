@@ -63,5 +63,82 @@
     "@profileSexLabel": {
         "description": "Label for the male/female choice that picks the 3D body's base shape"
     },
-    "profileHeightInvalidImperial": "Enter a height between 3 ft 11 in and 7 ft 7 in."
+    "profileHeightInvalidImperial": "Enter a height between 3 ft 11 in and 7 ft 7 in.",
+    "onboardingStep": "Step {current} of {total}",
+    "@onboardingStep": {
+        "placeholders": {
+            "current": {
+                "type": "int"
+            },
+            "total": {
+                "type": "int"
+            }
+        }
+    },
+    "onboardingBack": "Back",
+    "onboardingContinue": "Continue",
+    "goalsTitle": "What do you want to see change?",
+    "goalsSubtitle": "Pick all that fit. We lead with the numbers that matter for you.",
+    "goalLoseFat": "Lose fat",
+    "goalLoseFatHelp": "See where the fat comes off, region by region.",
+    "goalBuildMuscle": "Build muscle",
+    "goalBuildMuscleHelp": "Watch lean mass grow on your arms, legs and trunk.",
+    "goalTrackHealth": "Track my health",
+    "goalTrackHealthHelp": "Visceral fat, bone density and how you compare.",
+    "goalsRequired": "Pick at least one to continue.",
+    "sourceTitle": "How should we build your 3D body?",
+    "sourceSubtitle": "A DEXA scan measures your fat, muscle and bone in every region. It gives the most accurate body.",
+    "sourceDexaTitle": "Connect my DEXA scans",
+    "sourceDexaBody": "Link your BodySpec account. We import your scans and build your body from them.",
+    "sourceDexaRecommended": "Most accurate",
+    "sourceDexaInviteOnly": "BodySpec sync is invite-only during the beta. Ask us for an invite, or start with photos.",
+    "sourceDexaUnavailable": "DEXA sync isn't available in this version of the app.",
+    "sourcePhotosTitle": "Start with photos",
+    "sourcePhotosBody": "No DEXA scan yet? Take guided photos and we estimate your body.",
+    "consentTitle": "Your scans are health data",
+    "consentIntro": "Before we import anything, here is what happens to it.",
+    "consentPointStore": "We store your body composition: fat, lean and bone mass for each region, visceral fat and bone density.",
+    "consentPointIdentity": "We never keep your name, email or birth date from BodySpec.",
+    "consentPointToken": "Your BodySpec sign-in stays on this phone. We never see your BodySpec password.",
+    "consentPointDelete": "Delete any scan, or your whole account, at any time in Settings.",
+    "consentAgree": "I agree that the app stores and processes my DEXA scan data to build and track my 3D body.",
+    "consentContinue": "Agree and connect BodySpec",
+    "consentRequired": "Tick the box to continue.",
+    "connectSigningIn": "Signing in to BodySpec…",
+    "connectImporting": "Importing your scans…",
+    "connectImportingHelp": "This takes a few seconds per scan.",
+    "syncErrorNotInBeta": "BodySpec sync is invite-only for now, and your account isn't on the list yet.",
+    "syncErrorSignIn": "Sign in to BodySpec again to keep syncing.",
+    "syncErrorForbidden": "BodySpec refused access. We've been told and will look into it.",
+    "syncErrorBusy": "BodySpec is busy right now. Try again in a few minutes.",
+    "syncErrorConsent": "We need your consent before importing scans.",
+    "syncNoScans": "Your BodySpec account has no scans yet. Book a scan, then tap Refresh on your home screen.",
+    "photosTitle": "Photo estimates are coming soon",
+    "photosBody": "We're building guided front and side photos that estimate your body composition. Until then, your 3D body needs a DEXA scan.",
+    "photosHint": "You can connect BodySpec any time from your home screen.",
+    "photosFinish": "Go to my home screen",
+    "revealTitle": "Meet your body",
+    "revealSubtitle": "{count, plural, =1{Built from your DEXA scan of {date}.} other{Built from the latest of your {count} DEXA scans, {date}.}}",
+    "@revealSubtitle": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            },
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "revealNeedsReview": "{count, plural, =1{One scan couldn't be read and isn't shown.} other{{count} scans couldn't be read and aren't shown.}}",
+    "@revealNeedsReview": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "revealFinish": "Explore my body",
+    "unitKg": "kg",
+    "unitG": "g",
+    "unitPercent": "%"
 }

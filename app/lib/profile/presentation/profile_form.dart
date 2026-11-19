@@ -116,7 +116,8 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
       await ref
           .read(profileProvider.notifier)
           .save(
-            Profile(
+            // copyWith keeps what this form does not edit (onboarding).
+            widget.initial.copyWith(
               sex: _sex,
               birthYear: int.parse(_birthYear.text.trim()),
               heightCm: _heightCm(),

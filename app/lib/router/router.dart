@@ -1,6 +1,7 @@
 import 'package:app_auth/app_auth.dart';
 import 'package:app_ui/app_ui.dart';
 import 'package:body_comp/home/home_page.dart';
+import 'package:body_comp/onboarding/onboarding_page.dart';
 import 'package:body_comp/profile/domain/profile.dart';
 import 'package:body_comp/profile/presentation/profile_providers.dart';
 import 'package:body_comp/profile/presentation/profile_setup_page.dart';
@@ -15,6 +16,7 @@ abstract final class Routes {
   static const profileSetup = '/profile-setup';
   static const home = '/';
   static const settings = '/settings';
+  static const onboarding = '/onboarding';
 }
 
 typedef _Session = ({AsyncValue<AuthUser?> auth, AsyncValue<Profile?> profile});
@@ -51,6 +53,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const ProfileSetupPage(),
       ),
       GoRoute(
+        path: Routes.onboarding,
+        builder: (_, _) => const OnboardingPage(),
+      ),
+      GoRoute(
         path: Routes.home,
         builder: (_, _) => const HomePage(),
         routes: [
@@ -83,6 +89,8 @@ String? appRedirect({
     return entry.contains(location) ? go(Routes.splash) : null;
   }
   if (!loaded.isComplete) return go(Routes.profileSetup);
+  if (!loaded.isOnboarded) return go(Routes.onboarding);
+  // Onboarded users may come back to /onboarding to connect a DEXA provider.
   if (entry.contains(location) || location == Routes.profileSetup) {
     return Routes.home;
   }
