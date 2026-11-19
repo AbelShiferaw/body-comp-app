@@ -1,0 +1,26 @@
+name: app_dexa_sync
+description: DEXA provider sync module. Links a provider account (BodySpec first) on the phone and imports scans through the ingest-scan edge function when the user taps Refresh.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.14.0
+  flutter: ^3.50.0
+
+dependencies:
+  app_core: any
+  flutter:
+    sdk: flutter
+  flutter_appauth: ^13.0.0
+  flutter_riverpod: ^3.5.0
+  flutter_secure_storage: ^11.2.0
+  http: ^1.5.0
+  meta: ^1.17.0
+  shared_preferences: ^2.5.3
+  supabase: ^2.16.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  very_good_analysis: ^11.0.0

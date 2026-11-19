@@ -13,6 +13,7 @@ workspace:
   - packages/app_payments
   - packages/app_feedback
   - packages/app_scans
+  - packages/app_dexa_sync
   - packages/app_body
   - packages/body_mapping
 
