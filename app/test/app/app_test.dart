@@ -84,8 +84,8 @@ void main() {
     testWidgets('home opens settings with the body style toggle', (
       tester,
     ) async {
-      await tester.pumpApp(user: const AuthUser(id: 'u1'));
-      await tester.tap(find.byIcon(Icons.settings_outlined));
+      await tester.pumpApp(user: user);
+      await tester.tap(find.byKey(const Key('home_settings')));
       await tester.pumpAndSettle();
       expect(find.byType(BodyStyleSetting), findsOneWidget);
     });
