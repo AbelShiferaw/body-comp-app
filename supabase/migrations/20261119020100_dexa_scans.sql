@@ -109,7 +109,8 @@ create table public.raw_payloads (
   content_sha256 text not null check (content_sha256 ~ '^[0-9a-f]{64}$'),
   created_at timestamptz not null default now(),
   check (payload is not null or storage_path is not null),
-  unique (user_id, source, provider_scan_id, content_sha256)
+  unique (user_id, source, provider_scan_id, content_sha256),
+  unique (id, user_id)
 );
 
 alter table public.raw_payloads enable row level security;
@@ -134,7 +135,7 @@ create table public.scans (
   source text not null check (source in ('bodyspec', 'manual', 'pdf', 'fitnescity')),
   provider_scan_id text not null check (char_length(provider_scan_id) <= 200),
   scanned_at timestamptz not null,
-  raw_payload_id uuid references public.raw_payloads (id) on delete set null,
+  raw_payload_id uuid,
   normalizer_version text not null check (char_length(normalizer_version) <= 40),
   status text not null default 'ok' check (status in ('ok', 'needs_review')),
   height_cm numeric(5, 1) check (height_cm > 0),
@@ -151,11 +152,13 @@ create table public.scans (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (user_id, source, provider_scan_id),
-  unique (id, user_id)
+  unique (id, user_id),
+  foreign key (raw_payload_id, user_id)
+    references public.raw_payloads (id, user_id) on delete set null (raw_payload_id)
 );
 
 create index scans_user_scanned_at_idx on public.scans (user_id, scanned_at desc);
-create index scans_raw_payload_idx on public.scans (raw_payload_id);
+create index scans_raw_payload_idx on public.scans (raw_payload_id, user_id);
 
 alter table public.scans enable row level security;
 
@@ -286,8 +289,9 @@ revoke insert, update, delete on public.scan_regions, public.bone_density, publi
 --    bone_density: [{site, bmd_g_cm2?, t_score?, z_score?}],
 --    percentiles: [{metric, percentile?, band?, reference_group?}]}
 --
--- Returns {scan_id, status}: created, unchanged (same id and same raw hash) or
--- updated (same id, new hash: a new raw row is kept beside the old one).
+-- Returns {scan_id, status}: created, unchanged (same id, same raw hash and
+-- same normalizer version) or updated (a new hash keeps a new raw row beside
+-- the old one; a new normalizer version rewrites the rows from the same raw).
 create function public.ingest_normalized_scan(p_user_id uuid, p_raw jsonb, p_scan jsonb)
 returns jsonb
 language plpgsql
@@ -298,6 +302,7 @@ declare
   v_provider_scan_id text := p_scan ->> 'provider_scan_id';
   v_existing_id uuid;
   v_existing_hash text;
+  v_existing_normalizer text;
   v_raw_id uuid;
   v_scan_id uuid;
   v_inserted boolean;
@@ -311,8 +316,8 @@ begin
     raise exception 'health_data consent required' using errcode = '42501';
   end if;
 
-  select s.id, r.content_sha256
-    into v_existing_id, v_existing_hash
+  select s.id, r.content_sha256, s.normalizer_version
+    into v_existing_id, v_existing_hash, v_existing_normalizer
   from public.scans s
   left join public.raw_payloads r on r.id = s.raw_payload_id
   where s.user_id = p_user_id
@@ -321,7 +326,8 @@ begin
   for update of s;
 
   if v_existing_id is not null and p_raw is not null
-     and v_existing_hash = p_raw ->> 'content_sha256' then
+     and v_existing_hash = p_raw ->> 'content_sha256'
+     and v_existing_normalizer = p_scan ->> 'normalizer_version' then
     return jsonb_build_object('scan_id', v_existing_id, 'status', 'unchanged');
   end if;
 

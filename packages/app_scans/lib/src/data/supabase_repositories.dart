@@ -120,40 +120,22 @@ final class SupabaseMeasurementsRepository extends _SupabaseRepository
     String? sdkVersion,
     String? pairedScanId,
   }) => run(() async {
-    final uid = userId;
-    final at = capturedAt.toUtc().toIso8601String();
-    final row = await client
-        .from('photo_sessions')
-        .insert({
-          'user_id': uid,
-          'captured_at': at,
-          'capture_kind': captureKind.name,
-          'sdk': sdk,
-          'sdk_version': sdkVersion,
-          'paired_scan_id': pairedScanId,
-        })
-        .select()
-        .single();
-    final session = photoSessionFromRow(row);
-    if (measurementsCm.isNotEmpty) {
-      try {
-        await client.from('body_measurements').insert([
+    // One RPC, so the session and its measurements save all or nothing.
+    final row = await client.rpc<Map<String, dynamic>>(
+      'save_photo_session',
+      params: {
+        'p_captured_at': capturedAt.toUtc().toIso8601String(),
+        'p_measurements': {
           for (final MapEntry(:key, :value) in measurementsCm.entries)
-            {
-              'user_id': uid,
-              'measurement': key.key,
-              'value_cm': value,
-              'source': MeasurementSource.photo.name,
-              'photo_session_id': session.id,
-              'measured_at': at,
-            },
-        ]);
-      } on Object {
-        // Keep it all-or-nothing: drop the empty session, then report.
-        await client.from('photo_sessions').delete().eq('id', session.id);
-        rethrow;
-      }
-    }
+            key.key: value,
+        },
+        'p_capture_kind': captureKind.name,
+        'p_sdk': sdk,
+        'p_sdk_version': sdkVersion,
+        'p_paired_scan_id': pairedScanId,
+      },
+    );
+    final session = photoSessionFromRow(row);
     log.info(
       'Saved photo session ${session.id} with '
       '${measurementsCm.length} measurements',
@@ -172,7 +154,12 @@ final class SupabaseMeasurementsRepository extends _SupabaseRepository
 
   @override
   Future<void> deletePhotoSession(String id) => run(() async {
-    await client.from('photo_sessions').delete().eq('id', id);
+    final deleted = await client
+        .from('photo_sessions')
+        .delete()
+        .eq('id', id)
+        .select('id');
+    if (deleted.isEmpty) throw NotFoundException('Photo session $id');
     log.info('Deleted photo session $id');
   });
 }

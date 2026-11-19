@@ -17,6 +17,7 @@ status=$(supabase status -o env 2>/dev/null) || {
 api_url=$(grep '^API_URL=' <<<"$status" | cut -d= -f2- | tr -d '"')
 key=$(grep '^PUBLISHABLE_KEY=' <<<"$status" | cut -d= -f2- | tr -d '"')
 secret=$(grep '^SECRET_KEY=' <<<"$status" | cut -d= -f2- | tr -d '"')
+[ -n "$secret" ] || echo "Warning: no SECRET_KEY in supabase status; integration tests that ingest scans will fail" >&2
 
 # Android emulators reach the host at 10.0.2.2, not 127.0.0.1.
 device_url=${LOCAL_DEVICE_HOST:+${api_url/127.0.0.1/$LOCAL_DEVICE_HOST}}

@@ -3,7 +3,7 @@
 -- another user's scans, regions, raw payloads, connections or sync runs.
 -- Run: supabase test db
 begin;
-select plan(45);
+select plan(50);
 
 insert into auth.users (id, email)
 values
@@ -106,6 +106,14 @@ select is(
 
 select is(
   public.ingest_normalized_scan('11111111-1111-1111-1111-111111111111',
+    pg_temp.raw(repeat('a', 64)),
+    (select jsonb_set(scan, '{normalizer_version}', '"bodyspec-n2"') from fixture)) ->> 'status',
+  'updated',
+  'same raw with a new normalizer version is rewritten'
+);
+
+select is(
+  public.ingest_normalized_scan('11111111-1111-1111-1111-111111111111',
     pg_temp.raw(repeat('b', 64)),
     (select jsonb_set(scan, '{fat_g}', '11000') from fixture)) ->> 'status',
   'updated',
@@ -196,6 +204,14 @@ select is_empty(
   $$ update public.provider_connections set status = 'revoked' returning id $$,
   'Bob cannot change Alice''s connection'
 );
+select is_empty(
+  $$ update public.sync_runs set status = 'failed' returning id $$,
+  'Bob cannot change Alice''s sync runs'
+);
+select is_empty(
+  $$ update public.consents set revoked_at = now() returning id $$,
+  'Bob cannot revoke Alice''s consent'
+);
 
 select throws_ok(
   $$ insert into public.provider_connections (user_id, provider)
@@ -231,6 +247,16 @@ select throws_ok(
   $$ update public.consents set kind = 'terms' $$,
   '42501', null,
   'Alice cannot rewrite what she consented to'
+);
+
+update public.consents set revoked_at = '2000-01-01' where kind = 'health_data';
+select ok(
+  (select revoked_at > now() - interval '1 minute' from public.consents where kind = 'health_data'),
+  'revoking stamps the current time, not a backdated one'
+);
+select is_empty(
+  $$ update public.consents set revoked_at = null returning id $$,
+  'a revoked consent cannot be brought back'
 );
 
 delete from public.scans;

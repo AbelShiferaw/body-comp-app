@@ -126,3 +126,41 @@ select distinct on (user_id, measurement)
   user_id, measurement, value_cm, source, photo_session_id, measured_at
 from public.body_measurements
 order by user_id, measurement, measured_at desc, created_at desc;
+
+-- Saves a photo session and its measurements in one transaction, as the
+-- signed-in user (security invoker, so RLS applies). p_measurements maps
+-- measurement keys to centimetres, e.g. {"waist": 82.0, "chest": 101.0}.
+create function public.save_photo_session(
+  p_captured_at timestamptz,
+  p_measurements jsonb,
+  p_capture_kind text default 'photos',
+  p_sdk text default null,
+  p_sdk_version text default null,
+  p_paired_scan_id uuid default null
+)
+returns public.photo_sessions
+language plpgsql
+set search_path = ''
+as $$
+declare
+  v_session public.photo_sessions;
+begin
+  insert into public.photo_sessions
+    (user_id, captured_at, capture_kind, sdk, sdk_version, paired_scan_id)
+  values
+    ((select auth.uid()), p_captured_at, p_capture_kind, p_sdk, p_sdk_version, p_paired_scan_id)
+  returning * into v_session;
+
+  insert into public.body_measurements
+    (user_id, measurement, value_cm, source, photo_session_id, measured_at)
+  select v_session.user_id, m.key, m.value::numeric, 'photo', v_session.id, p_captured_at
+  from jsonb_each_text(coalesce(p_measurements, '{}')) as m;
+
+  return v_session;
+end;
+$$;
+
+revoke execute on function public.save_photo_session(timestamptz, jsonb, text, text, text, uuid)
+  from public, anon;
+grant execute on function public.save_photo_session(timestamptz, jsonb, text, text, text, uuid)
+  to authenticated;

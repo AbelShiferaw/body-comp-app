@@ -19,7 +19,7 @@ void main() {
   final url = env['SUPABASE_URL'];
   final publishableKey = env['SUPABASE_PUBLISHABLE_KEY'];
   final secretKey = env['SUPABASE_SECRET_KEY'];
-  if (url == null || publishableKey == null || secretKey == null) {
+  if ([url, publishableKey, secretKey].any((v) => v == null || v.isEmpty)) {
     test('local Supabase env', () {
       fail(
         'Set SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY and SUPABASE_SECRET_KEY '
@@ -30,12 +30,12 @@ void main() {
   }
 
   final runId = Random().nextInt(1 << 32);
-  final server = SupabaseClient(url, secretKey);
+  final server = SupabaseClient(url!, secretKey!);
 
   Future<SupabaseClient> signedUp(String name) async {
     final client = SupabaseClient(
       url,
-      publishableKey,
+      publishableKey!,
       authOptions: const AuthClientOptions(
         autoRefreshToken: false,
         authFlowType: AuthFlowType.implicit,

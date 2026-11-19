@@ -28,15 +28,37 @@ create policy "consents: owner can grant"
   to authenticated
   with check ((select auth.uid()) = user_id and revoked_at is null);
 
+-- Revoking is one-way: only an active consent can be updated, and only to
+-- revoked. The trigger below stamps the time, so it cannot be backdated.
 create policy "consents: owner can revoke"
   on public.consents for update
   to authenticated
-  using ((select auth.uid()) = user_id)
-  with check ((select auth.uid()) = user_id);
+  using ((select auth.uid()) = user_id and revoked_at is null)
+  with check ((select auth.uid()) = user_id and revoked_at is not null);
 
 -- Only revoked_at may change; the rest is the record of what was agreed.
 revoke update on public.consents from anon, authenticated;
 grant update (revoked_at) on public.consents to authenticated;
+
+create function public.stamp_consent_revoked_at()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if old.revoked_at is not null then
+    raise exception 'consent already revoked' using errcode = '42501';
+  end if;
+  if new.revoked_at is not null then
+    new.revoked_at = now();
+  end if;
+  return new;
+end;
+$$;
+
+create trigger consents_stamp_revoked_at
+  before update on public.consents
+  for each row execute function public.stamp_consent_revoked_at();
 
 -- No delete policy: consents go only with the account (cascade).
 

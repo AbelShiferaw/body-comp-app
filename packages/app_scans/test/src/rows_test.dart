@@ -118,6 +118,7 @@ void main() {
     });
     test('expired JWT is unauthorized', () {
       expect(map('PGRST301'), isA<UnauthorizedException>());
+      expect(map('PGRST303'), isA<UnauthorizedException>());
     });
     test('anything else is left to guard', () {
       expect(map('XX000'), isNull);

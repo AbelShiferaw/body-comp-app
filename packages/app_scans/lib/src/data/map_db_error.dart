@@ -20,12 +20,13 @@ AppException? mapDbError(Object error, StackTrace stackTrace) {
         cause: error,
         stackTrace: stackTrace,
       ),
-      // Expired or invalid JWT.
-      'PGRST301' || 'PGRST302' => UnauthorizedException(
-        error.message,
-        cause: error,
-        stackTrace: stackTrace,
-      ),
+      // Missing, invalid or expired JWT.
+      _ when code.startsWith('PGRST30') || code == '401' =>
+        UnauthorizedException(
+          error.message,
+          cause: error,
+          stackTrace: stackTrace,
+        ),
       // RLS or privilege denial, or a constraint (check, foreign key, unique).
       _ when code == '42501' || code.startsWith('23') => ValidationException(
         error.message,
