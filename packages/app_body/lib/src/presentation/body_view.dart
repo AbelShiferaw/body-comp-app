@@ -147,7 +147,12 @@ class _BodyViewState extends ConsumerState<BodyView>
         // A new scan after the first load (Refresh): show what changed.
         final before = prev?.value;
         final after = next.value;
-        if (before == null || before.isEmpty || after == null) return;
+        if (before == null ||
+            before.isEmpty ||
+            after == null ||
+            after.isEmpty) {
+          return;
+        }
         if (after.last.id != before.last.id) {
           _controller.showNewScan(after);
           _playMorph();
