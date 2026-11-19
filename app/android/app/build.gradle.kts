@@ -24,16 +24,17 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.abelshiferaw.bodycomp"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        // Version name and code come from pubspec.yaml, or from --build-name /
+        // --build-number in the release workflow (see docs/releasing.md).
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    // Release signing: CI passes the upload keystore through ANDROID_KEYSTORE_* env vars
+    // (from GitHub secrets); locally, android/key.properties (gitignored) works too.
     signingConfigs {
         create("release") {
             if (System.getenv("ANDROID_KEYSTORE_PATH") != null) {
@@ -41,7 +42,6 @@ android {
                 keyAlias = System.getenv("ANDROID_KEYSTORE_ALIAS")
                 keyPassword = System.getenv("ANDROID_KEYSTORE_PRIVATE_KEY_PASSWORD")
                 storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
-                
             } else {
                 keyAlias = keystoreProperties["keyAlias"] as String?
                 keyPassword = keystoreProperties["keyPassword"] as String?
