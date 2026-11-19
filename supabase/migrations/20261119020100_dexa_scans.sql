@@ -220,7 +220,6 @@ create table public.scan_regions (
 );
 
 create index scan_regions_user_idx on public.scan_regions (user_id);
-create index scan_regions_scan_user_idx on public.scan_regions (scan_id, user_id);
 
 create table public.bone_density (
   scan_id uuid not null,
@@ -234,7 +233,6 @@ create table public.bone_density (
 );
 
 create index bone_density_user_idx on public.bone_density (user_id);
-create index bone_density_scan_user_idx on public.bone_density (scan_id, user_id);
 
 create table public.percentiles (
   scan_id uuid not null,
@@ -248,7 +246,6 @@ create table public.percentiles (
 );
 
 create index percentiles_user_idx on public.percentiles (user_id);
-create index percentiles_scan_user_idx on public.percentiles (scan_id, user_id);
 
 -- Read-only for users; ingest_normalized_scan replaces them with the scan.
 alter table public.scan_regions enable row level security;

@@ -92,7 +92,6 @@ create table public.body_measurements (
 
 create index body_measurements_current_idx
   on public.body_measurements (user_id, measurement, measured_at desc, created_at desc);
-create index body_measurements_session_idx on public.body_measurements (photo_session_id, user_id);
 
 alter table public.body_measurements enable row level security;
 

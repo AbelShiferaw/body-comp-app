@@ -80,8 +80,7 @@ final class SupabaseMeasurementsRepository extends _SupabaseRepository
   Future<Map<MeasurementKind, BodyMeasurement>> currentMeasurements() =>
       run(() async {
         final rows = await client.from('current_body_measurements').select();
-        final list = rows.map(measurementFromRow);
-        return {for (final m in list) m.kind: m};
+        return {for (final m in rows.map(measurementFromRow)) m.kind: m};
       });
 
   @override

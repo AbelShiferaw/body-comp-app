@@ -14,7 +14,7 @@ create table public.consents (
   check (revoked_at is null or revoked_at >= granted_at)
 );
 
-create index consents_user_kind_idx on public.consents (user_id, kind);
+create index consents_active_idx on public.consents (user_id, kind) where revoked_at is null;
 
 alter table public.consents enable row level security;
 
