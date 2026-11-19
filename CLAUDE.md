@@ -17,7 +17,7 @@ packages/
   app_payments/         # Module: PaymentsService + Entitlements (RevenueCat plugs in here)
   app_feedback/         # Module: FeedbackService
 supabase/               # Local Supabase: config.toml, migrations/, tests/ (pgTAP)
-tool/                   # local_env.sh, test_all.sh
+tool/                   # local_env.sh, test_all.sh, release/ (signing setup scripts)
 spikes/                 # Throwaway spike apps. Not part of the workspace; never import from them.
 ```
 
@@ -79,4 +79,5 @@ Android emulator: run `LOCAL_DEVICE_HOST=10.0.2.2 source tool/local_env.sh` so t
 - One thread per feature, on its own branch. Never commit to `main`; Abel approves every merge.
 - Before opening a PR: tests pass locally, simulator screenshots in light and dark for UI changes, then a self-review and simplify pass (`/code-review`, `/simplify`).
 - CI (`.github/workflows/ci.yml`) runs format, analyze, tests, local-Supabase tests and an Android build on every PR; iOS builds on `main`.
+- Beta releases (`.github/workflows/release.yml`): a `v<pubspec version>` tag or a manual run builds the signed production flavor, an APK/AAB and a TestFlight upload. Signing lives only in GitHub secrets; see `docs/releasing.md`.
 - Shared skills arrive in `.claude/skills/` from `AbelShiferaw/agent-skills` via the "Sync shared skills" workflow. Edit them there, not here.
