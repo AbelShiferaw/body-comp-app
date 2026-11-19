@@ -3,6 +3,7 @@ import 'package:app_body/app_body.dart';
 import 'package:body_comp/app/app.dart';
 import 'package:body_comp/profile/domain/profile.dart';
 import 'package:body_comp/profile/presentation/profile_providers.dart';
+import 'package:body_mapping/body_mapping.dart' show BodyScan;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -25,12 +26,14 @@ extension PumpApp on WidgetTester {
   }
 
   /// Pumps the real [App] with in-memory auth and profile backends. A signed-in
-  /// [user] gets [profile], complete by default.
+  /// [user] gets [profile], complete by default, and [scans] for the body.
   Future<Fakes> pumpApp({
     AuthUser? user,
     Profile profile = completeProfile,
+    List<BodyScan> scans = const [],
+    bool tallPhone = true,
   }) async {
-    useTallPhone();
+    if (tallPhone) useTallPhone();
     final auth = FakeAuthRepository(user: user);
     final profiles = FakeProfileRepository({?user?.id: profile});
     await pumpWidget(
@@ -39,7 +42,7 @@ extension PumpApp on WidgetTester {
           authRepositoryProvider.overrideWithValue(auth),
           profileRepositoryProvider.overrideWithValue(profiles),
           bodyDataSourceProvider.overrideWithValue(
-            FixtureBodyDataSource(scans: const []),
+            FixtureBodyDataSource(scans: scans),
           ),
           bodyStyleStoreProvider.overrideWithValue(_NoStyleStore()),
           bodyRendererFactoryProvider.overrideWithValue(FakeBodyRenderer.new),

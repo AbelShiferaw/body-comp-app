@@ -15,6 +15,10 @@ abstract final class Routes {
   static const profileSetup = '/profile-setup';
   static const home = '/';
   static const settings = '/settings';
+
+  /// Connect a DEXA provider. The route itself comes with the onboarding
+  /// screens.
+  static const onboarding = '/onboarding';
 }
 
 typedef _Session = ({AsyncValue<AuthUser?> auth, AsyncValue<Profile?> profile});

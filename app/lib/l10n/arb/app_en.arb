@@ -8,10 +8,80 @@
     "@homeTitle": {
         "description": "Title of the home screen that shows the 3D body"
     },
-    "homeBodyPlaceholder": "Your 3D body appears here after your first DEXA scan",
-    "@homeBodyPlaceholder": {
-        "description": "Shown where the 3D body will render"
+    "homeLevel": "Level {level}",
+    "@homeLevel": {
+        "description": "Semantics label of the hex badge on home. The level is the number of DEXA scans.",
+        "placeholders": {
+            "level": {
+                "type": "int"
+            }
+        }
     },
+    "homeNextScan": "Next suggested scan: {percent}% of the way there",
+    "@homeNextScan": {
+        "description": "Semantics label of the bar under the wordmark that fills up until the next DEXA scan is due",
+        "placeholders": {
+            "percent": {
+                "type": "int"
+            }
+        }
+    },
+    "homeScanDexa": "{date} · DEXA",
+    "@homeScanDexa": {
+        "description": "Chip with the date of the scan the body shows",
+        "placeholders": {
+            "date": {
+                "type": "DateTime",
+                "format": "MMMd"
+            }
+        }
+    },
+    "homeScanEstimate": "{date} · Photo estimate",
+    "@homeScanEstimate": {
+        "description": "Chip with the date of the photo estimate the body shows",
+        "placeholders": {
+            "date": {
+                "type": "DateTime",
+                "format": "MMMd"
+            }
+        }
+    },
+    "homeRefresh": "Refresh scans",
+    "homeSince": "since {date}",
+    "@homeSince": {
+        "description": "After a change, e.g. '▼ 3.8 pts since May'",
+        "placeholders": {
+            "date": {
+                "type": "DateTime",
+                "format": "MMM"
+            }
+        }
+    },
+    "homeNoChange": "no change since {date}",
+    "@homeNoChange": {
+        "placeholders": {
+            "date": {
+                "type": "DateTime",
+                "format": "MMM"
+            }
+        }
+    },
+    "homeFirstScan": "first scan",
+    "@homeFirstScan": {
+        "description": "Under a headline number when there is only one scan to compare with"
+    },
+    "homeEmptyTitle": "Your 3D body starts with a DEXA scan",
+    "homeEmptyBody": "Connect your DEXA provider and we build your body from your scans: fat where you carry it, muscle where you have it.",
+    "homeEmptyAction": "Connect your DEXA provider",
+    "metricVisceralShort": "Visceral",
+    "@metricVisceralShort": {
+        "description": "Short label for visceral fat on the home screen"
+    },
+    "unitPercent": "%",
+    "unitPoints": "pts",
+    "unitKg": "kg",
+    "unitLb": "lb",
+    "unitG": "g",
     "metricBodyFat": "Body fat",
     "metricLeanMass": "Lean mass",
     "metricFatMass": "Fat mass",

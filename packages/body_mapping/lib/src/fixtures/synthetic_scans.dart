@@ -12,7 +12,7 @@ BodyScan syntheticScan({
   required (double, double) trunk,
   required (double, double) android,
   required (double, double) gynoid,
-  double visceralFatG = 400,
+  double? visceralFatG = 400,
   double boneKg = 3.2,
   double headLeanKg = 3.9,
   double headFatKg = 1,
