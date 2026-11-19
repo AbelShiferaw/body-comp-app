@@ -20,9 +20,11 @@ That adds the profile fields and the `delete_account()` function.
 
 Supabase dashboard, Authentication, Sign In / Providers, Email: enabled, minimum password length 8.
 
+**Confirm email: OFF for the beta** (decided Nov 19, 2026; local Supabase is off too). Turn it on before the public launch, once the app handles auth links.
+
 "Confirm email" decides what happens after sign-up:
 
-- Off: the user is signed in straight away. Simplest for the private beta.
+- Off: the user is signed in straight away.
 - On: the app shows "Check your email to confirm your account, then sign in". The link in the email opens the Site URL, not the app (the app does not handle auth deep links yet), so set the Site URL to a page that says "Email confirmed, go back to the app". Also set up custom SMTP, because Supabase's built-in mailer only sends a few emails an hour.
 
 ## 3. Sign in with Apple (iOS)
