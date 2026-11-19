@@ -1,6 +1,7 @@
 import 'package:app_auth/app_auth.dart';
 import 'package:app_ui/app_ui.dart';
 import 'package:body_comp/home/home_page.dart';
+import 'package:body_comp/settings/settings_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -9,6 +10,7 @@ abstract final class Routes {
   static const splash = '/splash';
   static const signIn = '/sign-in';
   static const home = '/';
+  static const settings = '/settings';
 }
 
 /// The app's routes. Signed-out users always land on sign-in; signed-in users
@@ -37,6 +39,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: Routes.signIn, builder: (_, _) => const SignInPage()),
       GoRoute(path: Routes.home, builder: (_, _) => const HomePage()),
+      GoRoute(path: Routes.settings, builder: (_, _) => const SettingsPage()),
     ],
   );
   ref.onDispose(router.dispose);

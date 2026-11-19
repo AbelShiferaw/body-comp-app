@@ -1,0 +1,187 @@
+import 'package:body_mapping/src/body_scan.dart';
+
+/// Builds a synthetic scan. Region values are (lean kg, fat kg); the head
+/// adds [headLeanKg] and [headFatKg] to the totals the way DEXA does.
+BodyScan syntheticScan({
+  required String id,
+  required DateTime scannedAt,
+  required Sex sex,
+  required double heightCm,
+  required (double, double) arm,
+  required (double, double) leg,
+  required (double, double) trunk,
+  required (double, double) android,
+  required (double, double) gynoid,
+  double visceralFatG = 400,
+  double boneKg = 3.2,
+  double headLeanKg = 3.9,
+  double headFatKg = 1,
+  double leftRightSkew = 0.025,
+}) {
+  RegionMass m((double, double) v, [double skew = 0]) =>
+      RegionMass(leanKg: v.$1 * (1 + skew), fatKg: v.$2);
+  final regions = {
+    BodyRegion.leftArm: m(arm, -leftRightSkew),
+    BodyRegion.rightArm: m(arm),
+    BodyRegion.leftLeg: m(leg, -leftRightSkew / 2),
+    BodyRegion.rightLeg: m(leg),
+    BodyRegion.trunk: m(trunk),
+  };
+  final lean = regions.values.fold(headLeanKg, (s, r) => s + r.leanKg);
+  final fat = regions.values.fold(headFatKg, (s, r) => s + r.fatKg);
+  return BodyScan(
+    id: id,
+    scannedAt: scannedAt,
+    sex: sex,
+    heightCm: heightCm,
+    regions: regions,
+    bands: {
+      FatBand.android: RegionMass(leanKg: android.$1, fatKg: android.$2),
+      FatBand.gynoid: RegionMass(leanKg: gynoid.$1, fatKg: gynoid.$2),
+    },
+    totalFatKg: fat,
+    totalLeanKg: lean,
+    totalBoneKg: boneKg,
+    visceralFatG: visceralFatG,
+  );
+}
+
+/// Made-up scans for previews and the fixture data source: a 178 cm male
+/// who cut from about 24% to 17% body fat while gaining some lean mass,
+/// over three scans in 2026.
+final List<BodyScan> sampleTimeline = [
+  syntheticScan(
+    id: 'sample-1',
+    scannedAt: DateTime.utc(2026, 3, 14),
+    sex: Sex.male,
+    heightCm: 178,
+    arm: (3.75, 1.15),
+    leg: (10.45, 3.3),
+    trunk: (29.5, 10.6),
+    android: (3.2, 2),
+    gynoid: (7.6, 3.1),
+    visceralFatG: 620,
+  ),
+  syntheticScan(
+    id: 'sample-2',
+    scannedAt: DateTime.utc(2026, 7, 2),
+    sex: Sex.male,
+    heightCm: 178,
+    arm: (3.9, 0.95),
+    leg: (10.75, 2.9),
+    trunk: (30.2, 8.3),
+    android: (3.25, 1.5),
+    gynoid: (7.8, 2.7),
+    visceralFatG: 470,
+  ),
+  syntheticScan(
+    id: 'sample-3',
+    scannedAt: DateTime.utc(2026, 11, 7),
+    sex: Sex.male,
+    heightCm: 178,
+    arm: (4.05, 0.75),
+    leg: (10.95, 2.5),
+    trunk: (30.8, 6.4),
+    android: (3.3, 1.1),
+    gynoid: (8, 2.3),
+    visceralFatG: 340,
+  ),
+];
+
+/// One scan per synthetic body type, for golden numbers and tuning beyond
+/// one lean male (see the LLD's Testing section).
+final Map<String, BodyScan> syntheticBodyTypes = {
+  'male_lean': syntheticScan(
+    id: 'male_lean',
+    scannedAt: DateTime.utc(2026),
+    sex: Sex.male,
+    heightCm: 180,
+    arm: (4.1, 0.5),
+    leg: (11.2, 1.7),
+    trunk: (31, 3.6),
+    android: (3.3, 0.5),
+    gynoid: (8.1, 1.5),
+    visceralFatG: 150,
+  ),
+  'male_average': syntheticScan(
+    id: 'male_average',
+    scannedAt: DateTime.utc(2026),
+    sex: Sex.male,
+    heightCm: 176,
+    arm: (3.5, 1),
+    leg: (9.8, 3),
+    trunk: (27.5, 9.5),
+    android: (3, 1.9),
+    gynoid: (7.2, 3),
+    visceralFatG: 550,
+  ),
+  'male_high_fat': syntheticScan(
+    id: 'male_high_fat',
+    scannedAt: DateTime.utc(2026),
+    sex: Sex.male,
+    heightCm: 175,
+    arm: (3.6, 2.1),
+    leg: (10.2, 5.4),
+    trunk: (29, 19),
+    android: (3.4, 4.2),
+    gynoid: (7.4, 5.2),
+    visceralFatG: 1500,
+  ),
+  'male_high_muscle': syntheticScan(
+    id: 'male_high_muscle',
+    scannedAt: DateTime.utc(2026),
+    sex: Sex.male,
+    heightCm: 182,
+    arm: (5.2, 0.8),
+    leg: (13.5, 2.4),
+    trunk: (35.5, 6),
+    android: (3.8, 1),
+    gynoid: (9.2, 2.2),
+    visceralFatG: 300,
+  ),
+  'female_lean': syntheticScan(
+    id: 'female_lean',
+    scannedAt: DateTime.utc(2026),
+    sex: Sex.female,
+    heightCm: 167,
+    arm: (2.5, 0.9),
+    leg: (8, 3.4),
+    trunk: (20.5, 6),
+    android: (2.1, 0.8),
+    gynoid: (5.5, 3.2),
+    visceralFatG: 120,
+    headLeanKg: 3.1,
+    headFatKg: 0.9,
+    boneKg: 2.4,
+  ),
+  'female_average': syntheticScan(
+    id: 'female_average',
+    scannedAt: DateTime.utc(2026),
+    sex: Sex.female,
+    heightCm: 164,
+    arm: (2.3, 1.4),
+    leg: (7.4, 4.8),
+    trunk: (19, 10),
+    android: (2, 1.6),
+    gynoid: (5, 4.4),
+    visceralFatG: 350,
+    headLeanKg: 3.1,
+    headFatKg: 0.9,
+    boneKg: 2.3,
+  ),
+  'female_high_fat': syntheticScan(
+    id: 'female_high_fat',
+    scannedAt: DateTime.utc(2026),
+    sex: Sex.female,
+    heightCm: 163,
+    arm: (2.4, 2.4),
+    leg: (7.6, 7.4),
+    trunk: (19.5, 18),
+    android: (2.1, 3.4),
+    gynoid: (5.1, 6.6),
+    visceralFatG: 1100,
+    headLeanKg: 3.1,
+    headFatKg: 1,
+    boneKg: 2.3,
+  ),
+};

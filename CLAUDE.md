@@ -16,8 +16,10 @@ packages/
   app_auth/             # Module: AuthRepository, Supabase implementation, providers, SignInPage
   app_payments/         # Module: PaymentsService + Entitlements (RevenueCat plugs in here)
   app_feedback/         # Module: FeedbackService
+  app_body/             # Module: the 3D body (BodyView, BodyDataSource, flutter_scene renderer, style setting)
+  body_mapping/         # Pure Dart: scan model, scan-to-shape mapping, heatmaps, mesh measurements, body.glb
 supabase/               # Local Supabase: config.toml, migrations/, tests/ (pgTAP)
-tool/                   # local_env.sh, test_all.sh
+tool/                   # local_env.sh, test_all.sh, body_asset/ (rebuilds body.glb from CC0 MakeHuman)
 spikes/                 # Throwaway spike apps. Not part of the workspace; never import from them.
 ```
 
@@ -26,7 +28,7 @@ The repo is a Dart pub workspace: run `flutter pub get` once at the root.
 ## Architecture rules
 
 1. **Modules are self-contained** so they can move to a `flutter-starter` repo later.
-   A module (`packages/app_<name>`) depends only on `app_core`, `app_ui` and third-party packages. Never on another module, never on `app/`.
+   A module (`packages/app_<name>`) depends only on `app_core`, `app_ui`, pure Dart domain packages (no `app_` prefix, no Flutter, such as `body_mapping`) and third-party packages. Never on another module, never on `app/`.
 2. **The app composes.** `app/` wires modules together: it overrides each module's providers in `bootstrap.dart` and owns the router.
    Modules export screens and providers; they do not navigate to each other's routes.
 3. **Each module has the same shape:** `domain/` (interfaces, models), `data/` (implementations that talk to an SDK), `presentation/` (Riverpod providers, widgets).

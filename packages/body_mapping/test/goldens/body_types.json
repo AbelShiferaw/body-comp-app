@@ -1,0 +1,151 @@
+{
+  "mapper": "map-1.0",
+  "asset": "body-1",
+  "male_lean": {
+    "weights": {
+      "sex": "male",
+      "height_cm": 180.0,
+      "left_arm_fat": -0.5025,
+      "left_arm_muscle": 0.2863,
+      "right_arm_fat": -0.5025,
+      "right_arm_muscle": 0.3791,
+      "left_leg_fat": -0.4072,
+      "left_leg_muscle": 0.2719,
+      "right_leg_fat": -0.4072,
+      "right_leg_muscle": 0.3175,
+      "trunk_fat": -0.5999,
+      "trunk_muscle": 0.1378,
+      "android": -0.1936,
+      "gynoid": -0.1143
+    },
+    "waist_cm": 73.2,
+    "upper_arm_cm": 31.5,
+    "thigh_cm": 55.7
+  },
+  "male_average": {
+    "weights": {
+      "sex": "male",
+      "height_cm": 176.0,
+      "left_arm_fat": 0.4612,
+      "left_arm_muscle": -0.1217,
+      "right_arm_fat": 0.4612,
+      "right_arm_muscle": -0.0222,
+      "left_leg_fat": 0.3948,
+      "left_leg_muscle": -0.0405,
+      "right_leg_fat": 0.3948,
+      "right_leg_muscle": 0.008,
+      "trunk_fat": 0.7668,
+      "trunk_muscle": 0.0077,
+      "android": 0.4711,
+      "gynoid": 0.0797
+    },
+    "waist_cm": 86.5,
+    "upper_arm_cm": 33.4,
+    "thigh_cm": 58.2
+  },
+  "male_high_fat": {
+    "weights": {
+      "sex": "male",
+      "height_cm": 175.0,
+      "left_arm_fat": 1.6,
+      "left_arm_muscle": 0.0291,
+      "right_arm_fat": 1.6,
+      "right_arm_muscle": 0.1153,
+      "left_leg_fat": 1.5394,
+      "left_leg_muscle": 0.1403,
+      "right_leg_fat": 1.5394,
+      "right_leg_muscle": 0.1842,
+      "trunk_fat": 1.6,
+      "trunk_muscle": 0.1192,
+      "android": 0.0,
+      "gynoid": 0.0269
+    },
+    "waist_cm": 89.8,
+    "upper_arm_cm": 37.0,
+    "thigh_cm": 61.2
+  },
+  "male_high_muscle": {
+    "weights": {
+      "sex": "male",
+      "height_cm": 182.0,
+      "left_arm_fat": 0.0932,
+      "left_arm_muscle": 1.157,
+      "right_arm_fat": 0.0932,
+      "right_arm_muscle": 1.2722,
+      "left_leg_fat": 0.0435,
+      "left_leg_muscle": 0.9172,
+      "right_leg_fat": 0.0435,
+      "right_leg_muscle": 0.971,
+      "trunk_fat": 0.0435,
+      "trunk_muscle": 0.3546,
+      "android": 0.0232,
+      "gynoid": -0.0497
+    },
+    "waist_cm": 78.8,
+    "upper_arm_cm": 38.1,
+    "thigh_cm": 61.5
+  },
+  "female_lean": {
+    "weights": {
+      "sex": "female",
+      "height_cm": 167.0,
+      "left_arm_fat": -0.5403,
+      "left_arm_muscle": -0.0342,
+      "right_arm_fat": -0.5403,
+      "right_arm_muscle": 0.0562,
+      "left_leg_fat": -0.4641,
+      "left_leg_muscle": 0.0491,
+      "right_leg_fat": -0.4641,
+      "right_leg_muscle": 0.0919,
+      "trunk_fat": -0.6391,
+      "trunk_muscle": 0.0438,
+      "android": -0.1918,
+      "gynoid": 0.0099
+    },
+    "waist_cm": 62.3,
+    "upper_arm_cm": 25.5,
+    "thigh_cm": 52.4
+  },
+  "female_average": {
+    "weights": {
+      "sex": "female",
+      "height_cm": 164.0,
+      "left_arm_fat": 0.0901,
+      "left_arm_muscle": -0.2168,
+      "right_arm_fat": 0.0901,
+      "right_arm_muscle": -0.1198,
+      "left_leg_fat": 0.0562,
+      "left_leg_muscle": -0.1069,
+      "right_leg_fat": 0.0562,
+      "right_leg_muscle": -0.0576,
+      "trunk_fat": 0.0655,
+      "trunk_muscle": -0.0274,
+      "android": 0.017,
+      "gynoid": -0.0246
+    },
+    "waist_cm": 67.0,
+    "upper_arm_cm": 27.6,
+    "thigh_cm": 55.2
+  },
+  "female_high_fat": {
+    "weights": {
+      "sex": "female",
+      "height_cm": 163.0,
+      "left_arm_fat": 0.8917,
+      "left_arm_muscle": -0.0037,
+      "right_arm_fat": 0.8917,
+      "right_arm_muscle": 0.0823,
+      "left_leg_fat": 0.6484,
+      "left_leg_muscle": 0.0396,
+      "right_leg_fat": 0.6484,
+      "right_leg_muscle": 0.0823,
+      "trunk_fat": 0.9415,
+      "trunk_muscle": 0.0412,
+      "android": 0.4573,
+      "gynoid": -0.0908
+    },
+    "waist_cm": 68.6,
+    "upper_arm_cm": 30.2,
+    "thigh_cm": 57.4
+  }
+}

@@ -1,0 +1,16 @@
+name: body_mapping
+description: Turns DEXA scans into a 3D body shape and heatmap colors. Pure Dart, no Flutter or renderer imports, so it can be tested as plain math and reused by any renderer.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.14.0
+
+dependencies:
+  meta: ^1.17.0
+
+dev_dependencies:
+  crypto: ^3.0.6
+  test: ^1.26.0
+  very_good_analysis: ^11.0.0
