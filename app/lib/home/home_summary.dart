@@ -9,11 +9,35 @@ enum Trend { better, worse, flat }
 /// first scan. [change] is null with a single scan or a missing value.
 @immutable
 class HeadlineStat {
-  const new({required this.value, this.change, this.trend = Trend.flat});
+  const new({
+    required this.value,
+    required this.lowerIsBetter,
+    this.change,
+    this.firstScan = false,
+  });
 
   final double? value;
   final double? change;
-  final Trend trend;
+  final bool lowerIsBetter;
+
+  /// True when there is only one scan, so nothing to compare with yet.
+  final bool firstScan;
+
+  /// The change rounded the way it is shown ([change] times [scale], to
+  /// [digits] decimals), or null when there is none.
+  double? shownChange({required int digits, double scale = 1}) {
+    final c = change;
+    if (c == null) return null;
+    return double.parse((c * scale).toStringAsFixed(digits));
+  }
+
+  /// Good or bad news at the shown precision: a change that rounds to zero
+  /// is [Trend.flat], whatever the unit.
+  Trend trend({required int digits, double scale = 1}) {
+    final shown = shownChange(digits: digits, scale: scale);
+    if (shown == null || shown == 0) return Trend.flat;
+    return (shown < 0) == lowerIsBetter ? Trend.better : Trend.worse;
+  }
 }
 
 /// What the home screen shows above the body, worked out from the user's
@@ -44,20 +68,17 @@ class HomeSummary {
     HeadlineStat stat(
       double? Function(BodyScan) read, {
       required bool lowerIsBetter,
-      required double flatBelow,
     }) {
       final value = read(latest);
       final before = read(first);
-      if (!compare || value == null || before == null) {
-        return HeadlineStat(value: value);
-      }
-      final change = value - before;
-      final trend = change.abs() < flatBelow
-          ? Trend.flat
-          : (change < 0) == lowerIsBetter
-          ? Trend.better
-          : Trend.worse;
-      return HeadlineStat(value: value, change: change, trend: trend);
+      return HeadlineStat(
+        value: value,
+        lowerIsBetter: lowerIsBetter,
+        firstScan: !compare,
+        change: compare && value != null && before != null
+            ? value - before
+            : null,
+      );
     }
 
     // The bar tracks the next DEXA scan, so photo estimates do not reset it.
@@ -71,14 +92,9 @@ class HomeSummary {
       first: first,
       level: dexa.length,
       nextScanProgress: (days / scanIntervalDays).clamp(0, 1).toDouble(),
-      // "Flat" below the precision each number is shown at.
-      bodyFat: stat((s) => s.bodyFatPct, lowerIsBetter: true, flatBelow: 0.05),
-      leanKg: stat((s) => s.totalLeanKg, lowerIsBetter: false, flatBelow: 0.05),
-      visceralG: stat(
-        (s) => s.visceralFatG,
-        lowerIsBetter: true,
-        flatBelow: 0.5,
-      ),
+      bodyFat: stat((s) => s.bodyFatPct, lowerIsBetter: true),
+      leanKg: stat((s) => s.totalLeanKg, lowerIsBetter: false),
+      visceralG: stat((s) => s.visceralFatG, lowerIsBetter: true),
     );
   }
 
@@ -95,6 +111,4 @@ class HomeSummary {
   final HeadlineStat bodyFat;
   final HeadlineStat leanKg;
   final HeadlineStat visceralG;
-
-  bool get hasComparison => !identical(first, latest);
 }

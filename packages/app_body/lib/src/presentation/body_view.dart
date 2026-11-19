@@ -232,11 +232,14 @@ class _BodyViewState extends ConsumerState<BodyView>
             children: [
               if (style == BodyStyle.hologram)
                 Positioned.fill(
-                  child: CustomPaint(
-                    key: const Key('body_pad'),
-                    painter: ScannerPadPainter(
-                      color: tokens.lean,
-                      zoom: _pose.zoom,
+                  // The scene repaints every frame; keep the pad out of it.
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      key: const Key('body_pad'),
+                      painter: ScannerPadPainter(
+                        color: tokens.lean,
+                        zoom: _pose.zoom,
+                      ),
                     ),
                   ),
                 ),
@@ -750,11 +753,9 @@ class ScannerPadPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
-    // Mirrors FlutterSceneBodyRenderer's fit: half-height 0.53 and
-    // half-width 0.47 body heights, whichever needs the wider view.
-    final aspect = size.width / size.height;
-    final fit = math.max(0.53, 0.47 / aspect);
-    final z = zoom.clamp(1, 3);
+    // Same framing as the renderer, so the pad sits under the feet.
+    final fit = BodyFraming.fit(size.width / size.height);
+    final z = zoom.clamp(1, BodyFraming.maxZoom);
     final feetY = size.height * (0.5 + 0.5 * z * 0.5 / fit);
     final bodyPx = size.height * z / (2 * fit);
     final center = Offset(size.width / 2, feetY);

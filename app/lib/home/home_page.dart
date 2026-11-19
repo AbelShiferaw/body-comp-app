@@ -7,6 +7,7 @@ import 'package:app_ui/app_ui.dart';
 import 'package:body_comp/home/home_summary.dart';
 import 'package:body_comp/l10n/l10n.dart';
 import 'package:body_comp/profile/domain/profile.dart';
+import 'package:body_comp/profile/domain/profile_rules.dart';
 import 'package:body_comp/profile/presentation/profile_providers.dart';
 import 'package:body_comp/router/router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -57,9 +58,12 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     final scans = ref.watch(bodyScansProvider);
-    final units = ref.watch(profileProvider).value?.units ?? Units.metric;
+    final units =
+        ref.watch(profileProvider.select((p) => p.value?.units)) ??
+        Units.metric;
+    final now = widget.clock();
     final summary = switch (scans.value) {
-      final s? => HomeSummary.of(s, now: widget.clock()),
+      final s? => HomeSummary.of(s, now: now),
       null => null,
     };
     final empty = scans.hasValue && summary == null && !scans.hasError;
@@ -75,7 +79,8 @@ class _HomePageState extends ConsumerState<HomePage> {
               refreshing: _refreshing,
               onRefresh: () => unawaited(_refresh()),
             ),
-            if (summary != null) _Headline(summary: summary, units: units),
+            if (summary != null)
+              _Headline(summary: summary, units: units, now: now),
             Expanded(
               child: empty
                   ? const _EmptyState()
@@ -299,22 +304,40 @@ class _ScanChip extends StatelessWidget {
 /// Body fat, lean mass and visceral fat of the latest scan, each with its
 /// change since the first scan, colored by meaning.
 class _Headline extends StatelessWidget {
-  const new({required this.summary, required this.units});
+  const new({required this.summary, required this.units, required this.now});
 
   final HomeSummary summary;
   final Units units;
-
-  static const _lbPerKg = 2.20462;
+  final DateTime now;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final s = summary;
     final imperial = units == Units.imperial;
-    final mass = imperial ? _lbPerKg : 1.0;
     final massUnit = imperial ? l10n.unitLb : l10n.unitKg;
-    final visceral = imperial ? _lbPerKg / 1000 : 1.0;
-    final visceralUnit = imperial ? l10n.unitLb : l10n.unitG;
+    final since = _monthOf(context, s.first.scannedAt, now: now);
+
+    Widget stat(
+      String key,
+      String label,
+      HeadlineStat stat, {
+      required int digits,
+      required String unit,
+      String? changeUnit,
+      double scale = 1,
+    }) => Expanded(
+      child: _Stat(
+        key: Key(key),
+        label: label,
+        stat: stat,
+        digits: digits,
+        scale: scale,
+        unit: unit,
+        changeUnit: changeUnit ?? unit,
+        since: since,
+      ),
+    );
 
     return Semantics(
       container: true,
@@ -327,46 +350,31 @@ class _Headline extends StatelessWidget {
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: AppSpacing.sm,
           children: [
-            Expanded(
-              child: _Stat(
-                key: const Key('home_bodyFat'),
-                label: l10n.metricBodyFat,
-                stat: s.bodyFat,
-                digits: 1,
-                unit: l10n.unitPercent,
-                changeUnit: l10n.unitPoints,
-                since: s.first.scannedAt,
-                compare: s.hasComparison,
-              ),
+            stat(
+              'home_bodyFat',
+              l10n.metricBodyFat,
+              s.bodyFat,
+              digits: 1,
+              unit: l10n.unitPercent,
+              changeUnit: l10n.unitPoints,
             ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: _Stat(
-                key: const Key('home_lean'),
-                label: l10n.metricLeanMass,
-                stat: s.leanKg,
-                scale: mass,
-                digits: 1,
-                unit: massUnit,
-                changeUnit: massUnit,
-                since: s.first.scannedAt,
-                compare: s.hasComparison,
-              ),
+            stat(
+              'home_lean',
+              l10n.metricLeanMass,
+              s.leanKg,
+              digits: 1,
+              scale: imperial ? Mass.lbPerKg : 1,
+              unit: massUnit,
             ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: _Stat(
-                key: const Key('home_visceral'),
-                label: l10n.metricVisceralShort,
-                stat: s.visceralG,
-                scale: visceral,
-                digits: imperial ? 2 : 0,
-                unit: visceralUnit,
-                changeUnit: visceralUnit,
-                since: s.first.scannedAt,
-                compare: s.hasComparison,
-              ),
+            stat(
+              'home_visceral',
+              l10n.metricVisceralShort,
+              s.visceralG,
+              digits: imperial ? 2 : 0,
+              scale: imperial ? Mass.lbPerKg / 1000 : 1,
+              unit: imperial ? l10n.unitLb : l10n.unitG,
             ),
           ],
         ),
@@ -380,11 +388,10 @@ class _Stat extends StatelessWidget {
     required this.label,
     required this.stat,
     required this.digits,
+    required this.scale,
     required this.unit,
     required this.changeUnit,
     required this.since,
-    required this.compare,
-    this.scale = 1,
     super.key,
   });
 
@@ -394,8 +401,9 @@ class _Stat extends StatelessWidget {
   final double scale;
   final String unit;
   final String changeUnit;
-  final DateTime since;
-  final bool compare;
+
+  /// The first scan's month, already formatted.
+  final String since;
 
   @override
   Widget build(BuildContext context) {
@@ -403,26 +411,17 @@ class _Stat extends StatelessWidget {
     final tokens = context.tokens;
     final textTheme = Theme.of(context).textTheme;
     final value = stat.value;
-    final change = stat.change;
+    final shown = stat.shownChange(digits: digits, scale: scale);
+    final trend = stat.trend(digits: digits, scale: scale);
 
-    // A change that rounds to zero at the shown precision reads as flat,
-    // whatever the unit.
-    final shown = change == null
-        ? null
-        : (change.abs() * scale).toStringAsFixed(digits);
-    final flat =
-        stat.trend == Trend.flat || (shown != null && double.parse(shown) == 0);
-    final sinceText = _monthOf(context, since);
-    final String? changeText;
-    if (change != null) {
-      changeText = flat
-          ? l10n.homeNoChange(sinceText)
-          : '${change < 0 ? '▼' : '▲'} $shown $changeUnit '
-                '${l10n.homeSince(sinceText)}';
-    } else {
-      changeText = compare ? null : l10n.homeFirstScan;
-    }
-    final changeColor = switch (flat ? Trend.flat : stat.trend) {
+    final changeText = switch (shown) {
+      null => stat.firstScan ? l10n.homeFirstScan : null,
+      0 => l10n.homeNoChange(since),
+      _ =>
+        '${shown < 0 ? '▼' : '▲'} ${shown.abs().toStringAsFixed(digits)} '
+            '$changeUnit ${l10n.homeSince(since)}',
+    };
+    final changeColor = switch (trend) {
       Trend.better => tokens.lean,
       Trend.worse => tokens.fat,
       Trend.flat => tokens.textSecondary,
@@ -481,9 +480,9 @@ class _Stat extends StatelessWidget {
 }
 
 /// "May", or "May 2025" when it is not this year's May.
-String _monthOf(BuildContext context, DateTime date) {
+String _monthOf(BuildContext context, DateTime date, {required DateTime now}) {
   final locale = Localizations.localeOf(context).toLanguageTag();
-  return date.year == DateTime.now().year
+  return date.year == now.year
       ? DateFormat.MMM(locale).format(date)
       : DateFormat.yMMM(locale).format(date);
 }

@@ -4,10 +4,6 @@
     "@appTitle": {
         "description": "App name. Working title until branding is decided."
     },
-    "homeTitle": "Your body",
-    "@homeTitle": {
-        "description": "Title of the home screen that shows the 3D body"
-    },
     "homeLevel": "Level {level}",
     "@homeLevel": {
         "description": "Semantics label of the hex badge on home. The level is the number of DEXA scans.",
@@ -49,7 +45,7 @@
     "homeRefresh": "Refresh scans",
     "homeSince": "since {date}",
     "@homeSince": {
-        "description": "After a change, e.g. '▼ 3.8 pts since May'",
+        "description": "After a change, e.g. '▼ 3.8 pts since May'. date is a month, with the year when it is not this year.",
         "placeholders": {
             "date": {
                 "type": "String"
@@ -82,8 +78,6 @@
     "unitG": "g",
     "metricBodyFat": "Body fat",
     "metricLeanMass": "Lean mass",
-    "metricFatMass": "Fat mass",
-    "metricVisceralFat": "Visceral fat",
     "startupErrorTitle": "The app could not start",
     "@startupErrorTitle": {
         "description": "Shown when configuration is missing or invalid at launch"

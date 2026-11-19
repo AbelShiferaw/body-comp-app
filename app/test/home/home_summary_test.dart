@@ -34,10 +34,10 @@ void main() {
   test('one scan: values, no changes, level 1', () {
     final s = HomeSummary.of([scan('a', nov)], now: nov)!;
     expect(s.level, 1);
-    expect(s.hasComparison, isFalse);
     expect(s.bodyFat.value, closeTo(s.latest.bodyFatPct, 1e-9));
     expect(s.bodyFat.change, isNull);
-    expect(s.leanKg.trend, Trend.flat);
+    expect(s.bodyFat.firstScan, isTrue);
+    expect(s.leanKg.trend(digits: 1), Trend.flat);
   });
 
   test('changes are measured from the first scan to the latest', () {
@@ -59,17 +59,17 @@ void main() {
       scan('a', may, trunkFat: 12, trunkLean: 28, visceral: 300),
       scan('b', nov, trunkFat: 9, trunkLean: 29, visceral: 200),
     ], now: nov)!;
-    expect(better.bodyFat.trend, Trend.better);
-    expect(better.leanKg.trend, Trend.better);
-    expect(better.visceralG.trend, Trend.better);
+    expect(better.bodyFat.trend(digits: 1), Trend.better);
+    expect(better.leanKg.trend(digits: 1), Trend.better);
+    expect(better.visceralG.trend(digits: 0), Trend.better);
 
     final worse = HomeSummary.of([
       scan('a', may, trunkFat: 9, trunkLean: 29, visceral: 200),
       scan('b', nov, trunkFat: 12, trunkLean: 28, visceral: 300),
     ], now: nov)!;
-    expect(worse.bodyFat.trend, Trend.worse);
-    expect(worse.leanKg.trend, Trend.worse);
-    expect(worse.visceralG.trend, Trend.worse);
+    expect(worse.bodyFat.trend(digits: 1), Trend.worse);
+    expect(worse.leanKg.trend(digits: 1), Trend.worse);
+    expect(worse.visceralG.trend(digits: 0), Trend.worse);
   });
 
   test('changes smaller than the shown precision are flat', () {
@@ -77,8 +77,15 @@ void main() {
       scan('a', may),
       scan('b', nov, trunkLean: 29.02, visceral: 400.2),
     ], now: nov)!;
-    expect(s.leanKg.trend, Trend.flat);
-    expect(s.visceralG.trend, Trend.flat);
+    expect(s.leanKg.trend(digits: 1), Trend.flat);
+    expect(s.visceralG.trend(digits: 0), Trend.flat);
+    // 2 g is 0.00 lb but 2 g in metric.
+    final v = HomeSummary.of([
+      scan('a', may),
+      scan('b', nov, visceral: 402),
+    ], now: nov)!.visceralG;
+    expect(v.trend(digits: 0), Trend.worse);
+    expect(v.trend(digits: 2, scale: 2.20462 / 1000), Trend.flat);
   });
 
   test('a missing visceral reading has no change', () {

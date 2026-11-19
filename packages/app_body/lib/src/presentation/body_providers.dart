@@ -192,7 +192,7 @@ class BodyStyleController extends Notifier<BodyStyle> {
   @override
   BodyStyle build() {
     unawaited(_load());
-    return BodyStyle.hologram;
+    return BodyStyle.defaultStyle;
   }
 
   Future<void> _load() async {

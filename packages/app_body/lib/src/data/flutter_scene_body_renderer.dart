@@ -25,7 +25,7 @@ class FlutterSceneBodyRenderer implements BodyRenderer {
   BodyGeometry? _b;
   Float32List? _rgba;
   double _t = 1;
-  BodyStyle _style = BodyStyle.hologram;
+  BodyStyle _style = BodyStyle.defaultStyle;
   Brightness _brightness = Brightness.light;
   CameraPose _pose = (azimuth: 0, zoom: 1);
   double _aspect = 0;
@@ -206,10 +206,8 @@ class FlutterSceneBodyRenderer implements BodyRenderer {
     const fovY = 26 * vm.degrees2Radians;
     final halfTan = math.tan(fovY / 2);
     final aspect = _aspect <= 0 ? 0.6 : _aspect;
-    final h = (top - bottom) * 0.53;
-    final w = (top - bottom) * 0.47;
-    final fit = math.max(h / halfTan, w / (halfTan * aspect));
-    final dist = fit / _pose.zoom.clamp(1, 3);
+    final fit = (top - bottom) * BodyFraming.fit(aspect) / halfTan;
+    final dist = fit / _pose.zoom.clamp(1, BodyFraming.maxZoom);
     final eye =
         target +
         vm.Vector3(
