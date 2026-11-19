@@ -113,7 +113,10 @@ class SyncResult {
   /// New scans stored by this run.
   final int added;
 
-  /// Scans the provider reprocessed since we last stored them.
+  /// Scans the server rewrote (a reprocessed payload or a new normalizer).
+  /// Refresh fetches only ids it has not stored, so today this counts only
+  /// scans another phone stored mid-run; re-fetching reprocessed scans is a
+  /// follow-up (see docs/bodyspec-sync.md).
   final int updated;
 
   /// Scans stored but not drawable (they failed validation).

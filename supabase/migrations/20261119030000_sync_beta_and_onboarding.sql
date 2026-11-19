@@ -21,8 +21,10 @@ create table public.feature_flags (
   updated_at timestamptz not null default now()
 );
 
--- Users never read the tables directly: they ask feature_enabled() about
--- themselves, so nobody can list who else is in a beta.
+-- Server-only tables: RLS on, no policies and no grants, so the app can never
+-- read or write them (an exception to "per-operation policies", recorded in
+-- CLAUDE.md). Users ask feature_enabled() about themselves, so nobody can
+-- list who else is in a beta.
 alter table public.feature_flags enable row level security;
 revoke all on public.feature_flags from anon, authenticated;
 
@@ -105,3 +107,9 @@ comment on column public.profiles.goals is
   'Onboarding quiz answers: lose_fat, build_muscle, track_health.';
 comment on column public.profiles.onboarded_at is
   'When onboarding finished. Null keeps the user in onboarding.';
+
+-- Users who set up their profile before onboarding existed are not sent
+-- through it again.
+update public.profiles
+set onboarded_at = now()
+where sex is not null and birth_year is not null and height_cm is not null;

@@ -3,12 +3,20 @@
 -- allowlist, or add themselves to a beta.
 -- Run: supabase test db
 begin;
-select plan(17);
+select plan(18);
 
 insert into auth.users (id, email)
 values
   ('11111111-1111-1111-1111-111111111111', 'alice@example.test'),
   ('22222222-2222-2222-2222-222222222222', 'bob@example.test');
+
+-- The migration's backfill marks already set-up profiles as onboarded; these
+-- users are created after it, so they start fresh.
+select is(
+  (select count(*) from public.profiles where onboarded_at is not null
+     and id in ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222')),
+  0::bigint, 'new users start not onboarded'
+);
 
 select ok(
   (select bool_and(relrowsecurity) from pg_class

@@ -37,6 +37,10 @@ class BodySpecScanProvider implements ScanProvider {
 
   String? _accessToken;
   DateTime? _accessExpiresAt;
+
+  /// Whose access token is in memory. A different signed-in user never gets
+  /// it, even if sign-out cleanup did not run.
+  String? _accessUserId;
   Future<String>? _refreshing;
 
   /// The DEXA sections fetched for every result, besides its detail.
@@ -75,8 +79,9 @@ class BodySpecScanProvider implements ScanProvider {
         'BodySpec sign-in returned no refresh token or subject',
       );
     }
-    await _tokens.write(provider.key, _userId, refresh);
-    _remember(t);
+    final userId = _userId;
+    await _tokens.write(provider.key, userId, refresh);
+    _remember(t, userId);
     _log.info('Signed in to BodySpec');
     return ProviderAccount(subject: subject);
   });
@@ -180,19 +185,22 @@ class BodySpecScanProvider implements ScanProvider {
     }
   }
 
-  void _remember(OAuthTokens t) {
+  void _remember(OAuthTokens t, String userId) {
     _accessToken = t.accessToken;
     _accessExpiresAt = t.expiresAt;
+    _accessUserId = userId;
   }
 
   void _clearAccess() {
     _accessToken = null;
     _accessExpiresAt = null;
+    _accessUserId = null;
   }
 
   /// A valid access token, refreshing it first when it is missing or about
   /// to expire. Concurrent callers share one refresh.
   Future<String> _access({bool force = false}) {
+    if (_accessUserId != _userId) _clearAccess();
     final token = _accessToken;
     final exp = _accessExpiresAt;
     final fresh =
@@ -217,7 +225,7 @@ class BodySpecScanProvider implements ScanProvider {
     if (rotated != null && rotated != refresh) {
       await _tokens.write(provider.key, userId, rotated);
     }
-    _remember(t);
+    _remember(t, userId);
     return t.accessToken;
   }
 

@@ -47,6 +47,7 @@ The repo is a Dart pub workspace: run `flutter pub get` once at the root.
 9. **Imports:** Flutter 3.50 deprecates `package:flutter/material.dart`; import `package:material_ui/material_ui.dart`.
 10. **Database:** every table gets RLS enabled in the migration that creates it, per-operation policies on `auth.uid()`, and a pgTAP test in `supabase/tests/` proving one user cannot read or change another's rows. The service key is never in the app.
     Every user-owned table references `auth.users (id) on delete cascade`. Child rows carry `user_id` and a composite foreign key `(parent_id, user_id)` so they cannot point at another user's parent.
+    Server-only tables (`feature_flags`, `feature_allowlist`) are the exception: RLS on, no policies, no grants; the app asks `feature_enabled()` instead.
     Scans, regions and raw payloads are written only by `ingest_normalized_scan` (service role, from the ingest-scan edge function); the app can read them, set `photo_pair_status` and delete. Column-level grants restrict what the app may update.
 11. **Strings** shown to users go in `app/lib/l10n/arb/app_en.arb` (modules: a TODO until modules share l10n).
 

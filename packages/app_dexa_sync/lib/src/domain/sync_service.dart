@@ -170,10 +170,17 @@ class SyncService {
     }
   }
 
+  /// Undated scans first, then by date, then by id: a total order, so the
+  /// last created scan really is the newest.
   static int _oldestFirst(RemoteScanRef a, RemoteScanRef b) {
     final x = a.scannedAt;
     final y = b.scannedAt;
-    if (x == null || y == null) return a.id.compareTo(b.id);
-    return x.compareTo(y);
+    final byDate = switch ((x, y)) {
+      (null, null) => 0,
+      (null, _) => -1,
+      (_, null) => 1,
+      (final x?, final y?) => x.compareTo(y),
+    };
+    return byDate != 0 ? byDate : a.id.compareTo(b.id);
   }
 }
