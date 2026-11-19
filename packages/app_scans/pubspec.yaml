@@ -1,0 +1,23 @@
+name: app_scans
+description: Body data module. DEXA scans with regional data, body measurements, photo sessions and consents, read from Supabase under RLS.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.14.0
+  flutter: ^3.50.0
+
+dependencies:
+  app_core: any
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^3.5.0
+  http: ^1.5.0
+  meta: ^1.17.0
+  supabase: ^2.16.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  very_good_analysis: ^11.0.0
