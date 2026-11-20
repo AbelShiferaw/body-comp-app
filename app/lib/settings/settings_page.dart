@@ -76,43 +76,55 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final email = ref.watch(authUserProvider).value?.email;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.settingsTitle)),
+      appBar: AppBar(
+        title: Text(l10n.settingsTitle, style: textTheme.headlineSmall),
+      ),
       body: AbsorbPointer(
         absorbing: _busy,
         child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.gutter,
+            AppSpacing.sm,
+            AppSpacing.gutter,
+            AppSpacing.xl,
+          ),
           children: [
-            Text(l10n.settingsProfileSection, style: textTheme.titleMedium),
-            const SizedBox(height: AppSpacing.md),
-            switch (profile) {
-              AsyncError() => ErrorView(
-                message: l10n.errorGeneric,
-                retryLabel: l10n.retry,
-                onRetry: () => ref.invalidate(profileProvider),
-              ),
-              AsyncValue(:final value) when profile.hasValue => ProfileForm(
-                initial: value ?? const Profile(),
-                submitLabel: l10n.save,
-                onSaved: () => ScaffoldMessenger.of(context)
-                    .showSnackBar(SnackBar(content: Text(l10n.profileSaved))),
-              ),
-              _ => const LoadingView(),
-            },
-            const SizedBox(height: AppSpacing.lg),
-            const BodyStyleSetting(),
-            const SizedBox(height: AppSpacing.xl),
-            Text(l10n.settingsAccountSection, style: textTheme.titleMedium),
-            if (email != null) ...[
-              const SizedBox(height: AppSpacing.xs),
-              Text(email, style: TextStyle(color: tokens.textSecondary)),
-            ],
-            const SizedBox(height: AppSpacing.md),
-            OutlinedButton(
-              key: const Key('settings_signOut'),
-              onPressed: () => _run(ref.read(authRepositoryProvider).signOut),
-              child: Text(l10n.signOut),
+            _Section(
+              title: l10n.settingsProfileSection,
+              child: switch (profile) {
+                AsyncError() => ErrorView(
+                  message: l10n.errorGeneric,
+                  retryLabel: l10n.retry,
+                  onRetry: () => ref.invalidate(profileProvider),
+                ),
+                AsyncValue(:final value) when profile.hasValue => ProfileForm(
+                  initial: value ?? const Profile(),
+                  submitLabel: l10n.save,
+                  onSaved: () => ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text(l10n.profileSaved))),
+                ),
+                _ => const LoadingView(),
+              },
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const _Section(child: BodyStyleSetting()),
+            _Section(
+              title: l10n.settingsAccountSection,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (email != null) ...[
+                    Text(email, style: textTheme.bodyLarge),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  OutlinedButton(
+                    key: const Key('settings_signOut'),
+                    onPressed: () =>
+                        _run(ref.read(authRepositoryProvider).signOut),
+                    child: Text(l10n.signOut),
+                  ),
+                ],
+              ),
+            ),
             TextButton(
               key: const Key('settings_delete'),
               onPressed: _confirmDelete,
@@ -125,6 +137,46 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   : Text(l10n.deleteAccount),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A titled card on the settings page.
+class _Section extends StatelessWidget {
+  const new({required this.child, this.title});
+
+  final String? title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: tokens.surface,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: tokens.border),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.gutter),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (title case final title?) ...[
+                Text(
+                  title.toUpperCase(),
+                  style: Theme.of(context).textTheme.labelSmall
+                      ?.copyWith(color: tokens.textSecondary),
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
+              child,
+            ],
+          ),
         ),
       ),
     );
