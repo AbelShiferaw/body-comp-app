@@ -1,0 +1,2 @@
+# Mesh tests parse the 2 MB body.glb and run shape math; give them room on CI.
+timeout: 2x

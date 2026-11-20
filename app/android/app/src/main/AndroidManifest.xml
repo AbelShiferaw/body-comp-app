@@ -1,5 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Release builds need this to reach Supabase (debug/profile add it on their own). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- No Android backup: the BodySpec refresh token in secure storage must
+         never be restored to another phone (sync LLD). Everything else lives
+         in Supabase. -->
     <application
+        android:allowBackup="false"
+        android:fullBackupContent="false"
         android:label="${appName}"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
@@ -30,6 +37,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- The 3D body renders with flutter_scene, which needs Flutter GPU. -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableFlutterGPU"
+            android:value="true" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

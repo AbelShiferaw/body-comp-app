@@ -12,17 +12,23 @@ void main() {
 
   setUp(() => repo = FakeAuthRepository());
 
-  Future<void> pump(WidgetTester tester) => tester.pumpWidget(
-    ProviderScope(
-      overrides: [authRepositoryProvider.overrideWithValue(repo)],
-      child: MaterialApp(theme: AppTheme.light, home: const SignInPage()),
-    ),
-  );
+  Future<void> pump(WidgetTester tester, {ThemeData? theme}) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [authRepositoryProvider.overrideWithValue(repo)],
+        child: MaterialApp(
+          theme: theme ?? AppTheme.light,
+          home: const SignInPage(),
+        ),
+      ),
+    );
+    await tester.pump();
+  }
 
   Future<void> fillAndSubmit(WidgetTester tester) async {
     await tester.enterText(find.byKey(const Key('signIn_email')), ' a@b.co ');
     await tester.enterText(find.byKey(const Key('signIn_password')), 'secret');
-    await tester.tap(find.byType(AppButton));
+    await tester.tap(find.byKey(const Key('signIn_submit')));
     await tester.pumpAndSettle();
   }
 
@@ -42,11 +48,65 @@ void main() {
     expect(repo.calls, ['signUp:a@b.co']);
   });
 
+  testWidgets('asks the user to confirm their email when needed', (
+    tester,
+  ) async {
+    repo.signUpResult = SignUpResult.confirmationEmailSent;
+    await pump(tester);
+    await tester.tap(find.text('Create an account'));
+    await tester.pump();
+    await fillAndSubmit(tester);
+    expect(find.byKey(const Key('signIn_notice')), findsOneWidget);
+  });
+
   testWidgets('shows a friendly message for a network error', (tester) async {
     repo.nextError = const NetworkException('offline');
     await pump(tester);
     await fillAndSubmit(tester);
     expect(find.textContaining('No connection'), findsOneWidget);
+  });
+
+  testWidgets('shows specific copy for a wrong password', (tester) async {
+    repo.nextError = const UnauthorizedException(
+      'Invalid login credentials',
+      code: 'invalid_credentials',
+    );
+    await pump(tester);
+    await fillAndSubmit(tester);
+    expect(find.textContaining('did not match'), findsOneWidget);
+  });
+
+  testWidgets('hides Apple and Google when unavailable', (tester) async {
+    await pump(tester);
+    expect(find.byKey(const Key('signIn_apple')), findsNothing);
+    expect(find.byKey(const Key('signIn_google')), findsNothing);
+  });
+
+  for (final (name, theme) in [
+    ('light', AppTheme.light),
+    ('dark', AppTheme.dark),
+  ]) {
+    testWidgets('offers Apple and Google when available ($name)', (
+      tester,
+    ) async {
+      repo.methods = SignInMethod.values.toSet();
+      await pump(tester, theme: theme);
+      await tester.tap(find.byKey(const Key('signIn_google')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('signIn_apple')));
+      await tester.pumpAndSettle();
+      expect(repo.calls, ['google', 'apple']);
+    });
+  }
+
+  testWidgets('a cancelled sheet shows no error', (tester) async {
+    repo
+      ..methods = SignInMethod.values.toSet()
+      ..nextError = const CancelledException('closed');
+    await pump(tester);
+    await tester.tap(find.byKey(const Key('signIn_google')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('signIn_error')), findsNothing);
   });
 
   test('authUserProvider emits the current user, then changes', () async {

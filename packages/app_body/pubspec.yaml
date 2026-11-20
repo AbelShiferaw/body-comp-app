@@ -1,0 +1,31 @@
+name: app_body
+description: The 3D body module. Shows a body shaped from the user's scans, morphing between scans, with Fat and Change heatmap views. Reads scans through BodyDataSource, which the app overrides.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.14.0
+  flutter: ^3.50.0
+
+dependencies:
+  app_core: any
+  app_ui: any
+  body_mapping: any
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^3.5.0
+  flutter_scene: 0.24.3
+  material_ui: ^1.11.0
+  meta: ^1.17.0
+  shared_preferences: ^2.5.3
+  vector_math: ^2.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  very_good_analysis: ^11.0.0
+
+flutter:
+  assets:
+    - packages/body_mapping/assets/body.glb
