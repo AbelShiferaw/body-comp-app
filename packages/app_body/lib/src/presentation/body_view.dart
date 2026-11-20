@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:app_body/src/domain/body_renderer.dart';
 import 'package:app_body/src/domain/body_view_state.dart';
@@ -229,6 +230,19 @@ class _BodyViewState extends ConsumerState<BodyView>
         Expanded(
           child: Stack(
             children: [
+              if (style == BodyStyle.hologram)
+                Positioned.fill(
+                  // The scene repaints every frame; keep the pad out of it.
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      key: const Key('body_pad'),
+                      painter: ScannerPadPainter(
+                        color: tokens.lean,
+                        zoom: _pose.zoom,
+                      ),
+                    ),
+                  ),
+                ),
               Positioned.fill(child: _scene()),
               if (metric != null && mapper != null)
                 Positioned(
@@ -325,6 +339,14 @@ class _BodyViewState extends ConsumerState<BodyView>
   }
 
   static Gradient _background(AppTokens t, BodyStyle style) => switch (style) {
+    BodyStyle.hologram => RadialGradient(
+      center: const Alignment(0, 0.1),
+      radius: 0.85,
+      colors: [
+        Color.alphaBlend(t.lean.withValues(alpha: 0.10), t.surfaceRaised),
+        t.background,
+      ],
+    ),
     BodyStyle.studio => LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
@@ -635,6 +657,7 @@ class _Timeline extends StatelessWidget {
         DropdownButton<BodyScan>(
           key: key,
           value: value,
+          isExpanded: true,
           underline: const SizedBox.shrink(),
           style: textTheme.labelLarge?.copyWith(color: tokens.textPrimary),
           dropdownColor: tokens.surface,
@@ -677,16 +700,20 @@ class _Timeline extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    picker(
-                      pair.from,
-                      (s) => onCompare(s, pair.to),
-                      const Key('body_from'),
+                    Flexible(
+                      child: picker(
+                        pair.from,
+                        (s) => onCompare(s, pair.to),
+                        const Key('body_from'),
+                      ),
                     ),
                     Icon(Icons.arrow_forward, color: tokens.textSecondary),
-                    picker(
-                      pair.to,
-                      (s) => onCompare(pair.from, s),
-                      const Key('body_to'),
+                    Flexible(
+                      child: picker(
+                        pair.to,
+                        (s) => onCompare(pair.from, s),
+                        const Key('body_to'),
+                      ),
                     ),
                   ],
                 ),
@@ -711,4 +738,69 @@ class _Timeline extends StatelessWidget {
             ),
     );
   }
+}
+
+/// The game-style scanner pad under the avatar's feet: concentric rings and a
+/// hex ring in the lean color, drawn behind the 3D scene. Its position follows
+/// the renderer's camera fit (whole body framed, feet near the bottom).
+@visibleForTesting
+class ScannerPadPainter extends CustomPainter {
+  const new({required this.color, required this.zoom});
+
+  final Color color;
+  final double zoom;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+    // Same framing as the renderer, so the pad sits under the feet.
+    final fit = BodyFraming.fit(size.width / size.height);
+    final z = zoom.clamp(1, BodyFraming.maxZoom);
+    final feetY = size.height * (0.5 + 0.5 * z * 0.5 / fit);
+    final bodyPx = size.height * z / (2 * fit);
+    final center = Offset(size.width / 2, feetY);
+    final rx = bodyPx * 0.36;
+    Rect ellipse(double scale) => Rect.fromCenter(
+      center: center,
+      width: 2 * rx * scale,
+      height: 2 * rx * scale * 0.22,
+    );
+
+    canvas
+      ..drawOval(
+        ellipse(1.25),
+        Paint()
+          ..shader = RadialGradient(
+            colors: [color.withValues(alpha: 0.28), color.withValues(alpha: 0)],
+          ).createShader(ellipse(1.25)),
+      )
+      ..drawOval(
+        ellipse(1),
+        Paint()
+          ..color = color.withValues(alpha: 0.75)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6,
+      )
+      ..drawOval(
+        ellipse(0.62),
+        Paint()
+          ..color = color.withValues(alpha: 0.4)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1,
+      );
+
+    // Hex ticks around the outer ring.
+    final tick = Paint()
+      ..color = color.withValues(alpha: 0.55)
+      ..strokeWidth = 1.2;
+    for (var i = 0; i < 24; i++) {
+      final a = i * math.pi / 12;
+      final p = Offset(math.cos(a), math.sin(a) * 0.22);
+      canvas.drawLine(center + p * rx * 1.04, center + p * rx * 1.12, tick);
+    }
+  }
+
+  @override
+  bool shouldRepaint(ScannerPadPainter old) =>
+      old.color != color || old.zoom != zoom;
 }

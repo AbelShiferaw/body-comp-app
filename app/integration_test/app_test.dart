@@ -36,8 +36,14 @@ void main() {
       await settle();
     }
 
-    await tester.tap(find.text('Create an account'));
-    await tester.pump();
+    Future<void> signInWithEmail() async {
+      await tester.tap(find.byKey(const Key('signIn_haveAccount')));
+      await settle();
+      await fillCredentials();
+    }
+
+    await tester.tap(find.byKey(const Key('signIn_emailOption')));
+    await settle();
     await fillCredentials();
     expect(find.byType(ProfileSetupPage), findsOneWidget);
 
@@ -55,7 +61,7 @@ void main() {
     expect(find.byType(SignInPage), findsOneWidget);
 
     // Signing back in skips setup: the profile was saved.
-    await fillCredentials();
+    await signInWithEmail();
     expect(find.byType(HomePage), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('home_settings')));
@@ -71,7 +77,7 @@ void main() {
     expect(find.byType(SignInPage), findsOneWidget);
 
     // The account is gone.
-    await fillCredentials();
+    await signInWithEmail();
     expect(find.byKey(const Key('signIn_error')), findsOneWidget);
   });
 }

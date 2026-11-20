@@ -1,6 +1,8 @@
 import 'package:app_auth/app_auth.dart';
+import 'package:app_body/app_body.dart';
 import 'package:app_ui/app_ui.dart';
 import 'package:body_comp/home/home_page.dart';
+import 'package:body_comp/l10n/l10n.dart';
 import 'package:body_comp/onboarding/onboarding_page.dart';
 import 'package:body_comp/profile/domain/profile.dart';
 import 'package:body_comp/profile/presentation/profile_providers.dart';
@@ -47,7 +49,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.splash,
         builder: (_, _) => const Scaffold(body: LoadingView()),
       ),
-      GoRoute(path: Routes.signIn, builder: (_, _) => const SignInPage()),
+      GoRoute(
+        path: Routes.signIn,
+        builder: (context, _) => SignInPage(
+          hero: const BodyPreview(),
+          wordmark: context.l10n.appTitle.toUpperCase(),
+        ),
+      ),
       GoRoute(
         path: Routes.profileSetup,
         builder: (_, _) => const ProfileSetupPage(),
