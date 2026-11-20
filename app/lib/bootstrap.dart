@@ -6,6 +6,7 @@ import 'package:app_body/app_body.dart';
 import 'package:app_core/app_core.dart';
 import 'package:app_dexa_sync/app_dexa_sync.dart';
 import 'package:app_scans/app_scans.dart';
+import 'package:app_ui/app_ui.dart';
 import 'package:body_comp/app/app.dart';
 import 'package:body_comp/body/scan_body_data_source.dart';
 import 'package:body_comp/profile/data/supabase_profile_repository.dart';
@@ -23,6 +24,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// one flavor's entry point with another flavor's config file.
 Future<void> bootstrap(Flavor expected) async {
   WidgetsFlutterBinding.ensureInitialized();
+  AppTheme.registerFontLicenses();
 
   final AppConfig config;
   try {

@@ -13,6 +13,21 @@ dependencies:
     sdk: flutter
   material_ui: ^1.11.0
 
+flutter:
+  # Variable fonts from Google Fonts (SIL OFL, licenses next to them). Bundled
+  # so text never waits on the network. Width and weight are set with
+  # FontVariation in AppTheme.
+  assets:
+    - fonts/Archivo-OFL.txt
+    - fonts/Inter-OFL.txt
+  fonts:
+    - family: Archivo
+      fonts:
+        - asset: fonts/Archivo.ttf
+    - family: Inter
+      fonts:
+        - asset: fonts/Inter.ttf
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

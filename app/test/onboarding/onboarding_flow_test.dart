@@ -65,6 +65,7 @@ void main() {
     expect(fakes.profiles.saved.last.goals, {Goal.loseFat, Goal.buildMuscle});
 
     await tap(tester, 'source_dexa');
+    await tap(tester, 'source_continue');
     expect(find.text('Your scans are health data'), findsOneWidget);
     final agree = find.byKey(const Key('consent_continue'));
     expect(
@@ -105,6 +106,7 @@ void main() {
     await start(tester, dexa: dexa);
     await pickGoals(tester);
     await tap(tester, 'source_dexa');
+    await tap(tester, 'source_continue');
     expect(find.text('Meet your body'), findsOneWidget);
   });
 
@@ -114,6 +116,7 @@ void main() {
     await start(tester, dexa: dexa);
     await pickGoals(tester);
     await tap(tester, 'source_dexa');
+    await tap(tester, 'source_continue');
     expect(find.byKey(const Key('reveal_needs_review')), findsOneWidget);
     expect(find.textContaining('latest of your 2 DEXA scans'), findsOneWidget);
   });
@@ -126,6 +129,7 @@ void main() {
     final fakes = await start(tester, dexa: dexa);
     await pickGoals(tester);
     await tap(tester, 'source_dexa');
+    await tap(tester, 'source_continue');
     expect(find.byKey(const Key('reveal_no_scans')), findsOneWidget);
     await tap(tester, 'reveal_finish');
     expect(find.byType(HomePage), findsOneWidget);
@@ -141,12 +145,14 @@ void main() {
     await start(tester, dexa: dexa);
     await pickGoals(tester);
     await tap(tester, 'source_dexa');
+    await tap(tester, 'source_continue');
     expect(find.text('Step 2 of 3'), findsOneWidget);
     expect(find.byKey(const Key('onboarding_error')), findsNothing);
     expect(dexa.scans.rows, isEmpty);
 
     // Trying again works.
     await tap(tester, 'source_dexa');
+    await tap(tester, 'source_continue');
     expect(find.text('Meet your body'), findsOneWidget);
   });
 
@@ -159,6 +165,7 @@ void main() {
     await start(tester, dexa: dexa);
     await pickGoals(tester);
     await tap(tester, 'source_dexa');
+    await tap(tester, 'source_continue');
     expect(
       find.text('No connection. Check your internet and try again.'),
       findsOneWidget,
@@ -172,12 +179,14 @@ void main() {
     await start(tester, dexa: dexa);
     await pickGoals(tester);
     await tap(tester, 'source_dexa');
+    await tap(tester, 'source_continue');
     await tap(tester, 'consent_agree');
     await tap(tester, 'consent_continue');
     expect(find.text('Step 2 of 3'), findsOneWidget);
     expect(find.byKey(const Key('onboarding_error')), findsOneWidget);
 
     await tap(tester, 'source_dexa');
+    await tap(tester, 'source_continue');
     expect(find.text('Meet your body'), findsOneWidget);
     expect(dexa.consents.versions, hasLength(1));
   });
@@ -187,6 +196,7 @@ void main() {
     final fakes = await start(tester, dexa: dexa);
     await pickGoals(tester);
     await tap(tester, 'source_dexa');
+    await tap(tester, 'source_continue');
     fakes.profiles.nextError = const NetworkException('offline');
     await tap(tester, 'reveal_finish');
     expect(find.text('Meet your body'), findsOneWidget);
@@ -203,9 +213,13 @@ void main() {
     expect(find.byKey(const Key('source_dexa_note')), findsOneWidget);
     expect(find.textContaining('invite-only'), findsOneWidget);
     await tap(tester, 'source_dexa');
-    expect(find.text('Step 2 of 3'), findsOneWidget, reason: 'card disabled');
+    expect(
+      find.text('Start photo estimate'),
+      findsOneWidget,
+      reason: 'the DEXA card is disabled, so photos stays picked',
+    );
 
-    await tap(tester, 'source_photos');
+    await tap(tester, 'source_continue');
     expect(find.text('Photo estimates are coming soon'), findsOneWidget);
     await tap(tester, 'photos_finish');
     expect(find.byType(HomePage), findsOneWidget);
@@ -226,12 +240,18 @@ void main() {
     await start(tester);
     await pickGoals(tester);
     await tap(tester, 'source_photos');
+    await tap(tester, 'source_continue');
     await tap(tester, 'onboarding_back');
     expect(find.text('Step 2 of 3'), findsOneWidget);
     await tap(tester, 'onboarding_back');
     expect(find.text('Step 1 of 3'), findsOneWidget);
     // Goals are remembered.
-    expect(find.byIcon(Icons.check_circle), findsNWidgets(2));
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is Semantics && (w.properties.selected ?? false),
+      ),
+      findsNWidgets(2),
+    );
   });
 
   testWidgets('a save failure keeps the user on the goals step', (
@@ -255,7 +275,10 @@ void main() {
           .push<void>(Routes.onboarding),
     );
     await tester.pumpAndSettle();
-    expect(find.text('How should we build your 3D body?'), findsOneWidget);
+    expect(
+      find.text('See where you lose fat and build muscle.'),
+      findsOneWidget,
+    );
     expect(find.text('Step 2 of 3'), findsNothing);
     await tap(tester, 'onboarding_close');
     expect(find.byType(HomePage), findsOneWidget);
@@ -271,6 +294,7 @@ void main() {
       expect(Theme.of(context).brightness, brightness);
       await pickGoals(tester);
       await tap(tester, 'source_dexa');
+      await tap(tester, 'source_continue');
       expect(find.text('Your scans are health data'), findsOneWidget);
     });
   }

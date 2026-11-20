@@ -43,7 +43,11 @@ The repo is a Dart pub workspace: run `flutter pub get` once at the root.
    Only publishable values may be in app config. Secrets (Supabase secret key, BodySpec partner credentials, vendor API keys) live in Supabase edge-function secrets.
    BodySpec user tokens stay on the phone (Keychain/Keystore), never on our server.
 8. **Theme:** every color, spacing and radius comes from `context.tokens`, `AppSpacing`, `AppRadius`. The app follows the phone's light/dark setting (`ThemeMode.system`), so every screen must work in both.
+<<<<<<< HEAD
    Token values follow the launch design (direction A, Graphite + Ice); change values in `app_tokens.dart`, not at call sites.
+=======
+   Token values and the type scale (Archivo for headlines and numbers, Inter for text, bundled in `app_ui/fonts`) follow the design system on the UI design canvas (launch direction); change values in `app_tokens.dart` / `app_theme.dart`, not at call sites.
+>>>>>>> origin/claude/project-thread-lfz48g
 9. **Imports:** Flutter 3.50 deprecates `package:flutter/material.dart`; import `package:material_ui/material_ui.dart`.
 10. **Database:** every table gets RLS enabled in the migration that creates it, per-operation policies on `auth.uid()`, and a pgTAP test in `supabase/tests/` proving one user cannot read or change another's rows. The service key is never in the app.
     Every user-owned table references `auth.users (id) on delete cascade`. Child rows carry `user_id` and a composite foreign key `(parent_id, user_id)` so they cannot point at another user's parent.
