@@ -46,6 +46,8 @@ class OnboardingPage extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
+          centerTitle: true,
+          toolbarHeight: 52,
           leading: canGoBack
               ? IconButton(
                   key: const Key('onboarding_back'),
@@ -61,7 +63,16 @@ class OnboardingPage extends ConsumerWidget {
                   onPressed: () => context.go(Routes.home),
                 )
               : null,
-          title: state.returning ? null : _StepLabel(step: state.step),
+          title: Text(
+            context.l10n.appTitle.toUpperCase(),
+            style: AppTheme.wordmark,
+          ),
+          bottom: state.returning
+              ? null
+              : PreferredSize(
+                  preferredSize: const Size.fromHeight(20),
+                  child: _StepProgress(step: state.step),
+                ),
         ),
         body: SafeArea(
           top: false,
@@ -91,41 +102,72 @@ class OnboardingPage extends ConsumerWidget {
   }
 }
 
-/// "Step 1 of 3": goals, how to build the body, then connect or photos.
-class _StepLabel extends StatelessWidget {
+/// Three segments under the wordmark, with "Step 1 of 3" for screen readers
+/// and as a small caption: goals, how to build the body, then the last step.
+class _StepProgress extends StatelessWidget {
   const new({required this.step});
 
   final OnboardingStep step;
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final current = switch (step) {
       OnboardingStep.goals => 1,
       OnboardingStep.source => 2,
       _ => 3,
     };
-    return Text(
-      context.l10n.onboardingStep(current, 3),
-      style: Theme.of(context).textTheme.labelLarge
-          ?.copyWith(color: context.tokens.textSecondary),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.gutter,
+        0,
+        AppSpacing.gutter,
+        AppSpacing.sm,
+      ),
+      child: Row(
+        spacing: AppSpacing.sm,
+        children: [
+          for (var i = 1; i <= 3; i++)
+            Expanded(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                height: 4,
+                decoration: BoxDecoration(
+                  color: i <= current ? tokens.accent : tokens.surfaceRaised,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
+            ),
+          Text(
+            context.l10n.onboardingStep(current, 3),
+            style: Theme.of(context).textTheme.labelSmall
+                ?.copyWith(color: tokens.textFaint),
+          ),
+        ],
+      ),
     );
   }
 }
 
-/// A scrolling body with a title, and the primary action pinned below it.
+/// A scrolling body with an optional [hero] above a headline, and the
+/// primary action (plus an optional [footnote]) pinned below it.
 class _StepScaffold extends StatelessWidget {
   const new({
     required this.title,
     required this.children,
     this.subtitle,
+    this.hero,
     this.action,
+    this.footnote,
     this.error,
   });
 
   final String title;
   final String? subtitle;
+  final Widget? hero;
   final List<Widget> children;
   final Widget? action;
+  final String? footnote;
   final AppException? error;
 
   @override
@@ -138,16 +180,20 @@ class _StepScaffold extends StatelessWidget {
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
+              AppSpacing.gutter,
               AppSpacing.sm,
-              AppSpacing.lg,
+              AppSpacing.gutter,
               AppSpacing.lg,
             ),
             children: [
-              Text(title, style: text.headlineMedium),
+              ?hero,
+              Text(title, style: text.headlineLarge),
               if (subtitle case final s?) ...[
-                const SizedBox(height: AppSpacing.xs),
-                Text(s, style: TextStyle(color: tokens.textSecondary)),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  s,
+                  style: text.bodyLarge?.copyWith(color: tokens.textSecondary),
+                ),
               ],
               const SizedBox(height: AppSpacing.lg),
               ...children,
@@ -157,9 +203,9 @@ class _StepScaffold extends StatelessWidget {
         if (error != null || action != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
+              AppSpacing.gutter,
               0,
-              AppSpacing.lg,
+              AppSpacing.gutter,
               AppSpacing.md,
             ),
             child: Column(
@@ -170,6 +216,14 @@ class _StepScaffold extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                 ],
                 ?action,
+                if (footnote case final f?) ...[
+                  const SizedBox(height: AppSpacing.smd),
+                  Text(
+                    f,
+                    textAlign: TextAlign.center,
+                    style: text.bodySmall?.copyWith(color: tokens.textFaint),
+                  ),
+                ],
               ],
             ),
           ),
@@ -178,7 +232,31 @@ class _StepScaffold extends StatelessWidget {
   }
 }
 
-/// A selectable card: goals (multi) and body sources (single tap).
+/// A square tile holding an icon, as on the design's choice cards.
+class _IconTile extends StatelessWidget {
+  const new({required this.icon, this.color, this.size = 44});
+
+  final IconData icon;
+  final Color? color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: tokens.surfaceRaised,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Icon(icon, size: size / 2, color: color ?? tokens.textSecondary),
+    );
+  }
+}
+
+/// A selectable card: an icon tile, a title with an optional badge, and a
+/// line of help. Selected cards get an Ice border.
 class _ChoiceCard extends StatelessWidget {
   const new({
     required this.title,
@@ -203,35 +281,46 @@ class _ChoiceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final text = Theme.of(context).textTheme;
-    final fg = enabled ? tokens.textPrimary : tokens.textSecondary;
+    final fg = enabled ? tokens.textPrimary : tokens.textFaint;
     return Semantics(
       selected: selected,
       button: true,
       enabled: enabled,
       child: Material(
-        color: selected ? tokens.accentSoft : tokens.surfaceRaised,
+        color: tokens.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           side: BorderSide(
             color: selected ? tokens.accent : tokens.border,
-            width: selected ? 2 : 1,
+            width: 2,
           ),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: enabled ? onTap : null,
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.smd + 2,
+            ),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: AppSpacing.smd + 2,
               children: [
-                Icon(icon, color: selected ? tokens.accent : fg),
-                const SizedBox(width: AppSpacing.md),
+                _IconTile(
+                  icon: icon,
+                  color: selected
+                      ? tokens.accent
+                      : enabled
+                      ? tokens.textSecondary
+                      : tokens.textFaint,
+                ),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 2,
                     children: [
                       Row(
+                        spacing: AppSpacing.sm,
                         children: [
                           Flexible(
                             child: Text(
@@ -239,26 +328,22 @@ class _ChoiceCard extends StatelessWidget {
                               style: text.titleMedium?.copyWith(color: fg),
                             ),
                           ),
-                          if (badge case final b?) ...[
-                            const SizedBox(width: AppSpacing.sm),
-                            _Badge(label: b),
-                          ],
+                          if (badge case final b?) _Badge(label: b),
                         ],
                       ),
-                      const SizedBox(height: AppSpacing.xs),
                       Text(
                         body,
-                        style: text.bodyMedium?.copyWith(
-                          color: tokens.textSecondary,
+                        style: text.bodySmall?.copyWith(
+                          fontSize: 13,
+                          height: 1.35,
+                          color: enabled
+                              ? tokens.textSecondary
+                              : tokens.textFaint,
                         ),
                       ),
                     ],
                   ),
                 ),
-                if (selected) ...[
-                  const SizedBox(width: AppSpacing.sm),
-                  Icon(Icons.check_circle, color: tokens.accent),
-                ],
               ],
             ),
           ),
@@ -279,21 +364,30 @@ class _Badge extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: tokens.accent,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.sm,
-          vertical: AppSpacing.xs / 2,
+          vertical: 2,
         ),
         child: Text(
           label,
           style: Theme.of(context).textTheme.labelSmall
-              ?.copyWith(color: tokens.onAccent),
+              ?.copyWith(color: tokens.onAccent, letterSpacing: 0),
         ),
       ),
     );
   }
+}
+
+/// The body hero of the design, above a step's headline.
+class _BodyHero extends StatelessWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context) =>
+      const SizedBox(height: 260, child: BodyPreview());
 }
 
 class _GoalsStep extends ConsumerWidget {
@@ -345,22 +439,33 @@ class _GoalsStep extends ConsumerWidget {
             selected: state.goals.contains(goal),
             onTap: () => controller.toggleGoal(goal),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.smd),
         ],
       ],
     );
   }
 }
 
-class _SourceStep extends ConsumerWidget {
+/// The design's start screen: the body, the headline, DEXA or photos, and
+/// one Continue whose label follows the choice.
+class _SourceStep extends ConsumerStatefulWidget {
   const new({required this.state});
 
   final OnboardingState state;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_SourceStep> createState() => _SourceStepState();
+}
+
+class _SourceStepState extends ConsumerState<_SourceStep> {
+  /// Null until the user taps a card: DEXA when it is open, else photos.
+  BodySource? _picked;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
     final tokens = context.tokens;
+    final state = widget.state;
     final controller = ref.read(onboardingProvider.notifier);
     final link = ref.watch(dexaSyncProvider);
     final value = link.value;
@@ -372,20 +477,35 @@ class _SourceStep extends ConsumerWidget {
         : !value.allowed
         ? l10n.sourceDexaInviteOnly
         : null;
+    final picked = _picked ?? (dexaOpen ? BodySource.dexa : BodySource.photos);
+    final dexa = picked == BodySource.dexa && dexaOpen;
 
     return _StepScaffold(
-      title: l10n.sourceTitle,
-      subtitle: l10n.sourceSubtitle,
+      hero: const _BodyHero(),
+      title: l10n.sourceHeadline,
+      subtitle: l10n.sourceLead,
       error: state.error,
+      footnote: l10n.sourcePrivacy,
+      action: AppButton(
+        key: const Key('source_continue'),
+        label: dexa ? l10n.sourceContinueDexa : l10n.sourceContinuePhotos,
+        loading: state.busy,
+        onPressed: link.isLoading
+            ? null
+            : dexa
+            ? controller.chooseDexa
+            : controller.choosePhotos,
+      ),
       children: [
         _ChoiceCard(
           key: const Key('source_dexa'),
           title: l10n.sourceDexaTitle,
           body: l10n.sourceDexaBody,
-          icon: Icons.accessibility_new,
+          icon: Icons.document_scanner_outlined,
           badge: l10n.sourceDexaRecommended,
           enabled: dexaOpen && !state.busy,
-          onTap: controller.chooseDexa,
+          selected: dexa,
+          onTap: () => setState(() => _picked = BodySource.dexa),
         ),
         if (link.isLoading)
           const Padding(
@@ -402,7 +522,12 @@ class _SourceStep extends ConsumerWidget {
           ),
         if (note != null)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xs,
+              AppSpacing.sm,
+              AppSpacing.xs,
+              0,
+            ),
             child: Text(
               note,
               key: const Key('source_dexa_note'),
@@ -410,14 +535,15 @@ class _SourceStep extends ConsumerWidget {
                   ?.copyWith(color: tokens.textSecondary),
             ),
           ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.smd),
         _ChoiceCard(
           key: const Key('source_photos'),
           title: l10n.sourcePhotosTitle,
           body: l10n.sourcePhotosBody,
           icon: Icons.photo_camera_outlined,
           enabled: !state.busy,
-          onTap: controller.choosePhotos,
+          selected: !dexa,
+          onTap: () => setState(() => _picked = BodySource.photos),
         ),
       ],
     );
@@ -440,6 +566,7 @@ class _ConsentStepState extends ConsumerState<_ConsentStep> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final tokens = context.tokens;
+    final text = Theme.of(context).textTheme;
     final state = widget.state;
     final points = [
       (Icons.monitor_weight_outlined, l10n.consentPointStore),
@@ -460,66 +587,83 @@ class _ConsentStepState extends ConsumerState<_ConsentStep> {
             : null,
       ),
       children: [
-        for (final (icon, text) in points)
+        for (final (icon, line) in points)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.md),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: AppSpacing.smd + 2,
               children: [
-                Icon(icon, color: tokens.accent),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(child: Text(text)),
+                _IconTile(icon: icon, color: tokens.accent, size: 40),
+                Expanded(child: Text(line, style: text.bodyMedium)),
               ],
             ),
           ),
-        const SizedBox(height: AppSpacing.sm),
-        CheckboxListTile(
-          key: const Key('consent_agree'),
-          value: _agreed,
-          onChanged: state.busy
-              ? null
-              : (v) => setState(() => _agreed = v ?? false),
-          controlAffinity: ListTileControlAffinity.leading,
-          contentPadding: EdgeInsets.zero,
-          title: Text(l10n.consentAgree),
+        const SizedBox(height: AppSpacing.xs),
+        Material(
+          color: tokens.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            side: BorderSide(
+              color: _agreed ? tokens.accent : tokens.border,
+              width: _agreed ? 2 : 1,
+            ),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: CheckboxListTile(
+            key: const Key('consent_agree'),
+            value: _agreed,
+            onChanged: state.busy
+                ? null
+                : (v) => setState(() => _agreed = v ?? false),
+            controlAffinity: ListTileControlAffinity.leading,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
+            title: Text(l10n.consentAgree, style: text.bodyMedium),
+          ),
         ),
       ],
     );
   }
 }
 
+/// Sign-in, then the import: the body turns while the scans come in.
 class _ConnectingStep extends ConsumerWidget {
   const new();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
+    final tokens = context.tokens;
+    final text = Theme.of(context).textTheme;
     final run = ref.watch(syncRunProvider);
     final signingIn = run is SyncRunning && run.connecting;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: AppSpacing.lg),
-            Text(
-              signingIn ? l10n.connectSigningIn : l10n.connectImporting,
-              key: const Key('connecting_label'),
-              style: Theme.of(context).textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-            if (!signingIn) ...[
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                l10n.connectImportingHelp,
-                style: TextStyle(color: context.tokens.textSecondary),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gutter),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Expanded(child: BodyPreview()),
+          Text(
+            signingIn ? l10n.connectSigningIn : l10n.connectImporting,
+            key: const Key('connecting_label'),
+            style: text.headlineMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            signingIn ? l10n.connectSigningInHelp : l10n.connectImportingHelp,
+            style: text.bodyLarge?.copyWith(color: tokens.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          const ClipRRect(
+            borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
+            child: LinearProgressIndicator(minHeight: 4),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+        ],
       ),
     );
   }
@@ -571,20 +715,36 @@ class _RevealStep extends ConsumerWidget {
         children: [
           Expanded(child: BodyView(emptyMessage: l10n.homeBodyPlaceholder)),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gutter),
             child: Row(
               spacing: AppSpacing.sm,
               children: [
-                for (final (label, value, unit) in [
-                  (l10n.metricBodyFat, latest.bodyFatPct, l10n.unitPercent),
-                  (l10n.metricLeanMass, _kg(latest.leanG), l10n.unitKg),
-                  (l10n.metricFatMass, _kg(latest.fatG), l10n.unitKg),
+                for (final (label, value, unit, color) in [
+                  (
+                    l10n.metricBodyFat,
+                    latest.bodyFatPct,
+                    l10n.unitPercent,
+                    null,
+                  ),
+                  (
+                    l10n.metricLeanMass,
+                    _kg(latest.leanG),
+                    l10n.unitKg,
+                    tokens.lean,
+                  ),
+                  (
+                    l10n.metricFatMass,
+                    _kg(latest.fatG),
+                    l10n.unitKg,
+                    tokens.fat,
+                  ),
                 ])
                   Expanded(
                     child: MetricTile(
                       label: label,
                       value: fmt(value, 1),
                       unit: unit,
+                      valueColor: color,
                     ),
                   ),
               ],
@@ -599,9 +759,9 @@ class _RevealStep extends ConsumerWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
+            AppSpacing.gutter,
             AppSpacing.sm,
-            AppSpacing.lg,
+            AppSpacing.gutter,
             AppSpacing.md,
           ),
           child: Column(
@@ -609,7 +769,7 @@ class _RevealStep extends ConsumerWidget {
             children: [
               Text(
                 l10n.revealTitle,
-                style: Theme.of(context).textTheme.headlineMedium,
+                style: Theme.of(context).textTheme.headlineLarge,
               ),
               if (latest != null) ...[
                 const SizedBox(height: AppSpacing.xs),
@@ -636,15 +796,20 @@ class _RevealStep extends ConsumerWidget {
         if (state.error case final e?)
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
+              AppSpacing.gutter,
               AppSpacing.md,
-              AppSpacing.lg,
+              AppSpacing.gutter,
               0,
             ),
             child: _ErrorText(e),
           ),
         Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.gutter,
+            AppSpacing.md,
+            AppSpacing.gutter,
+            AppSpacing.md,
+          ),
           child: AppButton(
             key: const Key('reveal_finish'),
             label: l10n.revealFinish,
@@ -679,11 +844,22 @@ class _PhotosStep extends StatelessWidget {
         onPressed: onFinish,
       ),
       children: [
-        Icon(Icons.photo_camera_outlined, size: 56, color: tokens.accent),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: _IconTile(
+            icon: Icons.photo_camera_outlined,
+            color: tokens.accent,
+            size: 64,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        Text(l10n.photosBody, style: Theme.of(context).textTheme.bodyLarge),
         const SizedBox(height: AppSpacing.md),
-        Text(l10n.photosBody),
-        const SizedBox(height: AppSpacing.md),
-        Text(l10n.photosHint, style: TextStyle(color: tokens.textSecondary)),
+        Text(
+          l10n.photosHint,
+          style: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(color: tokens.textSecondary),
+        ),
       ],
     );
   }

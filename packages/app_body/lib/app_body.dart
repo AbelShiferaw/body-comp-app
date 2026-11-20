@@ -9,6 +9,7 @@ export 'src/data/flutter_scene_body_renderer.dart';
 export 'src/domain/body_data_source.dart';
 export 'src/domain/body_renderer.dart';
 export 'src/domain/body_view_state.dart';
+export 'src/presentation/body_preview.dart';
 export 'src/presentation/body_providers.dart';
 export 'src/presentation/body_style_setting.dart';
 export 'src/presentation/body_view.dart';

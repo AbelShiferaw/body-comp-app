@@ -1,14 +1,17 @@
+import 'package:app_ui/src/theme/app_theme.dart';
 import 'package:app_ui/src/theme/app_tokens.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// A labelled number, such as "Body fat 18.2 %". Optionally shows a change
-/// since the last scan; [deltaIsGood] decides whether it is colored as
-/// progress (lean) or a regression (danger).
+/// A labelled number, such as "Body fat 18.2 %", on a card. [valueColor]
+/// tints the number (lean or fat). An optional [delta] shows the change since
+/// the last scan; [deltaIsGood] colors it by meaning, never as an alarm:
+/// progress is lean (Ice), a step back is fat (Ember).
 class MetricTile extends StatelessWidget {
   const new({
     required this.label,
     required this.value,
     this.unit,
+    this.valueColor,
     this.delta,
     this.deltaIsGood,
     super.key,
@@ -17,6 +20,7 @@ class MetricTile extends StatelessWidget {
   final String label;
   final String value;
   final String? unit;
+  final Color? valueColor;
   final String? delta;
   final bool? deltaIsGood;
 
@@ -26,11 +30,14 @@ class MetricTile extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final deltaColor = switch (deltaIsGood) {
       true => t.lean,
-      false => t.danger,
-      null => t.textSecondary,
+      false => t.fat,
+      null => t.textFaint,
     };
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.smd + 2,
+        vertical: AppSpacing.smd,
+      ),
       decoration: BoxDecoration(
         color: t.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -43,24 +50,27 @@ class MetricTile extends StatelessWidget {
           Text(
             label,
             style: text.labelMedium?.copyWith(color: t.textSecondary),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: 2),
           Text.rich(
             TextSpan(
               text: value,
-              style: text.headlineSmall?.copyWith(color: t.textPrimary),
+              style: AppTheme.display(size: 22)
+                  .copyWith(color: valueColor ?? t.textPrimary),
               children: [
                 if (unit != null)
                   TextSpan(
                     text: ' $unit',
-                    style: text.bodyMedium?.copyWith(color: t.textSecondary),
+                    style: text.bodySmall?.copyWith(color: t.textSecondary),
                   ),
               ],
             ),
           ),
           if (delta != null) ...[
-            const SizedBox(height: AppSpacing.xs),
-            Text(delta!, style: text.labelMedium?.copyWith(color: deltaColor)),
+            const SizedBox(height: 2),
+            Text(delta!, style: text.bodySmall?.copyWith(color: deltaColor)),
           ],
         ],
       ),
