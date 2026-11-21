@@ -1,13 +1,36 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' show Brightness, Offset, Size;
 
 import 'package:body_mapping/body_mapping.dart';
 import 'package:material_ui/material_ui.dart' show BuildContext, Widget;
 
-/// The look of the body. Studio is the default; Midnight is a Settings
-/// option. Fat and Change are view modes on either style, not styles. Both
-/// follow the phone's light or dark mode.
-enum BodyStyle { studio, midnight }
+/// How the body looks. Studio is the default (Abel, 3D LLD review, Nov 19).
+/// [hologram] is the launch-direction game look as a Settings option: a
+/// glowing Ice avatar on a scanner pad in dark mode, a porcelain body on an
+/// Ice ring in light mode. Fat and Change are view modes on any style, not
+/// styles. All follow the phone's light or dark mode.
+enum BodyStyle {
+  hologram,
+  studio,
+  midnight;
+
+  static const BodyStyle defaultStyle = studio;
+}
+
+/// How the camera frames the body, shared by the renderer and anything drawn
+/// in line with it (the scanner pad). In body heights around the body's
+/// middle: the view fits [halfHeight] up and down and [halfWidth] each side
+/// (the A pose is about as wide as it is tall), at zoom 1 to [maxZoom].
+abstract final class BodyFraming {
+  static const halfHeight = 0.53;
+  static const halfWidth = 0.47;
+  static const maxZoom = 3.0;
+
+  /// Visible half-height, in body heights, for a view of [aspect]
+  /// (width / height) at zoom 1.
+  static double fit(double aspect) => math.max(halfHeight, halfWidth / aspect);
+}
 
 /// Where the camera looks from: `azimuth` in radians around the body (0 is
 /// facing it), `zoom` 1 frames the whole body, 2 is twice as close.

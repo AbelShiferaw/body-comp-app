@@ -1,11 +1,14 @@
 import 'package:app_auth/app_auth.dart';
 import 'package:app_ui/app_ui.dart';
 import 'package:body_comp/home/home_page.dart';
+import 'package:body_comp/l10n/l10n.dart';
 import 'package:body_comp/onboarding/onboarding_page.dart';
 import 'package:body_comp/profile/domain/profile.dart';
 import 'package:body_comp/profile/presentation/profile_providers.dart';
 import 'package:body_comp/profile/presentation/profile_setup_page.dart';
 import 'package:body_comp/settings/settings_page.dart';
+import 'package:body_comp/shell/app_shell.dart';
+import 'package:body_comp/shell/coming_soon_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -15,6 +18,8 @@ abstract final class Routes {
   static const signIn = '/sign-in';
   static const profileSetup = '/profile-setup';
   static const home = '/';
+  static const progress = '/progress';
+  static const scans = '/scans';
   static const settings = '/settings';
   static const onboarding = '/onboarding';
 }
@@ -56,11 +61,27 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.onboarding,
         builder: (_, _) => const OnboardingPage(),
       ),
-      GoRoute(
-        path: Routes.home,
-        builder: (_, _) => const HomePage(),
-        routes: [
-          GoRoute(path: 'settings', builder: (_, _) => const SettingsPage()),
+      StatefulShellRoute.indexedStack(
+        builder: (_, _, shell) => AppShell(shell),
+        branches: [
+          _tab(Routes.home, (_) => const HomePage()),
+          _tab(
+            Routes.progress,
+            (context) => ComingSoonPage(
+              title: context.l10n.tabProgress,
+              body: context.l10n.progressComingSoon,
+              icon: Icons.trending_up,
+            ),
+          ),
+          _tab(
+            Routes.scans,
+            (context) => ComingSoonPage(
+              title: context.l10n.tabScans,
+              body: context.l10n.scansComingSoon,
+              icon: Icons.article_outlined,
+            ),
+          ),
+          _tab(Routes.settings, (_) => const SettingsPage()),
         ],
       ),
     ],
@@ -68,6 +89,11 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.onDispose(router.dispose);
   return router;
 });
+
+StatefulShellBranch _tab(String path, WidgetBuilder page) =>
+    StatefulShellBranch(
+      routes: [GoRoute(path: path, builder: (context, _) => page(context))],
+    );
 
 /// Pure redirect rule, unit tested on its own.
 String? appRedirect({

@@ -104,8 +104,9 @@ class BodyScan {
   final double totalLeanKg;
   final double totalBoneKg;
 
-  /// Visceral adipose tissue mass. A number only: it never changes the shape.
-  final double visceralFatG;
+  /// Visceral adipose tissue mass, null when the scan does not report it. A
+  /// number only: it never changes the shape.
+  final double? visceralFatG;
 
   /// True for photo estimates and manual entries, false for DEXA.
   final bool isEstimate;

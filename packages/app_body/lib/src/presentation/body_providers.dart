@@ -187,12 +187,13 @@ final bodyStyleStoreProvider = Provider<BodyStyleStore>(
   (ref) => SharedPreferencesBodyStyleStore(),
 );
 
-/// The body style setting. Studio until the saved choice loads.
+/// The body style setting. [BodyStyle.defaultStyle] until the saved choice
+/// loads.
 class BodyStyleController extends Notifier<BodyStyle> {
   @override
   BodyStyle build() {
     unawaited(_load());
-    return BodyStyle.studio;
+    return BodyStyle.defaultStyle;
   }
 
   Future<void> _load() async {
