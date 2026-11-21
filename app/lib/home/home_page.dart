@@ -188,12 +188,6 @@ class _Header extends StatelessWidget {
                   )
                 : const Icon(Icons.refresh),
           ),
-          IconButton(
-            key: const Key('home_settings'),
-            tooltip: l10n.settingsTitle,
-            icon: const Icon(Icons.person_outline),
-            onPressed: () => context.push(Routes.settings),
-          ),
         ],
       ),
     );

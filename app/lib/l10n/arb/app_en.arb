@@ -47,6 +47,12 @@
         }
     },
     "homeRefresh": "Refresh scans",
+    "tabBody": "Body",
+    "tabProgress": "Progress",
+    "tabScans": "Scans",
+    "tabProfile": "Profile",
+    "progressComingSoon": "Watch your body change from one scan to the next. Coming soon.",
+    "scansComingSoon": "Every scan you've imported, with its full numbers. Coming soon.",
     "homeNewScans": "{count, plural, =1{1 new scan} other{{count} new scans}}",
     "@homeNewScans": {
         "description": "After Refresh imported scans",
