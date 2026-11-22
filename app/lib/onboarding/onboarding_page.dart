@@ -6,7 +6,9 @@ import 'package:app_ui/app_ui.dart';
 import 'package:body_comp/l10n/l10n.dart';
 import 'package:body_comp/onboarding/onboarding_controller.dart';
 import 'package:body_comp/profile/domain/profile.dart';
+import 'package:body_comp/profile/presentation/profile_providers.dart';
 import 'package:body_comp/router/router.dart';
+import 'package:body_mapping/body_mapping.dart' as body;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -387,7 +389,22 @@ class _BodyHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      const SizedBox(height: 260, child: BodyPreview());
+      const SizedBox(height: 260, child: _PreviewBody());
+}
+
+/// The base body in the sex the user picked in their profile.
+class _PreviewBody extends ConsumerWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sex = ref.watch(profileProvider).value?.sex;
+    return switch (sex) {
+      Sex.male => const BodyPreview(sex: body.Sex.male),
+      Sex.female => const BodyPreview(sex: body.Sex.female),
+      null => const SizedBox.expand(),
+    };
+  }
 }
 
 class _GoalsStep extends ConsumerWidget {
@@ -644,7 +661,7 @@ class _ConnectingStep extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Expanded(child: BodyPreview()),
+          const Expanded(child: _PreviewBody()),
           Text(
             signingIn ? l10n.connectSigningIn : l10n.connectImporting,
             key: const Key('connecting_label'),
