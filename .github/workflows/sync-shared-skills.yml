@@ -33,7 +33,7 @@ jobs:
           bash .agent-skills/scripts/sync-skills.sh .agent-skills . $PLUGINS
           rm -rf .agent-skills
 
-      - uses: peter-evans/create-pull-request@v7
+      - uses: peter-evans/create-pull-request@v8
         with:
           branch: chore/sync-shared-skills
           commit-message: "chore: sync shared skills from agent-skills"
