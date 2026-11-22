@@ -10,6 +10,7 @@ import 'package:app_ui/app_ui.dart';
 import 'package:body_comp/app/app.dart';
 import 'package:body_comp/body/scan_body_data_source.dart';
 import 'package:body_comp/profile/data/supabase_profile_repository.dart';
+import 'package:body_comp/profile/domain/profile.dart';
 import 'package:body_comp/profile/presentation/profile_providers.dart';
 import 'package:body_comp/sync/sync_wiring.dart';
 import 'package:flutter/foundation.dart';
@@ -103,6 +104,11 @@ Future<void> bootstrap(Flavor expected) async {
         ),
         bodyDataSourceProvider.overrideWith(
           (ref) => ref.watch(scanBodyDataSourceProvider),
+        ),
+        bodyMassUnitProvider.overrideWith(
+          (ref) => ref.watch(unitsProvider) == Units.imperial
+              ? MassUnit.lb
+              : MassUnit.kg,
         ),
       ],
       observers: [_ProviderErrorLogger(crashReporter)],

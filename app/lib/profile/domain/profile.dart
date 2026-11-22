@@ -33,7 +33,7 @@ class Profile {
     this.sex,
     this.birthYear,
     this.heightCm,
-    this.units = .metric,
+    this.units = .imperial,
     this.goals = const {},
     this.bodySource,
     this.onboardedAt,

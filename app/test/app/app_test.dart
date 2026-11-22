@@ -37,6 +37,9 @@ void main() {
         find.byKey(const Key('profile_birthYear')),
         '1990',
       );
+      // New profiles start in ft/in; this user switches to cm.
+      await tester.tap(find.text('cm'));
+      await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('profile_heightCm')), '168');
       await tester.tap(find.byKey(const Key('profile_submit')));
       await tester.pumpAndSettle();
@@ -44,7 +47,12 @@ void main() {
       expect(find.byType(OnboardingPage), findsOneWidget);
       expect(
         fakes.profiles.saved.single,
-        const Profile(sex: Sex.female, birthYear: 1990, heightCm: 168),
+        const Profile(
+          sex: Sex.female,
+          birthYear: 1990,
+          heightCm: 168,
+          units: Units.metric,
+        ),
       );
     });
 
