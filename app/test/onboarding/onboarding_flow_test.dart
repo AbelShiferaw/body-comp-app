@@ -9,6 +9,7 @@ import 'package:body_comp/onboarding/onboarding_controller.dart';
 import 'package:body_comp/onboarding/onboarding_page.dart';
 import 'package:body_comp/profile/domain/profile.dart';
 import 'package:body_comp/router/router.dart';
+import 'package:body_mapping/body_mapping.dart' as body;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -225,6 +226,17 @@ void main() {
     expect(find.byType(HomePage), findsOneWidget);
     expect(fakes.profiles.saved.last.bodySource, BodySource.photos);
   });
+
+  for (final (sex, shape) in [
+    (Sex.male, body.Sex.male),
+    (Sex.female, body.Sex.female),
+  ]) {
+    testWidgets('the body on the choice screen is ${sex.name}', (tester) async {
+      await start(tester, profile: newProfile.copyWith(sex: sex));
+      await pickGoals(tester);
+      expect(tester.widget<BodyPreview>(find.byType(BodyPreview)).sex, shape);
+    });
+  }
 
   testWidgets('a build without BodySpec says DEXA is unavailable', (
     tester,
