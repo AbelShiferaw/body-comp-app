@@ -21,7 +21,7 @@ Run from a machine that can reach BodySpec (the cloud sandbox cannot):
 issuer=https://auth.bodyspec.com/realms/bodyspec
 reg=$(curl -s "$issuer/.well-known/openid-configuration" | jq -r .registration_endpoint)
 curl -s -X POST "$reg" -H 'Content-Type: application/json' -d '{
-  "client_name": "Body Comp (development)",
+  "client_name": "Obsessed (development)",
   "application_type": "native",
   "redirect_uris": ["com.abelshiferaw.bodycomp.dev:/oauthredirect"],
   "grant_types": ["authorization_code", "refresh_token"],

@@ -1,4 +1,4 @@
-# Body Comp (working title)
+# Obsessed
 
 3D body composition tracking from DEXA scans. Flutter app (iOS and Android) with a Supabase backend.
 

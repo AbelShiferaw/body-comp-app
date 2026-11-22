@@ -1,6 +1,6 @@
 # Releasing beta builds
 
-Beta builds are the **production flavor** (`com.abelshiferaw.bodycomp`, "Body Comp"), signed, pointed at the hosted production Supabase project.
+Beta builds are the **production flavor** (`com.abelshiferaw.bodycomp`, "Obsessed"), signed, pointed at the hosted production Supabase project.
 TestFlight and Play internal testing are the beta channels of the same app that later goes to the stores, so testers keep their install when it launches.
 
 | Platform | Channel | Testers get it by |
@@ -47,7 +47,7 @@ It creates an upload keystore in `~/.body-comp-release/` (outside the repo) and 
 That's all Android needs for APKs. Play internal testing is optional:
 
 1. Create a [Google Play developer account](https://play.google.com/console/signup) ($25 one-time). New personal accounts must run a closed test with 12+ testers for 14 days before production, so starting early helps.
-2. Create the app "Body Comp", package `com.abelshiferaw.bodycomp`, and accept Play App Signing.
+2. Create the app "Obsessed", package `com.abelshiferaw.bodycomp`, and accept Play App Signing.
 3. Upload the first AAB by hand (from the workflow's `android-*` artifact) to Testing > Internal testing, and add testers' emails.
 4. Create a service account in Google Cloud with the Play Android Developer API enabled, invite it in Play Console > Users and permissions with "Release to testing tracks", download its JSON key, then `gh secret set PLAY_SERVICE_ACCOUNT_JSON < key.json` and delete the file.
 5. After the app passes its first Play review, `gh variable set PLAY_RELEASE_STATUS --body completed` so uploads go live without a manual click.
