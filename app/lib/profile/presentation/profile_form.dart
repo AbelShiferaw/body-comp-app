@@ -16,6 +16,7 @@ class ProfileForm extends ConsumerStatefulWidget {
     required this.submitLabel,
     this.onSaved,
     this.now,
+    this.showUnits = true,
     super.key,
   });
 
@@ -25,6 +26,10 @@ class ProfileForm extends ConsumerStatefulWidget {
 
   /// Today's date, for the age check. Tests pass a fixed date.
   final DateTime? now;
+
+  /// Shows the cm / ft-in switch next to height. Settings hides it because
+  /// its own Units switch sets the same thing.
+  final bool showUnits;
 
   @override
   ConsumerState<ProfileForm> createState() => _ProfileFormState();
@@ -204,19 +209,23 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
                   style: textTheme.titleSmall,
                 ),
               ),
-              SegmentedButton<Units>(
-                key: const Key('profile_units'),
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(value: Units.metric, label: Text(l10n.unitCm)),
-                  ButtonSegment(
-                    value: Units.imperial,
-                    label: Text(l10n.unitFtIn),
-                  ),
-                ],
-                selected: {_units},
-                onSelectionChanged: (s) => _switchUnits(s.first),
-              ),
+              if (widget.showUnits)
+                SegmentedButton<Units>(
+                  key: const Key('profile_units'),
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(
+                      value: Units.metric,
+                      label: Text(l10n.unitCm),
+                    ),
+                    ButtonSegment(
+                      value: Units.imperial,
+                      label: Text(l10n.unitFtIn),
+                    ),
+                  ],
+                  selected: {_units},
+                  onSelectionChanged: (s) => _switchUnits(s.first),
+                ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),

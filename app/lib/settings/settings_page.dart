@@ -94,6 +94,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 // Rebuilt when Units changes, so height follows it.
                 key: ValueKey(value?.units),
                 initial: value ?? const Profile(),
+                showUnits: false,
                 submitLabel: l10n.save,
                 onSaved: () => ScaffoldMessenger.of(context)
                     .showSnackBar(SnackBar(content: Text(l10n.profileSaved))),

@@ -18,6 +18,8 @@ void main() {
     final fakes = await tester.pumpApp(user: user, scans: sampleTimeline);
     await openProfile(tester);
     expect(find.text('lb · ft/in'), findsOne);
+    // One units switch: the height field has none of its own here.
+    expect(find.byKey(const Key('profile_units')), findsNothing);
 
     await tester.tap(find.text('kg · cm'));
     await tester.pumpAndSettle();
