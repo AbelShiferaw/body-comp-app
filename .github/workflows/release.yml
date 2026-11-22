@@ -108,7 +108,7 @@ jobs:
              "../dist/body-comp-$BUILD_NAME-$BUILD_NUMBER.apk"
           cp build/app/outputs/bundle/productionRelease/app-production-release.aab \
              "../dist/body-comp-$BUILD_NAME-$BUILD_NUMBER.aab"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: android-${{ env.BUILD_NAME }}-${{ env.BUILD_NUMBER }}
           path: dist/
@@ -189,7 +189,7 @@ jobs:
           LC_ALL: en_US.UTF-8
           LANG: en_US.UTF-8
         run: bundle exec fastlane beta
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ios-${{ env.BUILD_NAME }}-${{ env.BUILD_NUMBER }}
