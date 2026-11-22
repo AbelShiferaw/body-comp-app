@@ -176,7 +176,10 @@ class _Header extends StatelessWidget {
               ],
             ),
           ),
-          if (s != null) Flexible(child: _ScanChip(scan: s)),
+          if (s != null) ...[
+            const SizedBox(width: AppSpacing.sm),
+            Flexible(child: _ScanChip(scan: s)),
+          ],
           IconButton(
             key: const Key('home_refresh'),
             tooltip: l10n.homeRefresh,

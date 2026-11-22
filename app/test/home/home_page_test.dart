@@ -176,6 +176,13 @@ void main() {
     expect(find.text('No new scans'), findsOne);
   });
 
+  testWidgets('the wordmark does not run into the scan chip', (tester) async {
+    await tester.pumpApp(user: user, scans: sampleTimeline);
+    final wordmark = tester.getRect(find.text('BODY COMP'));
+    final chip = tester.getRect(find.byKey(const Key('home_scanChip')));
+    expect(wordmark.right, lessThan(chip.left));
+  });
+
   testWidgets('fits a small phone without overflow', (tester) async {
     tester.view
       ..physicalSize = const Size(375 * 2, 667 * 2)

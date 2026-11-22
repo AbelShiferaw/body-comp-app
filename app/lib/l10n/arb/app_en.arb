@@ -106,7 +106,6 @@
         "description": "Shown when configuration is missing or invalid at launch"
     },
     "signOut": "Sign out",
-    "settingsTitle": "Settings",
     "settingsProfileSection": "Your body profile",
     "settingsAccountSection": "Account",
     "deleteAccount": "Delete account",

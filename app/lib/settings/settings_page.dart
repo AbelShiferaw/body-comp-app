@@ -76,7 +76,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final email = ref.watch(authUserProvider).value?.email;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.settingsTitle)),
+      appBar: AppBar(title: Text(l10n.tabProfile)),
       body: AbsorbPointer(
         absorbing: _busy,
         child: ListView(
