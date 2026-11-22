@@ -11,11 +11,24 @@ import 'package:material_ui/material_ui.dart' show BuildContext, Widget;
 /// Ice ring in light mode. Fat and Change are view modes on any style, not
 /// styles. All follow the phone's light or dark mode.
 enum BodyStyle {
+  /// Game mode's avatar look (scanner pad, glow). Not picked directly: game
+  /// mode turns it on.
   hologram,
   studio,
   midnight;
 
   static const BodyStyle defaultStyle = studio;
+}
+
+/// Unit for masses the body shows.
+enum MassUnit {
+  kg,
+  lb;
+
+  static const lbPerKg = 2.20462;
+
+  /// [kg] in this unit.
+  double of(double kg) => this == lb ? kg * lbPerKg : kg;
 }
 
 /// How the camera frames the body, shared by the renderer and anything drawn

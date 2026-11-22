@@ -91,6 +91,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 onRetry: () => ref.invalidate(profileProvider),
               ),
               AsyncValue(:final value) when profile.hasValue => ProfileForm(
+                // Rebuilt when Units changes, so height follows it.
+                key: ValueKey(value?.units),
                 initial: value ?? const Profile(),
                 submitLabel: l10n.save,
                 onSaved: () => ScaffoldMessenger.of(context)
@@ -99,6 +101,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               _ => const LoadingView(),
             },
             const SizedBox(height: AppSpacing.lg),
+            if (profile.value case final p?) ...[
+              _UnitsSetting(profile: p),
+              const SizedBox(height: AppSpacing.lg),
+            ],
             const BodyStyleSetting(),
             const SizedBox(height: AppSpacing.xl),
             Text(l10n.settingsAccountSection, style: textTheme.titleMedium),
@@ -127,6 +133,59 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Pounds and feet/inches (the default) or kilograms and centimetres. Saves
+/// at once, like the body style.
+class _UnitsSetting extends ConsumerWidget {
+  const new({required this.profile});
+
+  final Profile profile;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(l10n.settingsUnitsLabel),
+          subtitle: Text(l10n.settingsUnitsHelp),
+        ),
+        SegmentedButton<Units>(
+          key: const Key('settings_units'),
+          showSelectedIcon: false,
+          segments: [
+            ButtonSegment(
+              value: Units.imperial,
+              label: Text(l10n.unitsImperial),
+            ),
+            ButtonSegment(value: Units.metric, label: Text(l10n.unitsMetric)),
+          ],
+          selected: {profile.units},
+          onSelectionChanged: (s) async {
+            final messenger = ScaffoldMessenger.of(context);
+            try {
+              await ref
+                  .read(profileProvider.notifier)
+                  .save(profile.copyWith(units: s.first));
+            } on AppException catch (e) {
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    e is NetworkException
+                        ? l10n.errorNetwork
+                        : l10n.errorGeneric,
+                  ),
+                ),
+              );
+            }
+          },
+        ),
+      ],
     );
   }
 }

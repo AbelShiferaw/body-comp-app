@@ -51,17 +51,15 @@ void main() {
         expect(find.byKey(const Key('home_level')), findsNothing);
       });
 
-      testWidgets('shows the body, level and latest numbers', (tester) async {
+      testWidgets('shows the body and latest numbers', (tester) async {
         await tester.pumpApp(user: user, scans: sampleTimeline);
         final tokens = tester.element(find.byType(HomePage)).tokens;
 
         expect(find.byType(BodyView), findsOne);
         expect(find.byKey(const Key('fake_body')), findsOne);
-        expect(
-          find.bySemanticsLabel('Level ${sampleTimeline.length}'),
-          findsOne,
-        );
         expect(find.byKey(const Key('home_scanChip')), findsOne);
+        // The basic look: no game pieces until game mode is on.
+        expect(find.byKey(const Key('home_level')), findsNothing);
 
         // Body fat fell and lean mass rose since the first scan: both are
         // good news, so both changes are colored lean.
@@ -108,12 +106,32 @@ void main() {
     });
   }
 
-  testWidgets('imperial profiles see pounds', (tester) async {
+  testWidgets('game mode adds the level badge and next-scan bar', (
+    tester,
+  ) async {
+    await tester.pumpApp(user: user, scans: sampleTimeline, gameMode: true);
+    expect(find.bySemanticsLabel('Level ${sampleTimeline.length}'), findsOne);
+    expect(find.byKey(const Key('home_nextScan')), findsOne);
+  });
+
+  testWidgets('metric profiles see kilograms', (tester) async {
     await tester.pumpApp(
       user: user,
       scans: sampleTimeline,
-      profile: completeProfile.copyWith(units: Units.imperial),
+      profile: completeProfile.copyWith(units: Units.metric),
     );
+    final kg = latest.totalLeanKg.toStringAsFixed(1);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('home_lean')),
+        matching: find.textContaining(kg, findRichText: true),
+      ),
+      findsOne,
+    );
+  });
+
+  testWidgets('pounds by default', (tester) async {
+    await tester.pumpApp(user: user, scans: sampleTimeline);
     final lb = (latest.totalLeanKg * 2.20462).toStringAsFixed(1);
     expect(
       find.descendant(
@@ -132,11 +150,7 @@ void main() {
       first.copyWith(visceralFatG: 400),
       latest.copyWith(visceralFatG: 402),
     ];
-    await tester.pumpApp(
-      user: user,
-      scans: scans,
-      profile: completeProfile.copyWith(units: Units.imperial),
-    );
+    await tester.pumpApp(user: user, scans: scans);
     expect(
       find.descendant(
         of: find.byKey(const Key('home_visceral')),
@@ -178,7 +192,7 @@ void main() {
 
   testWidgets('the wordmark does not run into the scan chip', (tester) async {
     await tester.pumpApp(user: user, scans: sampleTimeline);
-    final wordmark = tester.getRect(find.text('BODY COMP'));
+    final wordmark = tester.getRect(find.text('OBSESSED'));
     final chip = tester.getRect(find.byKey(const Key('home_scanChip')));
     expect(wordmark.right, lessThan(chip.left));
   });

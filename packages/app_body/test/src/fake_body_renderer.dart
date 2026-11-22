@@ -56,6 +56,13 @@ class FakeBodyRenderer implements BodyRenderer {
 
 class MemoryBodyStyleStore implements BodyStyleStore {
   BodyStyle? saved;
+  bool? gameMode;
+
+  @override
+  Future<bool?> readGameMode() async => gameMode;
+
+  @override
+  Future<void> writeGameMode({required bool on}) async => gameMode = on;
 
   @override
   Future<BodyStyle?> read() async => saved;

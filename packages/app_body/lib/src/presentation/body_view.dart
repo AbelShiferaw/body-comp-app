@@ -13,14 +13,21 @@ import 'package:material_ui/material_ui.dart';
 
 // TODO(body): move strings to localization once modules share l10n.
 
-/// The 3D body with its controls: Body / Fat / Change views, a scan-to-scan
-/// slider with play, drag to turn, pinch to zoom, and tap a part for its
-/// numbers. Fills the space it is given.
+/// The 3D body with its controls: drag to turn, pinch to zoom, tap a part
+/// for its numbers, and a Shape / Fat / Change bar under it. Fills the space
+/// it is given.
+///
+/// With [showCompare], it also shows the scan-to-scan slider with play and
+/// the ×3 exaggerate button. Home leaves them off (the basic look); they
+/// belong on the Progress screen.
 class BodyView extends ConsumerStatefulWidget {
-  const new({this.emptyMessage, super.key});
+  const new({this.emptyMessage, this.showCompare = false, super.key});
 
   /// Shown when there are no scans yet.
   final String? emptyMessage;
+
+  /// Shows the compare controls (timeline, play, ×3).
+  final bool showCompare;
 
   @override
   ConsumerState<BodyView> createState() => _BodyViewState();
@@ -218,15 +225,6 @@ class _BodyViewState extends ConsumerState<BodyView>
     final mapper = ref.watch(bodyMapperProvider).value;
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.sm,
-            AppSpacing.md,
-            0,
-          ),
-          child: _ModeBar(view: view, controller: _controller),
-        ),
         Expanded(
           child: Stack(
             children: [
@@ -255,14 +253,15 @@ class _BodyViewState extends ConsumerState<BodyView>
                     to: pair.to,
                   ),
                 ),
-              Positioned(
-                right: AppSpacing.sm,
-                top: AppSpacing.xs,
-                child: _ExaggerateButton(
-                  on: view.exaggerate,
-                  onTap: _controller.toggleExaggerate,
+              if (widget.showCompare)
+                Positioned(
+                  right: AppSpacing.sm,
+                  top: AppSpacing.xs,
+                  child: _ExaggerateButton(
+                    on: view.exaggerate,
+                    onTap: _controller.toggleExaggerate,
+                  ),
                 ),
-              ),
               if (view.exaggerate)
                 Positioned(
                   right: AppSpacing.md,
@@ -278,24 +277,35 @@ class _BodyViewState extends ConsumerState<BodyView>
                     part: view.selected!,
                     pair: pair,
                     t: view.t,
+                    unit: ref.watch(bodyMassUnitProvider),
                     onClose: () => _controller.select(null),
                   ),
                 ),
             ],
           ),
         ),
-        _Timeline(
-          scans: ref.watch(bodyScansProvider).value ?? const [],
-          pair: pair,
-          t: view.t,
-          onT: (t) {
-            _play.stop();
-            _controller.setT(t);
-          },
-          onPlay: _playMorph,
-          onCompare: (from, to) =>
-              _controller.compare(fromId: from.id, toId: to.id),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.xs,
+            AppSpacing.md,
+            AppSpacing.sm,
+          ),
+          child: _ModeBar(view: view, controller: _controller),
         ),
+        if (widget.showCompare)
+          _Timeline(
+            scans: ref.watch(bodyScansProvider).value ?? const [],
+            pair: pair,
+            t: view.t,
+            onT: (t) {
+              _play.stop();
+              _controller.setT(t);
+            },
+            onPlay: _playMorph,
+            onCompare: (from, to) =>
+                _controller.compare(fromId: from.id, toId: to.id),
+          ),
       ],
     );
   }
@@ -370,20 +380,9 @@ class _ModeBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SegmentedButton<BodyViewMode>(
-          key: const Key('body_mode'),
-          segments: const [
-            ButtonSegment(value: BodyViewMode.body, label: Text('Body')),
-            ButtonSegment(value: BodyViewMode.fat, label: Text('Fat')),
-            ButtonSegment(value: BodyViewMode.change, label: Text('Change')),
-          ],
-          selected: {view.mode},
-          showSelectedIcon: false,
-          onSelectionChanged: (s) => controller.setMode(s.first),
-        ),
         if (view.mode == BodyViewMode.change)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
             child: Wrap(
               spacing: AppSpacing.sm,
               children: [
@@ -399,6 +398,20 @@ class _ModeBar extends StatelessWidget {
               ],
             ),
           ),
+        SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<BodyViewMode>(
+            key: const Key('body_mode'),
+            segments: const [
+              ButtonSegment(value: BodyViewMode.body, label: Text('Shape')),
+              ButtonSegment(value: BodyViewMode.fat, label: Text('Fat')),
+              ButtonSegment(value: BodyViewMode.change, label: Text('Change')),
+            ],
+            selected: {view.mode},
+            showSelectedIcon: false,
+            onSelectionChanged: (s) => controller.setMode(s.first),
+          ),
+        ),
       ],
     );
   }
@@ -515,20 +528,22 @@ class _Badge extends StatelessWidget {
   );
 }
 
-/// Numbers for a tapped part: lean and fat in kg next to fat %, and the
-/// change since the earlier scan (kg beside %, so small lean limbs do not
-/// look dramatic).
+/// Numbers for a tapped part: lean and fat (kg or lb) next to fat %, and
+/// the change since the earlier scan (mass beside %, so small lean limbs do
+/// not look dramatic).
 class _PartCard extends StatelessWidget {
   const new({
     required this.part,
     required this.pair,
     required this.t,
+    required this.unit,
     required this.onClose,
   });
 
   final BodyPart part;
   final ScanPair pair;
   final double t;
+  final MassUnit unit;
   final VoidCallback onClose;
 
   RegionMass? _mass(BodyScan s) =>
@@ -567,9 +582,11 @@ class _PartCard extends StatelessWidget {
       ),
     );
 
-    String kgChange(double x, double y) {
+    String mass(double kg) => '${unit.of(kg).toStringAsFixed(2)} ${unit.name}';
+    String massChange(double x, double y) {
       final pct = x == 0 ? 0 : 100 * (y - x) / x;
-      return '${signed(y - x, digits: 2)} kg (${signed(pct.toDouble())}%)';
+      return '${signed(unit.of(y - x), digits: 2)} ${unit.name} '
+          '(${signed(pct.toDouble())}%)';
     }
 
     return Container(
@@ -609,13 +626,13 @@ class _PartCard extends StatelessWidget {
             children: [
               cell(
                 'Lean',
-                '${lerp(a.leanKg, b.leanKg).toStringAsFixed(2)} kg',
-                compare ? kgChange(a.leanKg, b.leanKg) : null,
+                mass(lerp(a.leanKg, b.leanKg)),
+                compare ? massChange(a.leanKg, b.leanKg) : null,
               ),
               cell(
                 'Fat',
-                '${lerp(a.fatKg, b.fatKg).toStringAsFixed(2)} kg',
-                compare ? kgChange(a.fatKg, b.fatKg) : null,
+                mass(lerp(a.fatKg, b.fatKg)),
+                compare ? massChange(a.fatKg, b.fatKg) : null,
               ),
               cell(
                 'Fat %',
