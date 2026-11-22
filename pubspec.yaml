@@ -12,6 +12,7 @@ workspace:
   - packages/app_auth
   - packages/app_payments
   - packages/app_feedback
+  - packages/app_scans
 
 dev_dependencies:
   very_good_analysis: ^11.0.0
