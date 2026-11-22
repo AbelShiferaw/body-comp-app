@@ -14,6 +14,7 @@ dependencies:
   app_core: any
   app_feedback: any
   app_payments: any
+  app_scans: any
   app_ui: any
   body_mapping: any
   flutter:

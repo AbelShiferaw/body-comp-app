@@ -4,6 +4,7 @@ import 'dart:developer' as developer;
 import 'package:app_auth/app_auth.dart';
 import 'package:app_body/app_body.dart';
 import 'package:app_core/app_core.dart';
+import 'package:app_scans/app_scans.dart';
 import 'package:body_comp/app/app.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -57,6 +58,7 @@ Future<void> bootstrap(Flavor expected) async {
     debug: false,
   );
   log.info('Supabase ready');
+  final supabase = Supabase.instance.client;
 
   runApp(
     ProviderScope(
@@ -64,7 +66,16 @@ Future<void> bootstrap(Flavor expected) async {
         appConfigProvider.overrideWithValue(config),
         crashReporterProvider.overrideWithValue(crashReporter),
         authRepositoryProvider.overrideWithValue(
-          SupabaseAuthRepository(Supabase.instance.client.auth),
+          SupabaseAuthRepository(supabase.auth),
+        ),
+        scanRepositoryProvider.overrideWithValue(
+          SupabaseScanRepository(supabase),
+        ),
+        measurementsRepositoryProvider.overrideWithValue(
+          SupabaseMeasurementsRepository(supabase),
+        ),
+        consentsRepositoryProvider.overrideWithValue(
+          SupabaseConsentsRepository(supabase),
         ),
         // Made-up scans until the scan data model lands; then this becomes
         // the adapter from scan rows to BodyScan.
