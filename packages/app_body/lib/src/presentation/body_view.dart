@@ -38,7 +38,13 @@ class _BodyViewState extends ConsumerState<BodyView>
   BodyRenderer? _renderer;
   bool _rendererReady = false;
   Object? _rendererError;
-  BodyShapes? _shapes;
+  BodyShapes? _latestShapes;
+
+  /// The shapes to draw. The listener below only sees changes, so shapes that
+  /// were already loaded before this view mounted (another screen read them
+  /// first) come from the provider directly.
+  BodyShapes? get _shapes =>
+      _latestShapes ?? ref.read(bodyShapesProvider).value;
   CameraPose _pose = (azimuth: 0, zoom: 1);
   double _zoomAtScaleStart = 1;
   Size _viewSize = Size.zero;
@@ -137,7 +143,7 @@ class _BodyViewState extends ConsumerState<BodyView>
       ..listen(bodyShapesProvider, (_, next) {
         final shapes = next.value;
         if (shapes == null) return;
-        _shapes = shapes;
+        _latestShapes = shapes;
         _pushAll();
       })
       ..listen(bodyViewControllerProvider, (prev, next) {

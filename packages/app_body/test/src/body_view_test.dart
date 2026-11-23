@@ -77,6 +77,67 @@ void main() {
     expect(find.byKey(const Key('body_slider')), findsOneWidget);
   });
 
+  testWidgets('draws shapes another screen loaded before it mounted', (
+    tester,
+  ) async {
+    // Onboarding reads the body providers before home's BodyView exists, so
+    // the shapes are already loaded when it mounts and never change after.
+    final show = ValueNotifier(false);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          bodyDataSourceProvider.overrideWithValue(FixtureBodyDataSource()),
+          bodyRendererFactoryProvider.overrideWithValue(() => renderer),
+          bodyStyleStoreProvider.overrideWithValue(store),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light,
+          home: Scaffold(
+            body: ValueListenableBuilder(
+              valueListenable: show,
+              builder: (context, on, _) => on
+                  ? const BodyView()
+                  : Consumer(
+                      builder: (context, ref, _) {
+                        ref.watch(bodyShapesProvider);
+                        return const SizedBox();
+                      },
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(Scaffold)),
+    );
+    for (
+      var i = 0;
+      i < 40 && !container.read(bodyShapesProvider).hasValue;
+      i++
+    ) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump();
+    }
+    expect(container.read(bodyShapesProvider).value, isNotNull);
+
+    show.value = true;
+    for (
+      var i = 0;
+      i < 40 && find.byKey(const Key('fake_body')).evaluate().isEmpty;
+      i++
+    ) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump();
+    }
+    expect(find.byKey(const Key('fake_body')), findsOneWidget);
+    expect(renderer.shapeUploads, greaterThan(0), reason: 'blank body');
+  });
+
   testWidgets('Fat view paints a heatmap with a legend', (tester) async {
     await pump(tester);
     await tester.tap(find.text('Fat'));
