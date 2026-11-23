@@ -387,9 +387,13 @@ class _Badge extends StatelessWidget {
 class _BodyHero extends StatelessWidget {
   const new();
 
+  /// A fifth of the screen, so both choice cards and Continue fit on one
+  /// phone screen (iPhone 17 Pro included) without scrolling.
   @override
-  Widget build(BuildContext context) =>
-      const SizedBox(height: 260, child: _PreviewBody());
+  Widget build(BuildContext context) => SizedBox(
+    height: (MediaQuery.sizeOf(context).height * 0.2).clamp(120, 260),
+    child: const _PreviewBody(),
+  );
 }
 
 /// The base body in the sex the user picked in their profile.
