@@ -119,7 +119,7 @@
     "syncNoScans": "Your BodySpec account has no scans yet. Book a scan, then tap Refresh on your home screen.",
     "photosTitle": "Photo estimates are coming soon",
     "photosBody": "We're building guided front and side photos that estimate your body composition. Until then, your 3D body needs a DEXA scan.",
-    "photosHint": "You can connect BodySpec any time from your home screen.",
+    "photosHint": "We'll let you know in the app when photo estimates are ready.",
     "photosFinish": "Go to my home screen",
     "revealTitle": "Meet your body",
     "revealSubtitle": "{count, plural, =1{Built from your DEXA scan of {date}.} other{Built from the latest of your {count} DEXA scans, {date}.}}",
