@@ -51,7 +51,8 @@ abstract interface class SyncBackend {
     String? errorCode,
   });
 
-  /// Provider scan ids we already store for this provider.
+  /// Provider scan ids we already store for this provider, or that the user
+  /// deleted (a deleted scan is never imported again).
   Future<Set<String>> knownScanIds(DexaProvider provider);
 
   /// Inserts a running `sync_runs` row and returns its id.

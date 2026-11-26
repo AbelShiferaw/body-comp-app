@@ -50,10 +50,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       location: state.matchedLocation,
     ),
     routes: [
-      GoRoute(
-        path: Routes.splash,
-        builder: (_, _) => const Scaffold(body: LoadingView()),
-      ),
+      GoRoute(path: Routes.splash, builder: (_, _) => const _SplashPage()),
       GoRoute(
         path: Routes.signIn,
         builder: (context, _) => SignInPage(
@@ -115,11 +112,11 @@ String? appRedirect({
   if (auth.isLoading && !auth.hasValue) return go(Routes.splash);
   if (auth.value == null) return go(Routes.signIn);
 
-  // Signed in. Wait for the profile on the way in, but never bounce a user
-  // who is already inside the app when it reloads.
+  // Signed in. Wait for the profile on the way in (splash offers a retry if
+  // it fails, so no one skips profile setup or onboarding), but never bounce
+  // a user who is already inside the app when it reloads.
   final loaded = profile.value;
-  if (profile.hasError) return entry.contains(location) ? Routes.home : null;
-  if (loaded == null) {
+  if (profile.hasError || loaded == null) {
     return entry.contains(location) ? go(Routes.splash) : null;
   }
   if (!loaded.isComplete) return go(Routes.profileSetup);
@@ -129,4 +126,26 @@ String? appRedirect({
     return Routes.home;
   }
   return null;
+}
+
+/// A loader while auth and the profile load, or a retry when the profile
+/// failed to load on the way in.
+class _SplashPage extends ConsumerWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(profileProvider);
+    return Scaffold(
+      body: profile.hasError && !profile.isLoading
+          ? SafeArea(
+              child: ErrorView(
+                message: context.l10n.errorGeneric,
+                retryLabel: context.l10n.retry,
+                onRetry: () => ref.invalidate(profileProvider),
+              ),
+            )
+          : const LoadingView(),
+    );
+  }
 }

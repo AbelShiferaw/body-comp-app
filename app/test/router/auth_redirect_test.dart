@@ -103,9 +103,12 @@ void main() {
       );
     });
 
-    test('lets users in when the profile fails to load', () {
+    test('holds new sessions on splash when the profile fails to load', () {
+      // Splash shows a retry; going home would skip setup and onboarding.
       final failed = AsyncError<Profile?>(Exception(), StackTrace.empty);
-      expect(redirect(user, Routes.splash, profile: failed), Routes.home);
+      expect(redirect(user, Routes.signIn, profile: failed), Routes.splash);
+      expect(redirect(user, Routes.splash, profile: failed), isNull);
+      // Already inside the app: stay put.
       expect(redirect(user, Routes.home, profile: failed), isNull);
     });
   });

@@ -24,6 +24,22 @@ void main() {
       expect(find.byType(HomePage), findsOneWidget);
     });
 
+    testWidgets('a profile that fails to load offers a retry on splash', (
+      tester,
+    ) async {
+      final fakes = await tester.pumpApp(
+        user: user,
+        profileError: Exception('offline'),
+      );
+      expect(find.byType(HomePage), findsNothing);
+      expect(find.text('Try again'), findsOneWidget);
+
+      fakes.profiles.fetchError = null;
+      await tester.tap(find.text('Try again'));
+      await tester.pumpAndSettle();
+      expect(find.byType(HomePage), findsOneWidget);
+    });
+
     testWidgets('new account goes through profile setup to onboarding', (
       tester,
     ) async {

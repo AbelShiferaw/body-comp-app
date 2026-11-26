@@ -5,6 +5,11 @@
 // Fields the spike never printed (weight, A/G ratio, bone density,
 // percentiles) are read from the likely keys and left out when absent, so a
 // different shape degrades to a missing number, never a failed import.
+//
+// Values the database would reject (its range checks, numeric precision and
+// primary keys) are dropped here and the scan flagged for review, so one odd
+// value costs that number, never the import. The bounds below mirror the
+// checks in the scans migration.
 
 export const BODYSPEC_NORMALIZER = "bodyspec-n1";
 
@@ -75,7 +80,8 @@ export type ReviewReason =
   | "regions_do_not_sum"
   | "body_fat_out_of_range"
   | "height_out_of_range"
-  | "scanned_in_future";
+  | "scanned_in_future"
+  | "value_dropped";
 
 export interface NormalizeResult {
   scan: NormalizedScan;
@@ -105,6 +111,23 @@ const grams = (kg: number | undefined) =>
   kg === undefined ? undefined : Math.round(kg * 1000);
 
 const round1 = (x: number) => Math.round(x * 10) / 10;
+const round2 = (x: number) => Math.round(x * 100) / 100;
+
+/**
+ * [x] when it lies in [lo, hi], else undefined with "value_dropped" noted.
+ * Undefined in is undefined out, with nothing noted.
+ */
+function within(
+  reasons: ReviewReason[],
+  x: number | undefined,
+  lo: number,
+  hi: number,
+): number | undefined {
+  if (x === undefined) return undefined;
+  if (x >= lo && x <= hi) return x;
+  reasons.push("value_dropped");
+  return undefined;
+}
 
 /**
  * Maps one BodySpec result (its detail plus six DEXA sections) to the
@@ -135,29 +158,40 @@ export function normalizeBodySpec(
     reasons.push("scanned_in_future");
   }
 
-  const fatKg = firstNum(total, "fat_mass_kg");
-  const leanKg = firstNum(total, "lean_mass_kg");
-  const boneKg = firstNum(total, "bone_mass_kg");
+  const kg = (k: string) => within(reasons, firstNum(total, k), 0, 1000);
+  const fatKg = kg("fat_mass_kg");
+  const leanKg = kg("lean_mass_kg");
+  const boneKg = kg("bone_mass_kg");
   if (fatKg === undefined || leanKg === undefined) {
     reasons.push("missing_totals");
   }
-  const bodyFatPct = firstNum(total, "region_fat_pct");
+  const bodyFatPct = within(
+    reasons,
+    firstNum(total, "region_fat_pct"),
+    0,
+    100,
+  );
   if (bodyFatPct !== undefined && (bodyFatPct < 2 || bodyFatPct > 70)) {
     reasons.push("body_fat_out_of_range");
   }
 
-  const heightCm = firstNum(intake, "height_cm");
+  const heightCm = within(reasons, firstNum(intake, "height_cm"), 1, 300);
   if (heightCm !== undefined && (heightCm < 120 || heightCm > 230)) {
     reasons.push("height_out_of_range");
   }
 
   // Weight at scan: the intake weight when BodySpec reports one, else the
   // DEXA total mass (fat + lean + bone), which is what the scanner weighed.
-  const weightKg = firstNum(intake, "weight_kg") ??
-    firstNum(total, "total_mass_kg") ??
-    (fatKg !== undefined && leanKg !== undefined && boneKg !== undefined
-      ? fatKg + leanKg + boneKg
-      : undefined);
+  const weightKg = within(
+    reasons,
+    firstNum(intake, "weight_kg") ??
+      firstNum(total, "total_mass_kg") ??
+      (fatKg !== undefined && leanKg !== undefined && boneKg !== undefined
+        ? fatKg + leanKg + boneKg
+        : undefined),
+    0.001,
+    1000,
+  );
 
   const regions: NormalizedRegion[] = [];
   for (const key of REGION_KEYS) {
@@ -169,13 +203,19 @@ export function normalizeBodySpec(
       continue;
     }
     if (lean < 0 || fat < 0) reasons.push("negative_mass");
+    if (lean > 1000 || fat > 1000) {
+      reasons.push("value_dropped");
+      continue;
+    }
     const bone = firstNum(r, "bone_mass_kg");
-    const pct = firstNum(r, "region_fat_pct");
+    const pct = within(reasons, firstNum(r, "region_fat_pct"), 0, 100);
     regions.push({
       region: key,
       lean_g: Math.max(0, grams(lean)!),
       fat_g: Math.max(0, grams(fat)!),
-      ...(bone !== undefined && bone >= 0 ? { bone_g: grams(bone) } : {}),
+      ...(bone !== undefined && bone >= 0 && bone <= 1000
+        ? { bone_g: grams(bone) }
+        : {}),
       ...(pct !== undefined ? { fat_pct: round1(pct) } : {}),
     });
   }
@@ -220,20 +260,26 @@ export function normalizeBodySpec(
     provider_scan_id: providerScanId,
     scanned_at: (scannedAt ?? now).toISOString(),
     normalizer_version: BODYSPEC_NORMALIZER,
-    status: reasons.length === 0 ? "ok" : "needs_review",
+    status: "ok", // set below, once every value has been checked
     height_cm: heightCm === undefined ? undefined : round1(heightCm),
     weight_g: grams(weightKg),
     fat_g: grams(fatKg),
     lean_g: grams(leanKg),
     bone_g: grams(boneKg),
     body_fat_pct: bodyFatPct === undefined ? undefined : round1(bodyFatPct),
-    vat_g: grams(firstNum(visceral, "vat_mass_kg")),
-    android_gynoid_ratio: androidGynoidRatio(composition),
+    vat_g: grams(within(reasons, firstNum(visceral, "vat_mass_kg"), 0, 1000)),
+    android_gynoid_ratio: within(
+      reasons,
+      androidGynoidRatio(composition),
+      0,
+      99.99,
+    ),
     rmr: obj(sections["rmr"]) ?? undefined,
     regions,
-    bone_density: boneDensity(sections["bone-density"]),
+    bone_density: boneDensity(sections["bone-density"], reasons),
     percentiles: percentiles(sections["percentiles"]),
   };
+  if (reasons.length > 0) scan.status = "needs_review";
   return { scan: dropUndefined(scan), reasons: [...new Set(reasons)] };
 }
 
@@ -244,17 +290,20 @@ function androidGynoidRatio(composition: Json | undefined) {
     "ag_ratio",
     "a_g_ratio",
   );
-  if (direct !== undefined) return Math.round(direct * 100) / 100;
+  if (direct !== undefined) return round2(direct);
   const regions = obj(composition?.["regions"]);
   const a = firstNum(obj(regions?.["android"]), "region_fat_pct");
   const g = firstNum(obj(regions?.["gynoid"]), "region_fat_pct");
   return a !== undefined && g !== undefined && g > 0
-    ? Math.round((a / g) * 100) / 100
+    ? round2(a / g)
     : undefined;
 }
 
 /** Bone density per site, from either `{regions: {site: {...}}}` or a list. */
-function boneDensity(section: unknown): NormalizedScan["bone_density"] {
+function boneDensity(
+  section: unknown,
+  reasons: ReviewReason[],
+): NormalizedScan["bone_density"] {
   const s = obj(section);
   const entries: [string, Json][] = [];
   const fromMap = obj(s?.["regions"]) ?? obj(s?.["sites"]);
@@ -277,16 +326,22 @@ function boneDensity(section: unknown): NormalizedScan["bone_density"] {
   const total = obj(s?.["total"]);
   if (total) entries.push(["total", total]);
 
-  return entries
-    .filter(([site]) => site.length >= 1 && site.length <= 40)
-    .map(([site, o]) =>
-      dropUndefined({
-        site,
-        bmd_g_cm2: firstNum(o, "bmd_g_cm2", "bmd"),
-        t_score: firstNum(o, "t_score"),
-        z_score: firstNum(o, "z_score"),
-      })
-    );
+  const round3 = (x: number | undefined) =>
+    x === undefined ? undefined : Math.round(x * 1000) / 1000;
+  const score = (o: Json, k: string) => {
+    const x = within(reasons, firstNum(o, k), -99.9, 99.9);
+    return x === undefined ? undefined : round1(x);
+  };
+  return firstPerKey(entries, 40).map(([site, o]) =>
+    dropUndefined({
+      site,
+      bmd_g_cm2: round3(
+        within(reasons, firstNum(o, "bmd_g_cm2", "bmd"), 0, 99.99),
+      ),
+      t_score: score(o, "t_score"),
+      z_score: score(o, "z_score"),
+    })
+  );
 }
 
 const BANDS = new Set(["green", "yellow", "red"]);
@@ -316,22 +371,36 @@ function percentiles(section: unknown): NormalizedScan["percentiles"] {
     ? (s["reference_group"] as string).slice(0, 80)
     : undefined;
 
-  return entries
-    .filter(([metric]) => metric.length >= 1 && metric.length <= 60)
-    .map(([metric, o]) => {
-      const p = firstNum(o, "percentile");
-      const band = typeof o["band"] === "string"
-        ? (o["band"] as string).toLowerCase()
-        : undefined;
-      return dropUndefined({
-        metric,
-        percentile: p !== undefined && p >= 0 && p <= 100
-          ? round1(p)
-          : undefined,
-        band: band && BANDS.has(band) ? band : undefined,
-        reference_group: referenceGroup,
-      });
+  return firstPerKey(entries, 60).map(([metric, o]) => {
+    const p = firstNum(o, "percentile");
+    const band = typeof o["band"] === "string"
+      ? (o["band"] as string).toLowerCase()
+      : undefined;
+    return dropUndefined({
+      metric,
+      percentile: p !== undefined && p >= 0 && p <= 100 ? round1(p) : undefined,
+      band: band && BANDS.has(band) ? band : undefined,
+      reference_group: referenceGroup,
     });
+  });
+}
+
+/**
+ * Entries whose key is 1 to [maxLength] characters, the first per key: the
+ * key is part of the table's primary key, so a repeat would fail the insert.
+ */
+function firstPerKey(
+  entries: [string, Json][],
+  maxLength: number,
+): [string, Json][] {
+  const seen = new Set<string>();
+  return entries.filter(([key]) => {
+    if (key.length < 1 || key.length > maxLength || seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
 }
 
 function dropUndefined<T extends object>(o: T): T {

@@ -9,6 +9,9 @@ class FakeProfileRepository implements ProfileRepository {
 
   /// When set, the next fetch or save throws it.
   Exception? nextError;
+
+  /// When set, every fetch throws it (Riverpod retries a failed provider).
+  Exception? fetchError;
   final saved = <Profile>[];
 
   void _maybeThrow() {
@@ -20,6 +23,7 @@ class FakeProfileRepository implements ProfileRepository {
   @override
   Future<Profile> fetch(String userId) async {
     _maybeThrow();
+    if (fetchError case final e?) throw e;
     return profiles[userId] ?? const Profile();
   }
 

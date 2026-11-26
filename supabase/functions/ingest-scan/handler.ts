@@ -5,7 +5,7 @@
 //
 // The handler is pure over [Deps], so unit tests run it without Supabase.
 
-import { canonicalJson, sha256Hex, stripIdentity } from "./identity.ts";
+import { canonicalJson, keepForStorage, sha256Hex } from "./identity.ts";
 import { normalizeBodySpec } from "./normalize_bodyspec.ts";
 
 export const MAX_BODY_BYTES = 256 * 1024;
@@ -90,7 +90,7 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
     return fail(403, "not_in_beta");
   }
 
-  const stripped = stripIdentity(sections) as Record<string, unknown>;
+  const stripped = keepForStorage(source, sections as Record<string, unknown>);
   const contentSha256 = await sha256Hex(canonicalJson(stripped));
   const { scan, reasons } = SOURCES[source](
     providerScanId,

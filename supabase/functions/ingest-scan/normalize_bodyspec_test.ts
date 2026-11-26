@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any -- fixtures are untyped JSON
 import { assert, assertEquals } from "@std/assert";
-import { stripIdentity } from "./identity.ts";
+import { keepForStorage } from "./identity.ts";
 import {
   BODYSPEC_NORMALIZER,
   normalizeBodySpec,
@@ -162,7 +162,75 @@ for (
   });
 }
 
+// Values the database checks would reject: dropped, so the scan still imports.
+for (
+  const [name, change, read] of [
+    [
+      "body fat over 100",
+      (s: any) => (s.composition.total.region_fat_pct = 101),
+      (scan: any) => scan.body_fat_pct,
+    ],
+    [
+      "region fat % over 100",
+      (s: any) => (s.composition.regions.trunk.region_fat_pct = 120),
+      (scan: any) =>
+        scan.regions.find((r: any) => r.region === "trunk").fat_pct,
+    ],
+    [
+      "region fat % below 0",
+      (s: any) => (s.composition.regions.trunk.region_fat_pct = -3),
+      (scan: any) =>
+        scan.regions.find((r: any) => r.region === "trunk").fat_pct,
+    ],
+    [
+      "weight of 0",
+      (s: any) => (s["scan-info"].patient_intake.weight_kg = 0),
+      (scan: any) => scan.weight_g,
+    ],
+    [
+      "A/G ratio too large to store",
+      (s: any) => (s.composition.android_gynoid_ratio = 120),
+      (scan: any) => scan.android_gynoid_ratio,
+    ],
+    [
+      "T-score too large to store",
+      (s: any) => (s["bone-density"].total.t_score = 150),
+      (scan: any) =>
+        scan.bone_density.find((b: any) => b.site === "total").t_score,
+    ],
+  ] as const
+) {
+  Deno.test(`drops a value the database would reject: ${name}`, () => {
+    const s = fixture();
+    change(s);
+    const { scan, reasons } = normalize(s);
+    assertEquals(read(scan), undefined);
+    assertEquals(scan.status, "needs_review");
+    assert(reasons.includes("value_dropped"), `${reasons}`);
+    assertEquals(scan.regions.length, 8, "the rest of the scan is kept");
+  });
+}
+
+Deno.test("keeps one row per bone density site and percentile metric", () => {
+  const s = fixture();
+  // A "total" site in the map as well as the section's own total.
+  s["bone-density"].regions.total = { bmd: 1.3 };
+  const { scan } = normalize(s);
+  const sites = scan.bone_density.map((b) => b.site);
+  assertEquals(sites, [...new Set(sites)]);
+  assertEquals(sites.sort(), ["spine", "total"]);
+
+  const list = normalize({
+    ...fixture(),
+    percentiles: [
+      { metric: "body_fat_pct", percentile: 80 },
+      { metric: "body_fat_pct", percentile: 81 },
+    ],
+  }).scan.percentiles;
+  assertEquals(list, [{ metric: "body_fat_pct", percentile: 80 }]);
+});
+
 Deno.test("normalizes the stripped payload the same way", () => {
-  const stripped = stripIdentity(fixture()) as Record<string, unknown>;
+  const stripped = keepForStorage("bodyspec", fixture());
   assertEquals(normalize(stripped).reasons, []);
 });
