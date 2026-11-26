@@ -13,6 +13,8 @@ workspace:
   - packages/app_payments
   - packages/app_feedback
   - packages/app_scans
+  - packages/app_body
+  - packages/body_mapping
 
 dev_dependencies:
   very_good_analysis: ^11.0.0

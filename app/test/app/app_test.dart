@@ -1,4 +1,5 @@
 import 'package:app_auth/app_auth.dart';
+import 'package:app_body/app_body.dart';
 import 'package:body_comp/home/home_page.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -28,6 +29,15 @@ void main() {
       await repo.signInWithPassword(email: 'a@b.co', password: 'x');
       await tester.pumpAndSettle();
       expect(find.byType(HomePage), findsOneWidget);
+    });
+
+    testWidgets('home opens settings with the body style toggle', (
+      tester,
+    ) async {
+      await tester.pumpApp(user: const AuthUser(id: 'u1'));
+      await tester.tap(find.byIcon(Icons.settings_outlined));
+      await tester.pumpAndSettle();
+      expect(find.byType(BodyStyleSetting), findsOneWidget);
     });
 
     testWidgets('follows the phone dark mode', (tester) async {

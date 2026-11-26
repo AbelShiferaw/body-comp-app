@@ -10,11 +10,13 @@ environment:
 
 dependencies:
   app_auth: any
+  app_body: any
   app_core: any
   app_feedback: any
   app_payments: any
   app_scans: any
   app_ui: any
+  body_mapping: any
   flutter:
     sdk: flutter
   flutter_localizations:

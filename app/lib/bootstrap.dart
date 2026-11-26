@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:app_auth/app_auth.dart';
+import 'package:app_body/app_body.dart';
 import 'package:app_core/app_core.dart';
 import 'package:app_scans/app_scans.dart';
 import 'package:body_comp/app/app.dart';
+import 'package:body_comp/body/scans_body_data_source.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
@@ -75,6 +77,12 @@ Future<void> bootstrap(Flavor expected) async {
         ),
         consentsRepositoryProvider.overrideWithValue(
           SupabaseConsentsRepository(supabase),
+        ),
+        bodyDataSourceProvider.overrideWith(
+          (ref) => ScansBodyDataSource(
+            scans: ref.watch(drawableScansProvider.future),
+            measurements: ref.watch(currentMeasurementsProvider.future),
+          ),
         ),
       ],
       observers: [_ProviderErrorLogger(crashReporter)],
