@@ -5,6 +5,7 @@ import 'package:app_scans/app_scans.dart';
 import 'package:body_comp/app/app.dart';
 import 'package:body_comp/profile/domain/profile.dart';
 import 'package:body_comp/profile/presentation/profile_providers.dart';
+import 'package:body_mapping/body_mapping.dart' show BodyScan;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -42,15 +43,18 @@ extension PumpApp on WidgetTester {
   }
 
   /// Pumps the real [App] with in-memory auth, profile, scan and DEXA
-  /// backends. A signed-in [user] gets [profile], onboarded by default.
-  /// [bodySpec] false is a build without a BodySpec client id.
+  /// backends. A signed-in [user] gets [profile], onboarded by default, and
+  /// [scans] for the body. [bodySpec] false is a build without a BodySpec
+  /// client id.
   Future<Fakes> pumpApp({
     AuthUser? user,
     Profile? profile,
     FakeDexa? dexa,
     bool bodySpec = true,
+    List<BodyScan> scans = const [],
+    bool tallPhone = true,
   }) async {
-    useTallPhone();
+    if (tallPhone) useTallPhone();
     final auth = FakeAuthRepository(user: user);
     final profiles = FakeProfileRepository({
       ?user?.id: profile ?? completeProfile,
@@ -62,7 +66,7 @@ extension PumpApp on WidgetTester {
           authRepositoryProvider.overrideWithValue(auth),
           profileRepositoryProvider.overrideWithValue(profiles),
           bodyDataSourceProvider.overrideWithValue(
-            FixtureBodyDataSource(scans: const []),
+            FixtureBodyDataSource(scans: scans),
           ),
           bodyStyleStoreProvider.overrideWithValue(_NoStyleStore()),
           bodyRendererFactoryProvider.overrideWithValue(FakeBodyRenderer.new),

@@ -15,6 +15,7 @@ class ProfileSetupPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final tokens = context.tokens;
+    final text = Theme.of(context).textTheme;
     final profile = ref.watch(profileProvider);
     return Scaffold(
       body: SafeArea(
@@ -25,18 +26,27 @@ class ProfileSetupPage extends ConsumerWidget {
             onRetry: () => ref.invalidate(profileProvider),
           ),
           AsyncValue(:final value) when profile.hasValue => ListView(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.gutter,
+              AppSpacing.gutter,
+              AppSpacing.gutter,
+              AppSpacing.xl,
+            ),
             children: [
-              Text(
-                l10n.profileSetupTitle,
-                style: Theme.of(context).textTheme.headlineMedium,
+              Center(
+                child: Text(
+                  l10n.appTitle.toUpperCase(),
+                  style: AppTheme.wordmark.copyWith(color: tokens.textPrimary),
+                ),
               ),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: AppSpacing.xl),
+              Text(l10n.profileSetupTitle, style: text.headlineLarge),
+              const SizedBox(height: AppSpacing.sm),
               Text(
                 l10n.profileSetupSubtitle,
-                style: TextStyle(color: tokens.textSecondary),
+                style: text.bodyLarge?.copyWith(color: tokens.textSecondary),
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.xl),
               ProfileForm(
                 initial: value ?? const Profile(),
                 submitLabel: l10n.profileSetupSubmit,

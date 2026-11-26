@@ -62,6 +62,7 @@ void main() {
     expect(renderer.t, 1);
     expect(renderer.colors, isNull);
     expect(renderer.style, BodyStyle.studio);
+    expect(find.byKey(const Key('body_pad')), findsNothing);
     expect(find.text('Jul 2, 2026'), findsOneWidget);
     expect(find.text('Nov 7, 2026'), findsOneWidget);
   });
@@ -204,11 +205,22 @@ void main() {
     expect(find.textContaining('after your first scan'), findsOneWidget);
   });
 
+  testWidgets('hologram style stands the body on a scanner pad', (
+    tester,
+  ) async {
+    store.saved = BodyStyle.hologram;
+    await pump(tester, theme: AppTheme.dark);
+    expect(renderer.style, BodyStyle.hologram);
+    expect(find.byKey(const Key('body_pad')), findsOneWidget);
+  });
+
   testWidgets('uses the saved style and follows dark mode', (tester) async {
     store.saved = BodyStyle.midnight;
     await pump(tester, theme: AppTheme.dark);
     expect(renderer.style, BodyStyle.midnight);
     expect(renderer.brightness, Brightness.dark);
+    // The scanner pad belongs to the hologram look only.
+    expect(find.byKey(const Key('body_pad')), findsNothing);
   });
 
   testWidgets('style setting saves the choice', (tester) async {
