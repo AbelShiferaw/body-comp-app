@@ -231,7 +231,7 @@ void main() {
       final arm = sampleTimeline.last.regions[BodyRegion.leftArm]!;
       expect(
         pinText(tester, 'leftArm'),
-        'Left arm · ${arm.leanKg.toStringAsFixed(2)} kg lean',
+        'Left arm · ${arm.leanKg.toStringAsFixed(1)} kg lean',
       );
 
       await tester.tap(find.text('Fat'));

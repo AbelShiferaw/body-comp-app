@@ -26,7 +26,8 @@ const List<BodyPart> pinnedParts = [
 ];
 
 /// The pin text for [part] in the current view: lean mass in Shape, fat %
-/// in Fat, and the change between the compared scans in Change.
+/// in Fat, and the change between the compared scans in Change. Masses
+/// use one decimal, like the headline numbers.
 PinText pinLabel(
   BodyPart part,
   BodyViewState view,
@@ -42,7 +43,7 @@ PinText pinLabel(
   double lerp(double x, double y) => x + (y - x) * view.t;
   String kg(double v, {bool sign = false}) {
     final shown = unit.of(v);
-    return '${sign ? signed(shown, digits: 2) : shown.toStringAsFixed(2)} '
+    return '${sign ? signed(shown) : shown.toStringAsFixed(1)} '
         '${unit.name}';
   }
 
