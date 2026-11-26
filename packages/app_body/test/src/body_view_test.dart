@@ -1,6 +1,7 @@
 import 'package:app_body/app_body.dart';
 import 'package:app_ui/app_ui.dart';
 import 'package:body_mapping/body_mapping.dart';
+import 'package:body_mapping/fixtures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -208,6 +209,86 @@ void main() {
     await tester.tap(find.byTooltip('Close'));
     await tester.pumpAndSettle();
     expect(renderer.highlighted, isNull);
+  });
+
+  group('part pins', () {
+    String pinText(WidgetTester tester, String part) => tester
+        .widgetList<Text>(
+          find.descendant(
+            of: find.byKey(Key('body_pin_$part')),
+            matching: find.byType(Text),
+          ),
+        )
+        .map((t) => t.data)
+        .join(' · ');
+
+    testWidgets('label the arms, belly and legs for each view', (tester) async {
+      await pump(tester);
+      for (final part in pinnedParts) {
+        expect(find.byKey(Key('body_pin_${part.name}')), findsOne);
+      }
+      final belly = sampleTimeline.last.bands[FatBand.android]!;
+      final arm = sampleTimeline.last.regions[BodyRegion.leftArm]!;
+      expect(
+        pinText(tester, 'leftArm'),
+        'Left arm · ${arm.leanKg.toStringAsFixed(2)} kg lean',
+      );
+
+      await tester.tap(find.text('Fat'));
+      await tester.pumpAndSettle();
+      expect(
+        pinText(tester, 'belly'),
+        'Belly · ${belly.fatPct.toStringAsFixed(1)}% fat',
+      );
+
+      await tester.tap(find.text('Change'));
+      await tester.pumpAndSettle();
+      expect(pinText(tester, 'belly'), startsWith('Belly · '));
+      expect(pinText(tester, 'belly'), endsWith(' kg fat'));
+    });
+
+    testWidgets('labels stay on screen and never overlap', (tester) async {
+      tester.view
+        ..physicalSize = const Size(320 * 2, 568 * 2)
+        ..devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      await pump(tester);
+      final rects = [
+        for (final part in pinnedParts)
+          tester.getRect(find.byKey(Key('body_pin_${part.name}'))),
+      ];
+      for (final (i, r) in rects.indexed) {
+        expect(r.left, greaterThanOrEqualTo(0));
+        expect(r.right, lessThanOrEqualTo(320));
+        for (final other in rects.skip(i + 1)) {
+          expect(r.overlaps(other), isFalse);
+        }
+      }
+    });
+
+    testWidgets('tapping a pin opens that part, and pins hide meanwhile', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tester.tap(find.byKey(const Key('body_pin_belly')));
+      await tester.pumpAndSettle();
+      expect(renderer.highlighted, BodyPart.belly);
+      expect(find.byKey(const Key('body_partCard')), findsOne);
+      expect(find.byKey(const Key('body_pin_belly')), findsNothing);
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('body_pin_belly')), findsOne);
+    });
+
+    testWidgets('pins hide while the body is side on', (tester) async {
+      await pump(tester);
+      await tester.drag(
+        find.byKey(const Key('body_scene')),
+        const Offset(-130, 0),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('body_pin_belly')), findsNothing);
+    });
   });
 
   testWidgets('shows the empty message with no scans', (tester) async {

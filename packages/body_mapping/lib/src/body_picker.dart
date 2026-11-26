@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:body_mapping/src/body_asset.dart';
@@ -82,6 +83,76 @@ class BodyPicker {
         if (best >= 0 && sum(t, slot) >= 1.5) best = part.index;
       }
       out[t] = best;
+    }
+    return out;
+  }
+
+  /// The vertices of each part, for placing a label on it.
+  late final Map<BodyPart, Int32List> verticesByPart = _verticesByPart();
+
+  Map<BodyPart, Int32List> _verticesByPart() {
+    final sets = [for (final _ in BodyPart.values) <int>{}];
+    final idx = asset.indices;
+    for (var t = 0; t < asset.triangleCount; t++) {
+      final p = _parts[t];
+      if (p < 0) continue;
+      sets[p]
+        ..add(idx[t * 3])
+        ..add(idx[t * 3 + 1])
+        ..add(idx[t * 3 + 2]);
+    }
+    return {
+      for (final part in BodyPart.values)
+        part: Int32List.fromList(sets[part.index].toList()..sort()),
+    };
+  }
+
+  /// Where a label for [part] sits: the point of the part nearest a viewer
+  /// looking from direction ([towardX], 0, [towardZ]) (a unit vector from
+  /// the body toward the camera), on the shape blended from [a] to [b] at
+  /// [t]. It favours the middle of the part over its edges, so the point
+  /// stays on the arm or leg as the body turns.
+  ({double x, double y, double z}) anchorOf(
+    BodyPart part,
+    BodyGeometry a,
+    BodyGeometry b,
+    double t, {
+    required double towardX,
+    required double towardZ,
+  }) {
+    final verts = verticesByPart[part]!;
+    final pa = a.positions;
+    final pb = b.positions;
+    double p(int v, int j) =>
+        pa[v * 3 + j] + (pb[v * 3 + j] - pa[v * 3 + j]) * t;
+    // The middle of the part's bounding box, not the vertex average: hands
+    // and feet have many small vertices and would pull it to the ends.
+    final lo = [double.infinity, double.infinity, double.infinity];
+    final hi = [-double.infinity, -double.infinity, -double.infinity];
+    for (final v in verts) {
+      for (var j = 0; j < 3; j++) {
+        lo[j] = math.min(lo[j], p(v, j));
+        hi[j] = math.max(hi[j], p(v, j));
+      }
+    }
+    final cx = (lo[0] + hi[0]) / 2;
+    final cy = (lo[1] + hi[1]) / 2;
+    final cz = (lo[2] + hi[2]) / 2;
+    var best = -double.infinity;
+    var out = (x: cx, y: cy, z: cz);
+    for (final v in verts) {
+      final dx = p(v, 0) - cx;
+      final dy = p(v, 1) - cy;
+      final dz = p(v, 2) - cz;
+      final along = dx * towardX + dz * towardZ;
+      final sideX = dx - along * towardX;
+      final sideZ = dz - along * towardZ;
+      final off = math.sqrt(sideX * sideX + dy * dy + sideZ * sideZ);
+      final score = along - 2 * off;
+      if (score > best) {
+        best = score;
+        out = (x: cx + dx, y: cy + dy, z: cz + dz);
+      }
     }
     return out;
   }

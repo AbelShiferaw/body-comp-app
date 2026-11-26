@@ -5,6 +5,7 @@ import 'package:app_body/src/domain/body_renderer.dart';
 import 'package:app_body/src/domain/body_view_state.dart';
 import 'package:app_body/src/presentation/body_providers.dart';
 import 'package:app_body/src/presentation/body_strings.dart';
+import 'package:app_body/src/presentation/part_pins.dart';
 import 'package:app_core/app_core.dart';
 import 'package:app_ui/app_ui.dart';
 import 'package:body_mapping/body_mapping.dart';
@@ -248,6 +249,8 @@ class _BodyViewState extends ConsumerState<BodyView>
                   ),
                 ),
               Positioned.fill(child: _scene()),
+              if (view.selected == null && math.cos(_pose.azimuth).abs() > 0.6)
+                Positioned.fill(child: _pins(pair, view)),
               if (metric != null && mapper != null)
                 Positioned(
                   left: AppSpacing.md,
@@ -339,6 +342,54 @@ class _BodyViewState extends ConsumerState<BodyView>
       );
     },
   );
+
+  /// Pins on the arms, belly and legs with each part's number for the
+  /// current view. They follow the body as it turns, and hide while the body
+  /// is side on (where an arm would sit behind the trunk) or a part is open.
+  Widget _pins(ScanPair pair, BodyViewState view) {
+    final picker = ref.watch(bodyPickerProvider).value;
+    final shapes = _shapes;
+    final r = _renderer;
+    if (picker == null || shapes == null || r == null) {
+      return const SizedBox.shrink();
+    }
+    return LayoutBuilder(
+      builder: (context, c) {
+        final size = Size(c.maxWidth, c.maxHeight);
+        final unit = ref.watch(bodyMassUnitProvider);
+        final pins = <PartPin>[
+          for (final part in pinnedParts)
+            if (_pinPoint(picker, shapes, r, part, view.t, size)
+                case final point?)
+              (
+                part: part,
+                point: point,
+                text: pinLabel(part, view, pair, unit),
+              ),
+        ];
+        return PartPins(pins: pins, onTap: _controller.select);
+      },
+    );
+  }
+
+  Offset? _pinPoint(
+    BodyPicker picker,
+    BodyShapes shapes,
+    BodyRenderer r,
+    BodyPart part,
+    double t,
+    Size size,
+  ) {
+    final a = picker.anchorOf(
+      part,
+      shapes.a,
+      shapes.b,
+      t,
+      towardX: math.sin(_pose.azimuth),
+      towardZ: -math.cos(_pose.azimuth),
+    );
+    return r.screenPointOf(a.x, a.y, a.z, size);
+  }
 
   void _pick(Offset point) {
     final picker = ref.read(bodyPickerProvider).value;
