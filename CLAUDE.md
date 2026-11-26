@@ -20,7 +20,7 @@ packages/
   app_body/             # Module: the 3D body (BodyView, BodyDataSource, flutter_scene renderer, style setting)
   body_mapping/         # Pure Dart: scan model, scan-to-shape mapping, heatmaps, mesh measurements, body.glb
 supabase/               # Local Supabase: config.toml, migrations/, tests/ (pgTAP)
-tool/                   # local_env.sh, test_all.sh, release/ (signing setup scripts), body_asset/ (rebuilds body.glb)
+tool/                   # local_env.sh, test_all.sh, release/ (signing setup scripts), body_asset/ (rebuilds body.glb from CC0 MakeHuman)
 spikes/                 # Throwaway spike apps. Not part of the workspace; never import from them.
 ```
 
