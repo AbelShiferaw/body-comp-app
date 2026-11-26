@@ -89,6 +89,19 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
     return Height.fromFeetInches(feet, inches);
   }
 
+  @override
+  void didUpdateWidget(ProfileForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Settings changes Units outside the form: convert the typed height in
+    // place, so the rest of the unsaved edits stay.
+    final units = widget.initial.units;
+    if (units != oldWidget.initial.units && units != _units) {
+      final cm = _heightCm();
+      _units = units;
+      _fillHeight(cm);
+    }
+  }
+
   void _switchUnits(Units units) {
     // Carry the typed height across, so switching never loses it.
     final cm = _heightCm();

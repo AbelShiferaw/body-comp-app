@@ -30,8 +30,3 @@ abstract final class Height {
 
   static double roundCm(double cm) => (cm * 10).round() / 10;
 }
-
-/// Mass conversions. Stored values are metric (kg, or g for visceral fat).
-abstract final class Mass {
-  static const lbPerKg = 2.20462;
-}

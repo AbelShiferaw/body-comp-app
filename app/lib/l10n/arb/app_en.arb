@@ -2,7 +2,7 @@
     "@@locale": "en",
     "appTitle": "Obsessed",
     "@appTitle": {
-        "description": "App name. Working title until branding is decided."
+        "description": "App name (decided Nov 22)."
     },
     "homeBodyPlaceholder": "Your 3D body appears here after your first DEXA scan",
     "@homeBodyPlaceholder": {

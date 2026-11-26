@@ -98,8 +98,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   onRetry: () => ref.invalidate(profileProvider),
                 ),
                 AsyncValue(:final value) when profile.hasValue => ProfileForm(
-                  // Rebuilt when Units changes, so height follows it.
-                  key: ValueKey(value?.units),
                   initial: value ?? const Profile(),
                   showUnits: false,
                   submitLabel: l10n.save,

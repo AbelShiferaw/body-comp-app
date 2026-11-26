@@ -38,6 +38,27 @@ void main() {
     );
   });
 
+  testWidgets('switching units keeps unsaved profile edits', (tester) async {
+    await tester.pumpApp(user: user, scans: sampleTimeline);
+    await openProfile(tester);
+    await tester.enterText(find.byKey(const Key('profile_birthYear')), '1990');
+    await tester.enterText(find.byKey(const Key('profile_heightFeet')), '6');
+    await tester.enterText(find.byKey(const Key('profile_heightInches')), '0');
+
+    await tester.tap(find.text('kg · cm'));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(TextField, '1990'), findsOne);
+    // 6 ft 0 in, converted in place.
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('profile_heightCm')),
+        matching: find.text('182.9'),
+      ),
+      findsOne,
+    );
+  });
+
   testWidgets('game mode turns on the level badge', (tester) async {
     await tester.pumpApp(user: user, scans: sampleTimeline);
     expect(find.byKey(const Key('home_level')), findsNothing);

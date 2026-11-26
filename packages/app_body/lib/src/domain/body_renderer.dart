@@ -25,10 +25,8 @@ enum MassUnit {
   kg,
   lb;
 
-  static const lbPerKg = 2.20462;
-
   /// [kg] in this unit.
-  double of(double kg) => this == lb ? kg * lbPerKg : kg;
+  double of(double kg) => this == lb ? kg * Mass.lbPerKg : kg;
 }
 
 /// How the camera frames the body, shared by the renderer and anything drawn
