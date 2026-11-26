@@ -145,9 +145,6 @@
     "unitFtIn": "ft / in",
     "unitFt": "ft",
     "unitIn": "in",
-    "@settingsTitle": {
-        "description": "Title of the settings screen"
-    },
     "@profileSexLabel": {
         "description": "Label for the male/female choice that picks the 3D body's base shape"
     },

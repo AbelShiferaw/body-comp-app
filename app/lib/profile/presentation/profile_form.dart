@@ -143,6 +143,8 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
     final tokens = context.tokens;
     final textTheme = Theme.of(context).textTheme;
     final digitsOnly = [FilteringTextInputFormatter.digitsOnly];
+    // Numbers use the display face, as on the canvas.
+    final numberStyle = textTheme.headlineSmall;
 
     return Form(
       key: _formKey,
@@ -153,26 +155,28 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(l10n.profileSexLabel, style: textTheme.titleSmall),
-          const SizedBox(height: AppSpacing.sm),
-          SegmentedButton<Sex>(
+          _Label(l10n.profileSexLabel),
+          Row(
             key: const Key('profile_sex'),
-            emptySelectionAllowed: true,
-            showSelectedIcon: false,
-            segments: [
-              ButtonSegment(value: Sex.male, label: Text(l10n.profileSexMale)),
-              ButtonSegment(
-                value: Sex.female,
-                label: Text(l10n.profileSexFemale),
-              ),
+            spacing: AppSpacing.smd,
+            children: [
+              for (final (sex, label) in [
+                (Sex.male, l10n.profileSexMale),
+                (Sex.female, l10n.profileSexFemale),
+              ])
+                Expanded(
+                  child: _OptionTile(
+                    label: label,
+                    selected: _sex == sex,
+                    onTap: () => setState(() {
+                      _sex = sex;
+                      _showSexError = false;
+                    }),
+                  ),
+                ),
             ],
-            selected: {?_sex},
-            onSelectionChanged: (s) => setState(() {
-              _sex = s.firstOrNull;
-              _showSexError = false;
-            }),
           ),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             _showSexError ? l10n.profileSexRequired : l10n.profileSexHelp,
             style: textTheme.bodySmall?.copyWith(
@@ -180,18 +184,17 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
+          _Label(l10n.profileBirthYearLabel),
           TextFormField(
             key: const Key('profile_birthYear'),
             controller: _birthYear,
             keyboardType: TextInputType.number,
+            style: numberStyle,
             inputFormatters: [
               ...digitsOnly,
               LengthLimitingTextInputFormatter(4),
             ],
-            decoration: InputDecoration(
-              labelText: l10n.profileBirthYearLabel,
-              errorMaxLines: 2,
-            ),
+            decoration: const InputDecoration(errorMaxLines: 2),
             validator: (value) {
               final year = int.tryParse(value?.trim() ?? '');
               if (year == null || !ProfileRules.isValidBirthYear(year, _now)) {
@@ -202,37 +205,29 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
           ),
           const SizedBox(height: AppSpacing.lg),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Expanded(
-                child: Text(
-                  l10n.profileHeightLabel,
-                  style: textTheme.titleSmall,
-                ),
-              ),
+              Expanded(child: _Label(l10n.profileHeightLabel)),
               if (widget.showUnits)
-                SegmentedButton<Units>(
-                  key: const Key('profile_units'),
-                  showSelectedIcon: false,
-                  segments: [
-                    ButtonSegment(
-                      value: Units.metric,
-                      label: Text(l10n.unitCm),
-                    ),
-                    ButtonSegment(
-                      value: Units.imperial,
-                      label: Text(l10n.unitFtIn),
-                    ),
-                  ],
-                  selected: {_units},
-                  onSelectionChanged: (s) => _switchUnits(s.first),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: _UnitToggle(
+                    key: const Key('profile_units'),
+                    options: [
+                      (Units.metric, l10n.unitCm),
+                      (Units.imperial, l10n.unitFtIn),
+                    ],
+                    selected: _units,
+                    onChanged: _switchUnits,
+                  ),
                 ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
           if (_units == Units.metric)
             TextFormField(
               key: const Key('profile_heightCm'),
               controller: _cm,
+              style: numberStyle,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
@@ -245,11 +240,13 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
           else
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: AppSpacing.smd,
               children: [
                 Expanded(
                   child: TextFormField(
                     key: const Key('profile_heightFeet'),
                     controller: _feet,
+                    style: numberStyle,
                     keyboardType: TextInputType.number,
                     inputFormatters: digitsOnly,
                     decoration: InputDecoration(
@@ -259,11 +256,11 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
                     validator: (_) => _validateHeight(),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: TextFormField(
                     key: const Key('profile_heightInches'),
                     controller: _inches,
+                    style: numberStyle,
                     keyboardType: TextInputType.number,
                     inputFormatters: digitsOnly,
                     decoration: InputDecoration(suffixText: l10n.unitIn),
@@ -290,6 +287,127 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
             onPressed: _submit,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A small caps section label above a field.
+class _Label extends StatelessWidget {
+  const new(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+    child: Text(
+      text.toUpperCase(),
+      style: Theme.of(context).textTheme.labelSmall
+          ?.copyWith(color: context.tokens.textSecondary),
+    ),
+  );
+}
+
+/// A large tappable choice, outlined in the accent color when selected.
+class _OptionTile extends StatelessWidget {
+  const new({required this.label, required this.selected, required this.onTap});
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Material(
+        color: selected ? tokens.accentSoft : tokens.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          side: BorderSide(
+            color: selected ? tokens.accent : tokens.border,
+            width: 2,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            height: 64,
+            child: Center(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: selected ? tokens.accent : tokens.textPrimary,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A compact pill switch between two or more values.
+class _UnitToggle<T> extends StatelessWidget {
+  const new({
+    required this.options,
+    required this.selected,
+    required this.onChanged,
+    super.key,
+  });
+
+  final List<(T, String)> options;
+  final T selected;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final text = Theme.of(context).textTheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: tokens.surfaceRaised,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xs),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (value, label) in options)
+              Semantics(
+                button: true,
+                selected: value == selected,
+                child: GestureDetector(
+                  onTap: () => onChanged(value),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.smd,
+                      vertical: AppSpacing.xs + 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: value == selected ? tokens.surface : null,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Text(
+                      label,
+                      style: text.titleSmall?.copyWith(
+                        color: value == selected
+                            ? tokens.textPrimary
+                            : tokens.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
