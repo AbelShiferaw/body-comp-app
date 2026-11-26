@@ -13,6 +13,11 @@ void main() {
   setUp(() => repo = FakeAuthRepository());
 
   Future<void> pump(WidgetTester tester, {ThemeData? theme}) async {
+    // A phone-sized screen, so the buttons under the hero are on screen.
+    tester.view
+      ..physicalSize = const Size(390, 844)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [authRepositoryProvider.overrideWithValue(repo)],
@@ -25,6 +30,12 @@ void main() {
     await tester.pump();
   }
 
+  Future<void> openEmail(WidgetTester tester, {bool newAccount = false}) async {
+    final key = newAccount ? 'signIn_emailOption' : 'signIn_haveAccount';
+    await tester.tap(find.byKey(Key(key)));
+    await tester.pumpAndSettle();
+  }
+
   Future<void> fillAndSubmit(WidgetTester tester) async {
     await tester.enterText(find.byKey(const Key('signIn_email')), ' a@b.co ');
     await tester.enterText(find.byKey(const Key('signIn_password')), 'secret');
@@ -34,15 +45,16 @@ void main() {
 
   testWidgets('signs in with the trimmed email', (tester) async {
     await pump(tester);
+    await openEmail(tester);
+    expect(find.text('Welcome back'), findsOneWidget);
     await fillAndSubmit(tester);
     expect(repo.calls, ['signIn:a@b.co']);
     expect(find.byKey(const Key('signIn_error')), findsNothing);
   });
 
-  testWidgets('switches to create account', (tester) async {
+  testWidgets('continue with email creates an account', (tester) async {
     await pump(tester);
-    await tester.tap(find.text('Create an account'));
-    await tester.pump();
+    await openEmail(tester, newAccount: true);
     expect(find.text('Create your account'), findsOneWidget);
     await fillAndSubmit(tester);
     expect(repo.calls, ['signUp:a@b.co']);
@@ -53,8 +65,7 @@ void main() {
   ) async {
     repo.signUpResult = SignUpResult.confirmationEmailSent;
     await pump(tester);
-    await tester.tap(find.text('Create an account'));
-    await tester.pump();
+    await openEmail(tester, newAccount: true);
     await fillAndSubmit(tester);
     expect(find.byKey(const Key('signIn_notice')), findsOneWidget);
   });
@@ -62,6 +73,7 @@ void main() {
   testWidgets('shows a friendly message for a network error', (tester) async {
     repo.nextError = const NetworkException('offline');
     await pump(tester);
+    await openEmail(tester);
     await fillAndSubmit(tester);
     expect(find.textContaining('No connection'), findsOneWidget);
   });
@@ -72,8 +84,18 @@ void main() {
       code: 'invalid_credentials',
     );
     await pump(tester);
+    await openEmail(tester);
     await fillAndSubmit(tester);
     expect(find.textContaining('did not match'), findsOneWidget);
+  });
+
+  testWidgets('the back button returns to the sign-in options', (tester) async {
+    await pump(tester);
+    await openEmail(tester);
+    await tester.tap(find.byKey(const Key('signIn_back')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('signIn_email')), findsNothing);
+    expect(find.byKey(const Key('signIn_emailOption')), findsOneWidget);
   });
 
   testWidgets('hides Apple and Google when unavailable', (tester) async {
