@@ -77,7 +77,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.settingsTitle, style: textTheme.headlineSmall),
+        title: Text(l10n.tabProfile, style: textTheme.headlineSmall),
       ),
       body: AbsorbPointer(
         absorbing: _busy,

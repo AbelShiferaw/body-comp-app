@@ -515,10 +515,8 @@ class _Badge extends StatelessWidget {
     ),
     child: Text(
       text,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-        color: context.tokens.onAccent,
-        fontWeight: FontWeight.w700,
-      ),
+      style: Theme.of(context).textTheme.labelLarge
+          ?.copyWith(color: context.tokens.onAccent),
     ),
   );
 }

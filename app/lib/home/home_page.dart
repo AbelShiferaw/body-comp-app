@@ -139,7 +139,6 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final tokens = context.tokens;
-    final textTheme = Theme.of(context).textTheme;
     final s = summary;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -165,10 +164,8 @@ class _Header extends StatelessWidget {
                   child: Text(
                     l10n.appTitle.toUpperCase(),
                     maxLines: 1,
-                    style: textTheme.titleSmall?.copyWith(
+                    style: AppTheme.wordmark.copyWith(
                       color: tokens.textPrimary,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.6,
                     ),
                   ),
                 ),
@@ -179,7 +176,10 @@ class _Header extends StatelessWidget {
               ],
             ),
           ),
-          if (s != null) Flexible(child: _ScanChip(scan: s)),
+          if (s != null) ...[
+            const SizedBox(width: AppSpacing.sm),
+            Flexible(child: _ScanChip(scan: s)),
+          ],
           IconButton(
             key: const Key('home_refresh'),
             tooltip: l10n.homeRefresh,
@@ -190,12 +190,6 @@ class _Header extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.refresh),
-          ),
-          IconButton(
-            key: const Key('home_settings'),
-            tooltip: l10n.settingsTitle,
-            icon: const Icon(Icons.person_outline),
-            onPressed: () => context.push(Routes.settings),
           ),
         ],
       ),
@@ -224,8 +218,8 @@ class LevelBadge extends StatelessWidget {
           child: Center(
             child: Text(
               '$level',
-              style: Theme.of(context).textTheme.titleSmall
-                  ?.copyWith(color: tokens.lean, fontWeight: FontWeight.w800),
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(color: tokens.lean),
             ),
           ),
         ),
@@ -462,10 +456,7 @@ class _Stat extends StatelessWidget {
           label.toUpperCase(),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: textTheme.labelSmall?.copyWith(
-            color: tokens.textSecondary,
-            letterSpacing: 0.8,
-          ),
+          style: textTheme.labelSmall?.copyWith(color: tokens.textSecondary),
         ),
         FittedBox(
           fit: BoxFit.scaleDown,
@@ -477,8 +468,6 @@ class _Stat extends StatelessWidget {
                   : (value * scale).toStringAsFixed(digits),
               style: textTheme.headlineMedium?.copyWith(
                 color: tokens.textPrimary,
-                fontWeight: FontWeight.w700,
-                height: 1.15,
               ),
               children: [
                 if (value != null)

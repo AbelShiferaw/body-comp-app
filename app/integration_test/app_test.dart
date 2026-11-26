@@ -54,7 +54,7 @@ void main() {
     await settle();
     expect(find.byType(HomePage), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('home_settings')));
+    await tester.tap(find.byKey(const Key('tab_profile')));
     await settle();
     await tester.tap(find.byKey(const Key('settings_signOut')));
     await settle();
@@ -64,7 +64,7 @@ void main() {
     await signInWithEmail();
     expect(find.byType(HomePage), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('home_settings')));
+    await tester.tap(find.byKey(const Key('tab_profile')));
     await settle();
     await tester.scrollUntilVisible(
       find.byKey(const Key('settings_delete')),

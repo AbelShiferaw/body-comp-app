@@ -47,6 +47,12 @@
         }
     },
     "homeRefresh": "Refresh scans",
+    "tabBody": "Body",
+    "tabProgress": "Progress",
+    "tabScans": "Scans",
+    "tabProfile": "Profile",
+    "progressComingSoon": "Watch your body change from one scan to the next. Coming soon.",
+    "scansComingSoon": "Every scan you've imported, with its full numbers. Coming soon.",
     "homeNewScans": "{count, plural, =1{1 new scan} other{{count} new scans}}",
     "@homeNewScans": {
         "description": "After Refresh imported scans",
@@ -100,7 +106,6 @@
         "description": "Shown when configuration is missing or invalid at launch"
     },
     "signOut": "Sign out",
-    "settingsTitle": "Settings",
     "settingsProfileSection": "Your body profile",
     "settingsAccountSection": "Account",
     "deleteAccount": "Delete account",
@@ -136,9 +141,6 @@
     "unitFtIn": "ft / in",
     "unitFt": "ft",
     "unitIn": "in",
-    "@settingsTitle": {
-        "description": "Title of the settings screen"
-    },
     "@profileSexLabel": {
         "description": "Label for the male/female choice that picks the 3D body's base shape"
     },

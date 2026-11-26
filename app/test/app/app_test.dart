@@ -50,7 +50,7 @@ void main() {
 
     testWidgets('settings signs out back to sign-in', (tester) async {
       final fakes = await tester.pumpApp(user: user);
-      await tester.tap(find.byKey(const Key('home_settings')));
+      await tester.tap(find.byKey(const Key('tab_profile')));
       await tester.pumpAndSettle();
       expect(find.byType(SettingsPage), findsOneWidget);
       expect(find.text('a@b.co'), findsOneWidget);
@@ -65,7 +65,7 @@ void main() {
       tester,
     ) async {
       final fakes = await tester.pumpApp(user: user);
-      await tester.tap(find.byKey(const Key('home_settings')));
+      await tester.tap(find.byKey(const Key('tab_profile')));
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('settings_delete')));
@@ -82,11 +82,9 @@ void main() {
       expect(find.byType(SignInPage), findsOneWidget);
     });
 
-    testWidgets('home opens settings with the body style toggle', (
-      tester,
-    ) async {
+    testWidgets('the Profile tab has the body style toggle', (tester) async {
       await tester.pumpApp(user: user);
-      await tester.tap(find.byKey(const Key('home_settings')));
+      await tester.tap(find.byKey(const Key('tab_profile')));
       await tester.pumpAndSettle();
       expect(find.byType(BodyStyleSetting), findsOneWidget);
     });
