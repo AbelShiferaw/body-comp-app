@@ -236,4 +236,22 @@ void main() {
       throwsA(isA<AppException>()),
     );
   });
+
+  test(
+    'a deleted scan stays known, so Refresh does not bring it back',
+    () async {
+      await alice.from('scans').delete().eq('provider_scan_id', scanRef.id);
+      expect(
+        await alice
+            .from('scans')
+            .select('id')
+            .eq('provider_scan_id', scanRef.id),
+        isEmpty,
+      );
+      expect(
+        await aliceSync.knownScanIds(DexaProvider.bodyspec),
+        contains(scanRef.id),
+      );
+    },
+  );
 }

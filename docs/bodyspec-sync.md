@@ -94,3 +94,10 @@ The normalizer (`bodyspec-n1`) relies on the fields the spike read. These it rea
 - bone density per site, percentiles with bands, RMR estimates
 
 If BodySpec renames a field the normalizer relies on, the scan is stored as `needs_review` (not drawn) and the logs show which rule failed.
+A value the database would reject (a fat % over 100, a weight of 0, a repeated bone-density site) is dropped and the scan flagged `value_dropped`, so one odd number never blocks the import.
+
+## What we store from BodySpec
+
+`raw_payloads` keeps only what `ALLOWED_SECTIONS` in `supabase/functions/ingest-scan/identity.ts` names: the composition sections whole, and from `detail` and `scan-info` only the result id, scan time, height and weight. Identity keys are then removed at any depth as a second layer. A new BodySpec section is dropped until it is added there, so check a real payload for identity fields before adding one.
+
+Deleting a scan records its provider id in `deleted_provider_scans` (ids only), and Refresh treats it as known, so a deleted scan never comes back.

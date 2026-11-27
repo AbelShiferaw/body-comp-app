@@ -10,16 +10,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The base body for [sex], turning once, for screens before the user has a
-/// scan (onboarding). It shows no one's data: just the mesh with the sex
-/// shape, in the chosen style. Decorative, so it is hidden from screen
-/// readers. Draws nothing if the renderer cannot start (the error is logged).
+/// scan (sign-in, onboarding). It shows no one's data: just the mesh with the
+/// sex shape (none before the user has picked one), in the chosen style.
+/// Decorative, so it is hidden from screen readers. Draws nothing if the
+/// renderer cannot start (the error is logged).
 class BodyPreview extends ConsumerStatefulWidget {
-  const new({required this.sex, super.key});
+  const new({this.sex, super.key});
 
-  final Sex sex;
+  /// Null before the user has said (sign-in): the base mesh alone.
+  final Sex? sex;
 
   /// The base mesh plus the [sex] shape, as `DexaBodyMapper` starts from.
-  static BodyGeometry geometryFor(BodyAsset asset, Sex sex) {
+  static BodyGeometry geometryFor(BodyAsset asset, Sex? sex) {
+    if (sex == null) {
+      return BodyGeometry.withNormals(asset.positions, asset.indices);
+    }
     final shape = asset.target(sex.name);
     final x = Float32List(asset.positions.length);
     for (var i = 0; i < x.length; i++) {

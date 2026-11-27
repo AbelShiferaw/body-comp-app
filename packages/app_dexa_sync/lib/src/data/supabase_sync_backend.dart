@@ -102,11 +102,20 @@ class SupabaseSyncBackend implements SyncBackend {
 
   @override
   Future<Set<String>> knownScanIds(DexaProvider provider) => _run(() async {
-    final rows = await _client
-        .from('scans')
-        .select('provider_scan_id')
-        .eq('source', provider.key);
-    return {for (final r in rows) r['provider_scan_id'] as String};
+    // Stored scans plus the ones the user deleted, so a delete stays deleted.
+    final (stored, deleted) = await (
+      _client
+          .from('scans')
+          .select('provider_scan_id')
+          .eq('source', provider.key),
+      _client
+          .from('deleted_provider_scans')
+          .select('provider_scan_id')
+          .eq('source', provider.key),
+    ).wait;
+    return {
+      for (final r in [...stored, ...deleted]) r['provider_scan_id'] as String,
+    };
   });
 
   @override

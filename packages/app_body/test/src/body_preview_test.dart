@@ -11,7 +11,7 @@ import 'package:material_ui/material_ui.dart';
 import 'fake_body_renderer.dart';
 
 void main() {
-  Widget app(FakeBodyRenderer renderer, Sex sex) => ProviderScope(
+  Widget app(FakeBodyRenderer renderer, Sex? sex) => ProviderScope(
     overrides: [
       bodyDataSourceProvider.overrideWithValue(FixtureBodyDataSource()),
       bodyRendererFactoryProvider.overrideWithValue(() => renderer),
@@ -76,5 +76,13 @@ void main() {
       diff = math.max(diff, (male[i] - female[i]).abs());
     }
     expect(diff, greaterThan(0.005), reason: 'the sex shape moves vertices');
+  });
+
+  testWidgets('with no sex yet (sign-in) draws the base mesh', (tester) async {
+    final renderer = FakeBodyRenderer();
+    await tester.pumpWidget(app(renderer, null));
+    await load(tester);
+    expect(find.byKey(const Key('fake_body')), findsOneWidget);
+    expect(renderer.shapeUploads, 1);
   });
 }

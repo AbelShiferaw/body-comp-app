@@ -54,12 +54,13 @@ extension PumpApp on WidgetTester {
     List<BodyScan> scans = const [],
     bool tallPhone = true,
     bool gameMode = false,
+    Exception? profileError,
   }) async {
     if (tallPhone) useTallPhone();
     final auth = FakeAuthRepository(user: user);
     final profiles = FakeProfileRepository({
       ?user?.id: profile ?? completeProfile,
-    });
+    })..fetchError = profileError;
     final fakeDexa = dexa ?? FakeDexa();
     await pumpWidget(
       ProviderScope(
