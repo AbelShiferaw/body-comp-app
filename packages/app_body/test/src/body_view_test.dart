@@ -159,6 +159,36 @@ void main() {
     expect(find.text('4%'), findsOneWidget);
   });
 
+  group('heatmap neutral', () {
+    // The head is always neutral, so some vertex carries the neutral color
+    // (baked to linear).
+    bool headIs(double srgb) {
+      final linear = math.pow(srgb, 2.2);
+      return renderer.colors!.any((c) => (c - linear).abs() < 0.01);
+    }
+
+    final grey = HeatPalette.standard.neutral.r;
+
+    testWidgets('takes the plain body color', (tester) async {
+      await pump(tester);
+      await tester.tap(find.text('Change'));
+      await tester.pumpAndSettle();
+      expect(headIs(0.2), isTrue);
+    });
+
+    testWidgets('stays grey in game-mode change maps', (tester) async {
+      store.gameMode = true;
+      await pump(tester);
+      await tester.tap(find.text('Change'));
+      await tester.pumpAndSettle();
+      expect(headIs(grey), isTrue);
+
+      await tester.tap(find.text('Fat'));
+      await tester.pumpAndSettle();
+      expect(headIs(0.2), isTrue);
+    });
+  });
+
   testWidgets('Change view switches between fat and lean change', (
     tester,
   ) async {

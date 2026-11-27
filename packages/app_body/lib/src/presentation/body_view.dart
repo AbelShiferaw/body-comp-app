@@ -163,6 +163,17 @@ class _BodyViewState extends ConsumerState<BodyView>
     _pushColors(view);
   }
 
+  /// The heatmap's neutral color: the plain body's, so the head and
+  /// unchanged parts keep the style's look. Not for change maps in game
+  /// mode, where the blue hologram would read as the blue of progress.
+  Rgb? _neutralFor(HeatMetric metric) {
+    if (metric != HeatMetric.fatPct &&
+        ref.read(bodyStyleProvider) == BodyStyle.hologram) {
+      return null;
+    }
+    return _renderer?.plainHeatColor;
+  }
+
   void _pushColors(BodyViewState view) {
     final r = _renderer;
     final shapes = _shapes;
@@ -178,7 +189,7 @@ class _BodyViewState extends ConsumerState<BodyView>
                   shapes.pair.to,
                   metric,
                   t: view.t,
-                  neutral: r.plainHeatColor,
+                  neutral: _neutralFor(metric),
                 )
                 .bake(mapper.asset),
     );
@@ -317,7 +328,7 @@ class _BodyViewState extends ConsumerState<BodyView>
               stops: mapper.legend(
                 metric,
                 pair.to.sex,
-                neutral: _renderer?.plainHeatColor,
+                neutral: _neutralFor(metric),
               ),
               from: pair.from,
               to: pair.to,
