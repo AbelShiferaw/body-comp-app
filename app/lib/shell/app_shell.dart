@@ -11,7 +11,8 @@ import 'package:material_ui/material_ui.dart';
 /// Each tab keeps its own navigation stack.
 ///
 /// With the Midnight body style, the Body tab (page and tab bar) is dark,
-/// like the website, whatever the phone's light/dark setting.
+/// like the website, whatever the phone's light/dark setting, in game mode
+/// too.
 class AppShell extends ConsumerWidget {
   const new(this.shell, {super.key});
 
@@ -22,7 +23,9 @@ class AppShell extends ConsumerWidget {
     final l10n = context.l10n;
     final midnight =
         shell.currentIndex == 0 &&
-        ref.watch(bodyStyleProvider) == BodyStyle.midnight;
+        // The picked style, not the drawn one: in game mode Midnight puts
+        // the hologram on the dark screen.
+        ref.watch(bodyStyleSettingProvider) == BodyStyle.midnight;
     final scaffold = Scaffold(
       body: shell,
       bottomNavigationBar: _TabBar(

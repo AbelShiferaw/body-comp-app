@@ -7,6 +7,7 @@ import 'package:body_mapping/fixtures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../helpers/fake_body_renderer.dart';
 import '../helpers/pump_app.dart';
 
 void main() {
@@ -64,6 +65,24 @@ void main() {
       expect(themeOf(SettingsPage), brightness);
     });
   }
+
+  testWidgets('Midnight keeps the Body tab dark in game mode', (tester) async {
+    final renderer = FakeBodyRenderer();
+    await tester.pumpApp(
+      user: user,
+      scans: sampleTimeline,
+      bodyStyle: BodyStyle.midnight,
+      gameMode: true,
+      renderer: renderer,
+    );
+    expect(
+      Theme.of(tester.element(find.byType(HomePage))).brightness,
+      Brightness.dark,
+    );
+    // The dark hologram look.
+    expect(renderer.style, BodyStyle.hologram);
+    expect(renderer.brightness, Brightness.dark);
+  });
 
   testWidgets('the tab bar fits a small phone', (tester) async {
     tester.view

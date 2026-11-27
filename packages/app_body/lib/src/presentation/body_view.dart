@@ -286,6 +286,23 @@ class _BodyViewState extends ConsumerState<BodyView>
     final mapper = ref.watch(bodyMapperProvider).value;
     return Column(
       children: [
+        // Above the body, not over it, so a turning body never goes behind
+        // it.
+        if (metric != null && mapper != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.xs,
+              AppSpacing.md,
+              0,
+            ),
+            child: _Legend(
+              metric: metric,
+              stops: mapper.legend(metric, pair.to.sex),
+              from: pair.from,
+              to: pair.to,
+            ),
+          ),
         Expanded(
           child: Stack(
             children: [
@@ -305,17 +322,6 @@ class _BodyViewState extends ConsumerState<BodyView>
               Positioned.fill(child: _scene()),
               if (view.selected == null && math.cos(_pose.azimuth).abs() > 0.6)
                 Positioned.fill(child: _pins(pair, view)),
-              if (metric != null && mapper != null)
-                Positioned(
-                  left: AppSpacing.md,
-                  top: AppSpacing.sm,
-                  child: _Legend(
-                    metric: metric,
-                    stops: mapper.legend(metric, pair.to.sex),
-                    from: pair.from,
-                    to: pair.to,
-                  ),
-                ),
               if (widget.showCompare)
                 Positioned(
                   right: AppSpacing.sm,
@@ -552,14 +558,19 @@ class _Legend extends StatelessWidget {
         ?.copyWith(color: tokens.textSecondary);
     final change = metric != HeatMetric.fatPct;
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: tokens.surface.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      child: Wrap(
+        spacing: AppSpacing.md,
+        runSpacing: AppSpacing.xs,
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           for (final (i, s) in stops.reversed.indexed)
             Padding(
@@ -589,12 +600,9 @@ class _Legend extends StatelessWidget {
               ),
             ),
           if (change)
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.xs),
-              child: Text(
-                '${shortDate(from.scannedAt)} → ${shortDate(to.scannedAt)}',
-                style: text,
-              ),
+            Text(
+              '${shortDate(from.scannedAt)} → ${shortDate(to.scannedAt)}',
+              style: text,
             ),
         ],
       ),

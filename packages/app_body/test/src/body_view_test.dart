@@ -415,10 +415,9 @@ void main() {
     await tester.tap(find.byKey(const Key('bodyStyle_gameMode')));
     await tester.pumpAndSettle();
     expect(store.gameMode, isTrue);
-    // Game mode draws the hologram, so the style picker is off meanwhile.
-    final picker = tester.widget<SegmentedButton<BodyStyle>>(
-      find.byKey(const Key('bodyStyle_toggle')),
-    );
-    expect(picker.onSelectionChanged, isNull);
+    // In game mode the picker still works: it picks the hologram's screen.
+    await tester.tap(find.text('Studio'));
+    await tester.pumpAndSettle();
+    expect(store.saved, BodyStyle.studio);
   });
 }

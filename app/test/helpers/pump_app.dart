@@ -46,7 +46,8 @@ extension PumpApp on WidgetTester {
   /// backends. A signed-in [user] gets [profile], onboarded by default, and
   /// [scans] for the body. [bodySpec] false is a build without a BodySpec
   /// client id. [gameMode] turns on the Settings game mode and [bodyStyle]
-  /// is the saved body style.
+  /// is the saved body style. [renderer] lets a test see what the body was
+  /// asked to draw.
   Future<Fakes> pumpApp({
     AuthUser? user,
     Profile? profile,
@@ -56,6 +57,7 @@ extension PumpApp on WidgetTester {
     bool tallPhone = true,
     bool gameMode = false,
     BodyStyle? bodyStyle,
+    FakeBodyRenderer? renderer,
     Exception? profileError,
   }) async {
     if (tallPhone) useTallPhone();
@@ -79,7 +81,9 @@ extension PumpApp on WidgetTester {
           bodyStyleStoreProvider.overrideWithValue(
             _StyleStore(gameMode, bodyStyle),
           ),
-          bodyRendererFactoryProvider.overrideWithValue(FakeBodyRenderer.new),
+          bodyRendererFactoryProvider.overrideWithValue(
+            () => renderer ?? FakeBodyRenderer(),
+          ),
           scanRepositoryProvider.overrideWithValue(fakeDexa.scans),
           consentsRepositoryProvider.overrideWithValue(fakeDexa.consents),
           scanProviderProvider.overrideWithValue(

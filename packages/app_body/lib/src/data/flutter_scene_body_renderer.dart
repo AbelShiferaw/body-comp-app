@@ -312,11 +312,12 @@ class _Look {
           lightIntensity: dark ? 1.9 : 2.2,
           environment: dark ? 0.7 : 1.0,
         );
-      // Midnight stays a dark, glossy body in every view: the heatmap is
-      // tinted toward the same charcoal instead of painted on white.
+      // Midnight is a glossy body on a dark screen. With a heatmap the
+      // material is only slightly dimmed, so the colors still match the
+      // legend.
       case BodyStyle.midnight:
         return _Look(
-          baseColor: heat ? _lin(0.42, 0.44, 0.50) : _lin(0.20, 0.22, 0.26),
+          baseColor: heat ? _lin(0.85, 0.86, 0.88) : _lin(0.20, 0.22, 0.26),
           roughness: 0.28,
           clearcoat: 1,
           lightDirection: vm.Vector3(-0.5, -0.4, 0.75),
