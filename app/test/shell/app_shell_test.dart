@@ -1,4 +1,5 @@
 import 'package:app_auth/app_auth.dart';
+import 'package:app_body/app_body.dart';
 import 'package:body_comp/home/home_page.dart';
 import 'package:body_comp/settings/settings_page.dart';
 import 'package:body_comp/shell/coming_soon_page.dart';
@@ -39,6 +40,28 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(HomePage), findsOne);
       expect(tester.takeException(), isNull);
+    });
+  }
+
+  for (final brightness in Brightness.values) {
+    testWidgets('Midnight makes the Body tab dark (${brightness.name})', (
+      tester,
+    ) async {
+      tester.platformDispatcher.platformBrightnessTestValue = brightness;
+      addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+      await tester.pumpApp(
+        user: user,
+        scans: sampleTimeline,
+        bodyStyle: BodyStyle.midnight,
+      );
+      Brightness themeOf(Type page) =>
+          Theme.of(tester.element(find.byType(page))).brightness;
+      expect(themeOf(HomePage), Brightness.dark);
+
+      // Other tabs keep the phone's setting.
+      await tester.tap(find.byKey(const Key('tab_profile')));
+      await tester.pumpAndSettle();
+      expect(themeOf(SettingsPage), brightness);
     });
   }
 
