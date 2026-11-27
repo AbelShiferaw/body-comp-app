@@ -361,6 +361,15 @@ void main() {
       expect(renderer.pose!.azimuth, at);
     });
 
+    testWidgets('faces front again when game mode turns off', (tester) async {
+      final container = await pumpGame(tester);
+      await tester.pump(const Duration(seconds: 3));
+      expect(renderer.pose!.azimuth, greaterThan(0.5));
+      await container.read(gameModeProvider.notifier).set(on: false);
+      await tester.pump();
+      expect(renderer.pose!.azimuth, 0);
+    });
+
     testWidgets('stays still with reduced motion', (tester) async {
       store.gameMode = true;
       await pump(tester, theme: AppTheme.dark);

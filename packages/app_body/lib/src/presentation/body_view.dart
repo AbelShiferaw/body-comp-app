@@ -203,7 +203,14 @@ class _BodyViewState extends ConsumerState<BodyView>
             (next.heatMetric == HeatMetric.fatPct && prev?.t != next.t);
         if (colorsChanged) _pushColors(next);
       })
-      ..listen(bodyStyleProvider, (_, s) => _renderer?.setStyle(s))
+      ..listen(bodyStyleProvider, (prev, s) {
+        _renderer?.setStyle(s);
+        // Leaving game mode: face front again after the turntable.
+        if (prev == BodyStyle.hologram && s != BodyStyle.hologram) {
+          setState(() => _pose = (azimuth: 0, zoom: _pose.zoom));
+          _renderer?.setCamera(_pose);
+        }
+      })
       ..listen(bodyScansProvider, (prev, next) {
         // A new scan after the first load (Refresh): show what changed.
         final before = prev?.value;
