@@ -163,6 +163,17 @@ class _BodyViewState extends ConsumerState<BodyView>
     _pushColors(view);
   }
 
+  /// The heatmap's neutral color: the plain body's, so the head and
+  /// unchanged parts keep the style's look. Not for change maps in game
+  /// mode, where the blue hologram would read as the blue of progress.
+  Rgb? _neutralFor(HeatMetric metric) {
+    if (metric != HeatMetric.fatPct &&
+        ref.read(bodyStyleProvider) == BodyStyle.hologram) {
+      return null;
+    }
+    return _renderer?.plainHeatColor;
+  }
+
   void _pushColors(BodyViewState view) {
     final r = _renderer;
     final shapes = _shapes;
@@ -173,7 +184,13 @@ class _BodyViewState extends ConsumerState<BodyView>
       metric == null
           ? null
           : mapper
-                .colorsFor(shapes.pair.from, shapes.pair.to, metric, t: view.t)
+                .colorsFor(
+                  shapes.pair.from,
+                  shapes.pair.to,
+                  metric,
+                  t: view.t,
+                  neutral: _neutralFor(metric),
+                )
                 .bake(mapper.asset),
     );
   }
@@ -182,6 +199,8 @@ class _BodyViewState extends ConsumerState<BodyView>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _renderer?.setBrightness(Theme.of(context).brightness);
+    // The neutral heatmap color follows the look.
+    _pushColors(ref.read(bodyViewControllerProvider));
   }
 
   @override
@@ -203,7 +222,15 @@ class _BodyViewState extends ConsumerState<BodyView>
             (next.heatMetric == HeatMetric.fatPct && prev?.t != next.t);
         if (colorsChanged) _pushColors(next);
       })
-      ..listen(bodyStyleProvider, (_, s) => _renderer?.setStyle(s))
+      ..listen(bodyStyleProvider, (prev, s) {
+        _renderer?.setStyle(s);
+        _pushColors(ref.read(bodyViewControllerProvider));
+        // Leaving game mode: face front again after the turntable.
+        if (prev == BodyStyle.hologram && s != BodyStyle.hologram) {
+          setState(() => _pose = (azimuth: 0, zoom: _pose.zoom));
+          _renderer?.setCamera(_pose);
+        }
+      })
       ..listen(bodyScansProvider, (prev, next) {
         // A new scan after the first load (Refresh): show what changed.
         final before = prev?.value;
@@ -286,6 +313,27 @@ class _BodyViewState extends ConsumerState<BodyView>
     final mapper = ref.watch(bodyMapperProvider).value;
     return Column(
       children: [
+        // Above the body, not over it, so a turning body never goes behind
+        // it.
+        if (metric != null && mapper != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.xs,
+              AppSpacing.md,
+              0,
+            ),
+            child: _Legend(
+              metric: metric,
+              stops: mapper.legend(
+                metric,
+                pair.to.sex,
+                neutral: _neutralFor(metric),
+              ),
+              from: pair.from,
+              to: pair.to,
+            ),
+          ),
         Expanded(
           child: Stack(
             children: [
@@ -305,17 +353,6 @@ class _BodyViewState extends ConsumerState<BodyView>
               Positioned.fill(child: _scene()),
               if (view.selected == null && math.cos(_pose.azimuth).abs() > 0.6)
                 Positioned.fill(child: _pins(pair, view)),
-              if (metric != null && mapper != null)
-                Positioned(
-                  left: AppSpacing.md,
-                  top: AppSpacing.sm,
-                  child: _Legend(
-                    metric: metric,
-                    stops: mapper.legend(metric, pair.to.sex),
-                    from: pair.from,
-                    to: pair.to,
-                  ),
-                ),
               if (widget.showCompare)
                 Positioned(
                   right: AppSpacing.sm,
@@ -552,14 +589,19 @@ class _Legend extends StatelessWidget {
         ?.copyWith(color: tokens.textSecondary);
     final change = metric != HeatMetric.fatPct;
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: tokens.surface.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      child: Wrap(
+        spacing: AppSpacing.md,
+        runSpacing: AppSpacing.xs,
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           for (final (i, s) in stops.reversed.indexed)
             Padding(
@@ -578,6 +620,8 @@ class _Legend extends StatelessWidget {
                         blue: s.color.b,
                       ),
                       borderRadius: BorderRadius.circular(3),
+                      // Keeps a swatch in the body's own dark color visible.
+                      border: Border.all(color: tokens.textFaint),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.xs),
@@ -589,12 +633,9 @@ class _Legend extends StatelessWidget {
               ),
             ),
           if (change)
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.xs),
-              child: Text(
-                '${shortDate(from.scannedAt)} → ${shortDate(to.scannedAt)}',
-                style: text,
-              ),
+            Text(
+              '${shortDate(from.scannedAt)} → ${shortDate(to.scannedAt)}',
+              style: text,
             ),
         ],
       ),

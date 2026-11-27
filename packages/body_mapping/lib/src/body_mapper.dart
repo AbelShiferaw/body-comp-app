@@ -38,10 +38,18 @@ abstract interface class BodyMapper {
 
   /// Heatmap colors for scan [a] to scan [b]. For [HeatMetric.fatPct], [t]
   /// interpolates between the two scans; change metrics ignore it.
-  RegionColors colorsFor(BodyScan a, BodyScan b, HeatMetric metric, {double t});
+  /// [neutral] replaces the palette's neutral (no change, and the head), so
+  /// those parts can look like the plain body.
+  RegionColors colorsFor(
+    BodyScan a,
+    BodyScan b,
+    HeatMetric metric, {
+    double t,
+    Rgb? neutral,
+  });
 
-  /// The legend stops for [metric].
-  List<RampStop> legend(HeatMetric metric, Sex sex);
+  /// The legend stops for [metric], with [neutral] as in [colorsFor].
+  List<RampStop> legend(HeatMetric metric, Sex sex, {Rgb? neutral});
 }
 
 /// The DEXA mapping from the 3D body pipeline LLD: masked global fat and
@@ -283,7 +291,9 @@ class DexaBodyMapper implements BodyMapper {
     BodyScan b,
     HeatMetric metric, {
     double t = 1,
+    Rgb? neutral,
   }) {
+    final palette = this.palette.withNeutral(neutral);
     final ramp = palette.ramp(metric, b.sex);
     final deadband = ShapeReference.forSex(b.sex).deadband;
 
@@ -317,6 +327,6 @@ class DexaBodyMapper implements BodyMapper {
   }
 
   @override
-  List<RampStop> legend(HeatMetric metric, Sex sex) =>
-      palette.ramp(metric, sex).stops;
+  List<RampStop> legend(HeatMetric metric, Sex sex, {Rgb? neutral}) =>
+      palette.withNeutral(neutral).ramp(metric, sex).stops;
 }

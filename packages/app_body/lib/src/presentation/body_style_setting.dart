@@ -24,7 +24,7 @@ class BodyStyleSetting extends ConsumerWidget {
           title: const Text('Body style'),
           subtitle: Text(
             gameMode
-                ? 'Game mode shows your body as a hologram'
+                ? 'Midnight puts your hologram on a dark screen'
                 : 'How your 3D body looks',
           ),
         ),
@@ -36,9 +36,8 @@ class BodyStyleSetting extends ConsumerWidget {
           ],
           selected: {style},
           showSelectedIcon: false,
-          onSelectionChanged: gameMode
-              ? null
-              : (s) => ref.read(bodyStyleSettingProvider.notifier).set(s.first),
+          onSelectionChanged: (s) =>
+              ref.read(bodyStyleSettingProvider.notifier).set(s.first),
         ),
         const SizedBox(height: AppSpacing.md),
         SwitchListTile(

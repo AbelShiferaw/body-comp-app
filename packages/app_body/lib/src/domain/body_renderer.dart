@@ -55,6 +55,11 @@ abstract interface class BodyRenderer {
   /// Prepares GPU resources for [asset]. Call once before anything else.
   Future<void> load(BodyAsset asset);
 
+  /// The heatmap color that draws like the plain body in the current
+  /// style and brightness, for the parts a heatmap leaves neutral (no
+  /// change, the head), so they keep the style's look.
+  Rgb get plainHeatColor;
+
   /// The A and B end shapes. The renderer blends between them with `setT`.
   void setShapes(BodyGeometry a, BodyGeometry b);
 

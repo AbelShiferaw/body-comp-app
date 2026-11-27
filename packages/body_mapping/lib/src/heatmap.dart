@@ -106,6 +106,22 @@ class HeatPalette {
     regress: Rgb.hex(0xE8822A),
   );
 
+  /// This palette with [neutral] in place of its own, if given.
+  HeatPalette withNeutral(Rgb? neutral) => neutral == null
+      ? this
+      : HeatPalette(
+          low: low,
+          mid: mid,
+          high: high,
+          progress: progress,
+          neutral: neutral,
+          regress: regress,
+          maleFatPctStops: maleFatPctStops,
+          femaleFatPctStops: femaleFatPctStops,
+          fatChangeRange: fatChangeRange,
+          leanChangeRange: leanChangeRange,
+        );
+
   /// Sequential fat % colors, low to high.
   final Rgb low;
   final Rgb mid;

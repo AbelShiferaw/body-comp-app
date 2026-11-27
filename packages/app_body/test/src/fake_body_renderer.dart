@@ -35,6 +35,9 @@ class FakeBodyRenderer implements BodyRenderer {
   void setStyle(BodyStyle style) => this.style = style;
 
   @override
+  Rgb get plainHeatColor => const Rgb(0.2, 0.2, 0.2);
+
+  @override
   void setBrightness(Brightness brightness) => this.brightness = brightness;
 
   @override
