@@ -2,5 +2,11 @@
   "FLAVOR": "staging",
   "SUPABASE_URL": "https://YOUR-PROJECT-REF.supabase.co",
   "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_...",
-  "LOG_LEVEL": "INFO"
+  "LOG_LEVEL": "INFO",
+  "GOOGLE_IOS_CLIENT_ID": "",
+  "GOOGLE_WEB_CLIENT_ID": "",
+  "BODYSPEC_CLIENT_ID": "",
+  "BODYSPEC_REDIRECT_URL": "com.abelshiferaw.bodycomp.stg:/oauthredirect",
+  "BODYSPEC_ISSUER": "https://auth.bodyspec.com/realms/bodyspec",
+  "BODYSPEC_API_URL": "https://app.bodyspec.com/api/v1"
 }

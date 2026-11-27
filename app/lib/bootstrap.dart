@@ -4,9 +4,14 @@ import 'dart:developer' as developer;
 import 'package:app_auth/app_auth.dart';
 import 'package:app_body/app_body.dart';
 import 'package:app_core/app_core.dart';
+import 'package:app_dexa_sync/app_dexa_sync.dart';
 import 'package:app_scans/app_scans.dart';
+import 'package:app_ui/app_ui.dart';
 import 'package:body_comp/app/app.dart';
-import 'package:body_comp/body/scans_body_data_source.dart';
+import 'package:body_comp/body/scan_body_data_source.dart';
+import 'package:body_comp/profile/data/supabase_profile_repository.dart';
+import 'package:body_comp/profile/presentation/profile_providers.dart';
+import 'package:body_comp/sync/sync_wiring.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
@@ -19,6 +24,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// one flavor's entry point with another flavor's config file.
 Future<void> bootstrap(Flavor expected) async {
   WidgetsFlutterBinding.ensureInitialized();
+  AppTheme.registerFontLicenses();
 
   final AppConfig config;
   try {
@@ -59,7 +65,13 @@ Future<void> bootstrap(Flavor expected) async {
     debug: false,
   );
   log.info('Supabase ready');
-  final supabase = Supabase.instance.client;
+  final client = Supabase.instance.client;
+  final tokens = SecureTokenStore();
+  // Before anything reads a provider token (iOS keeps Keychain items after
+  // an uninstall).
+  await guard(tokens.clearAfterReinstall).catchError((Object e) {
+    log.warning('Provider token cleanup failed', e);
+  });
 
   runApp(
     ProviderScope(
@@ -67,22 +79,30 @@ Future<void> bootstrap(Flavor expected) async {
         appConfigProvider.overrideWithValue(config),
         crashReporterProvider.overrideWithValue(crashReporter),
         authRepositoryProvider.overrideWithValue(
-          SupabaseAuthRepository(supabase.auth),
+          SupabaseAuthRepository(
+            client,
+            apple: const AppleIdTokenProvider(),
+            google: GoogleIdTokenProvider(
+              webClientId: config.googleWebClientId,
+              iosClientId: config.googleIosClientId,
+            ),
+          ),
         ),
+        profileRepositoryProvider.overrideWithValue(
+          SupabaseProfileRepository(client),
+        ),
+        ...dexaSyncOverrides(config: config, client: client, tokens: tokens),
         scanRepositoryProvider.overrideWithValue(
-          SupabaseScanRepository(supabase),
+          SupabaseScanRepository(client),
         ),
         measurementsRepositoryProvider.overrideWithValue(
-          SupabaseMeasurementsRepository(supabase),
+          SupabaseMeasurementsRepository(client),
         ),
         consentsRepositoryProvider.overrideWithValue(
-          SupabaseConsentsRepository(supabase),
+          SupabaseConsentsRepository(client),
         ),
         bodyDataSourceProvider.overrideWith(
-          (ref) => ScansBodyDataSource(
-            scans: ref.watch(drawableScansProvider.future),
-            measurements: ref.watch(currentMeasurementsProvider.future),
-          ),
+          (ref) => ref.watch(scanBodyDataSourceProvider),
         ),
       ],
       observers: [_ProviderErrorLogger(crashReporter)],

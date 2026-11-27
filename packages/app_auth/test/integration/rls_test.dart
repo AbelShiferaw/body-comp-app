@@ -35,7 +35,7 @@ void main() {
 
   Future<(SupabaseClient, String)> signedUpUser(String name) async {
     final client = newClient();
-    final repo = SupabaseAuthRepository(client.auth);
+    final repo = SupabaseAuthRepository(client);
     await repo.signUp(
       email: '$name-$runId@example.test',
       password: 'pw-$runId',
@@ -85,13 +85,67 @@ void main() {
   });
 
   test('wrong password maps to an AppException', () async {
-    final repo = SupabaseAuthRepository(newClient().auth);
+    final repo = SupabaseAuthRepository(newClient());
     await expectLater(
       repo.signInWithPassword(
         email: 'nobody-$runId@example.test',
         password: 'x',
       ),
-      throwsA(isA<ValidationException>()),
+      throwsA(
+        isA<UnauthorizedException>().having(
+          (e) => e.code,
+          'code',
+          'invalid_credentials',
+        ),
+      ),
+    );
+  });
+
+  test('profile fields round-trip and reject bad values', () async {
+    final (client, id) = await signedUpUser('dana');
+    await client
+        .from('profiles')
+        .update({'sex': 'female', 'birth_year': 1990, 'height_cm': 168.5})
+        .eq('id', id);
+    final row = await client.from('profiles').select().eq('id', id).single();
+    expect(row['sex'], 'female');
+    expect(row['birth_year'], 1990);
+    expect(row['height_cm'], 168.5);
+    expect(row['units'], 'metric');
+
+    await expectLater(
+      client.from('profiles').update({'height_cm': 20}).eq('id', id),
+      throwsA(isA<PostgrestException>()),
+    );
+  });
+
+  test('delete account removes the user and their profile only', () async {
+    final email = 'erin-$runId@example.test';
+    final password = 'pw-$runId';
+    final erin = newClient();
+    final repo = SupabaseAuthRepository(erin);
+    await repo.signUp(email: email, password: password);
+    final erinId = repo.currentUser!.id;
+    final (frank, frankId) = await signedUpUser('frank');
+
+    await repo.deleteAccount();
+    expect(repo.currentUser, isNull);
+
+    // Erin can no longer sign in, and Frank keeps his profile.
+    await expectLater(
+      repo.signInWithPassword(email: email, password: password),
+      throwsA(isA<UnauthorizedException>()),
+    );
+    final frankRows = await frank.from('profiles').select().eq('id', frankId);
+    expect(frankRows, hasLength(1));
+    final erinRows = await frank.from('profiles').select().eq('id', erinId);
+    expect(erinRows, isEmpty);
+  });
+
+  test('delete account needs a signed-in user', () async {
+    await expectLater(
+      SupabaseAuthRepository(newClient()).deleteAccount(),
+      throwsA(isA<UnauthorizedException>()),
     );
   });
 }

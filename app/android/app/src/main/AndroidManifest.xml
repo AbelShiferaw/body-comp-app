@@ -1,7 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Release builds need this to reach Supabase (debug/profile add it on their own). -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- No Android backup: the BodySpec refresh token in secure storage must
+         never be restored to another phone (sync LLD). Everything else lives
+         in Supabase. -->
     <application
+        android:allowBackup="false"
+        android:fullBackupContent="false"
         android:label="${appName}"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">

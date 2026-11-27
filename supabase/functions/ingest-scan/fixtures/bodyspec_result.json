@@ -1,0 +1,93 @@
+{
+  "_comment": "Synthetic BodySpec result in the shape the spike read. Every value and identity is made up; no real data.",
+  "detail": {
+    "result_id": "0f3c9a7e5b2d4c8a9e1f6b3d7a2c5e90",
+    "start_time": "2026-10-04T16:20:00Z",
+    "sections": [
+      "scan-info",
+      "composition",
+      "visceral-fat",
+      "bone-density",
+      "percentiles",
+      "rmr"
+    ],
+    "location": { "name": "Example Clinic", "city": "Testville" }
+  },
+  "scan-info": {
+    "patient_intake": {
+      "height_cm": 180.3,
+      "weight_kg": 81.2,
+      "first_name": "Test",
+      "last_name": "Person",
+      "email": "test.person@example.test",
+      "date_of_birth": "1990-01-01",
+      "phone_number": "+1 555 0100"
+    }
+  },
+  "composition": {
+    "total": {
+      "fat_mass_kg": 12.4,
+      "lean_mass_kg": 64.9,
+      "bone_mass_kg": 3.52,
+      "region_fat_pct": 15.4
+    },
+    "regions": {
+      "left_arm": {
+        "fat_mass_kg": 0.71,
+        "lean_mass_kg": 4.12,
+        "bone_mass_kg": 0.21,
+        "region_fat_pct": 14.7
+      },
+      "right_arm": {
+        "fat_mass_kg": 0.74,
+        "lean_mass_kg": 4.31,
+        "bone_mass_kg": 0.22,
+        "region_fat_pct": 14.6
+      },
+      "left_leg": {
+        "fat_mass_kg": 2.05,
+        "lean_mass_kg": 11.02,
+        "bone_mass_kg": 0.61,
+        "region_fat_pct": 15.7
+      },
+      "right_leg": {
+        "fat_mass_kg": 2.11,
+        "lean_mass_kg": 11.24,
+        "bone_mass_kg": 0.63,
+        "region_fat_pct": 15.8
+      },
+      "trunk": {
+        "fat_mass_kg": 5.92,
+        "lean_mass_kg": 30.11,
+        "bone_mass_kg": 0.98,
+        "region_fat_pct": 16.4
+      },
+      "android": {
+        "fat_mass_kg": 0.98,
+        "lean_mass_kg": 4.02,
+        "region_fat_pct": 19.6
+      },
+      "gynoid": {
+        "fat_mass_kg": 1.95,
+        "lean_mass_kg": 8.31,
+        "region_fat_pct": 19.0
+      }
+    }
+  },
+  "visceral-fat": { "vat_mass_kg": 0.31, "vat_volume_cm3": 329 },
+  "bone-density": {
+    "total": { "bmd_g_cm2": 1.312, "t_score": 1.4, "z_score": 1.2 },
+    "regions": { "spine": { "bmd": 1.21, "t_score": 0.9, "z_score": 0.8 } }
+  },
+  "percentiles": {
+    "reference_group": "male 30-39",
+    "body_fat_pct": { "percentile": 82, "band": "Green" },
+    "lean_mass_index": { "percentile": 74, "band": "green" }
+  },
+  "rmr": {
+    "cunningham": 1928,
+    "katch_mcardle": 1772,
+    "mifflin_st_jeor": 1810,
+    "harris_benedict": 1890
+  }
+}

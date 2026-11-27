@@ -57,16 +57,20 @@ android {
             dimension = "default"
             applicationIdSuffix = ""
             manifestPlaceholders["appName"] = "Body Comp"
+            // BodySpec sign-in redirect: <application id>:/oauthredirect
+            manifestPlaceholders["appAuthRedirectScheme"] = "com.abelshiferaw.bodycomp"
         }
         create("staging") {
             dimension = "default"
             applicationIdSuffix = ".stg"
             manifestPlaceholders["appName"] = "[STG] Body Comp"
+            manifestPlaceholders["appAuthRedirectScheme"] = "com.abelshiferaw.bodycomp.stg"
         }
         create("development") {
             dimension = "default"
             applicationIdSuffix = ".dev"
             manifestPlaceholders["appName"] = "[DEV] Body Comp"
+            manifestPlaceholders["appAuthRedirectScheme"] = "com.abelshiferaw.bodycomp.dev"
         }
     }
 

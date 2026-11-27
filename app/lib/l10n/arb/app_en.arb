@@ -1,18 +1,226 @@
 {
     "@@locale": "en",
     "appTitle": "Body Comp",
-    "@appTitle": { "description": "App name. Working title until branding is decided." },
-    "homeTitle": "Your body",
-    "@homeTitle": { "description": "Title of the home screen that shows the 3D body" },
+    "@appTitle": {
+        "description": "App name. Working title until branding is decided."
+    },
     "homeBodyPlaceholder": "Your 3D body appears here after your first DEXA scan",
-    "@homeBodyPlaceholder": { "description": "Shown where the 3D body will render" },
+    "@homeBodyPlaceholder": {
+        "description": "Shown where the 3D body will render"
+    },
+    "homeLevel": "Level {level}",
+    "@homeLevel": {
+        "description": "Semantics label of the hex badge on home. The level is the number of DEXA scans.",
+        "placeholders": {
+            "level": {
+                "type": "int"
+            }
+        }
+    },
+    "homeNextScan": "Next suggested scan: {percent}% of the way there",
+    "@homeNextScan": {
+        "description": "Semantics label of the bar under the wordmark that fills up until the next DEXA scan is due",
+        "placeholders": {
+            "percent": {
+                "type": "int"
+            }
+        }
+    },
+    "homeScanDexa": "{date} · DEXA",
+    "@homeScanDexa": {
+        "description": "Chip with the date of the scan the body shows",
+        "placeholders": {
+            "date": {
+                "type": "DateTime",
+                "format": "MMMd"
+            }
+        }
+    },
+    "homeScanEstimate": "{date} · Photo estimate",
+    "@homeScanEstimate": {
+        "description": "Chip with the date of the photo estimate the body shows",
+        "placeholders": {
+            "date": {
+                "type": "DateTime",
+                "format": "MMMd"
+            }
+        }
+    },
+    "homeRefresh": "Refresh scans",
+    "tabBody": "Body",
+    "tabProgress": "Progress",
+    "tabScans": "Scans",
+    "tabProfile": "Profile",
+    "progressComingSoon": "Watch your body change from one scan to the next. Coming soon.",
+    "scansComingSoon": "Every scan you've imported, with its full numbers. Coming soon.",
+    "homeNewScans": "{count, plural, =1{1 new scan} other{{count} new scans}}",
+    "@homeNewScans": {
+        "description": "After Refresh imported scans",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "homeNoNewScans": "No new scans",
+    "homeSignInAgain": "Sign in to your DEXA provider again to refresh",
+    "homeSignInAction": "Sign in",
+    "homeSince": "since {date}",
+    "@homeSince": {
+        "description": "After a change, e.g. '▼ 3.8 pts since May'. date is a month, with the year when it is not this year.",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "homeNoChange": "no change since {date}",
+    "@homeNoChange": {
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "homeFirstScan": "first scan",
+    "@homeFirstScan": {
+        "description": "Under a headline number when there is only one scan to compare with"
+    },
+    "homeEmptyTitle": "Your 3D body starts with a DEXA scan",
+    "homeEmptyBody": "Connect your DEXA provider and we build your body from your scans: fat where you carry it, muscle where you have it.",
+    "homeEmptyAction": "Connect your DEXA provider",
+    "metricVisceralShort": "Visceral",
+    "@metricVisceralShort": {
+        "description": "Short label for visceral fat on the home screen"
+    },
+    "unitPercent": "%",
+    "unitPoints": "pts",
+    "unitKg": "kg",
+    "unitLb": "lb",
+    "unitG": "g",
     "metricBodyFat": "Body fat",
     "metricLeanMass": "Lean mass",
     "metricFatMass": "Fat mass",
-    "metricVisceralFat": "Visceral fat",
-    "signOut": "Sign out",
-    "settingsTitle": "Settings",
-    "@settingsTitle": { "description": "Title of the settings screen and the tooltip of its button on home" },
     "startupErrorTitle": "The app could not start",
-    "@startupErrorTitle": { "description": "Shown when configuration is missing or invalid at launch" }
+    "@startupErrorTitle": {
+        "description": "Shown when configuration is missing or invalid at launch"
+    },
+    "signOut": "Sign out",
+    "settingsProfileSection": "Your body profile",
+    "settingsAccountSection": "Account",
+    "deleteAccount": "Delete account",
+    "deleteAccountTitle": "Delete your account?",
+    "deleteAccountBody": "This permanently deletes your account, profile and scan data. It cannot be undone.",
+    "deleteAccountConfirm": "Delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "retry": "Try again",
+    "errorNetwork": "No connection. Check your internet and try again.",
+    "errorGeneric": "Something went wrong. Please try again.",
+    "profileSetupTitle": "About your body",
+    "profileSetupSubtitle": "We use these to build your 3D body and compare your scans with people like you.",
+    "profileSetupSubmit": "Continue",
+    "profileSaved": "Profile saved",
+    "profileSexLabel": "Sex",
+    "profileSexMale": "Male",
+    "profileSexFemale": "Female",
+    "profileSexHelp": "Sets the base shape of your 3D body. DEXA reference data is split this way.",
+    "profileSexRequired": "Choose one to continue.",
+    "profileBirthYearLabel": "Birth year",
+    "profileBirthYearInvalid": "Enter a valid year. You need to be at least {minAge}.",
+    "@profileBirthYearInvalid": {
+        "placeholders": {
+            "minAge": {
+                "type": "int"
+            }
+        }
+    },
+    "profileHeightLabel": "Height",
+    "profileHeightInvalid": "Enter a height between 120 and 230 cm.",
+    "unitCm": "cm",
+    "unitFtIn": "ft / in",
+    "unitFt": "ft",
+    "unitIn": "in",
+    "@profileSexLabel": {
+        "description": "Label for the male/female choice that picks the 3D body's base shape"
+    },
+    "profileHeightInvalidImperial": "Enter a height between 3 ft 11 in and 7 ft 7 in.",
+    "onboardingStep": "Step {current} of {total}",
+    "@onboardingStep": {
+        "placeholders": {
+            "current": {
+                "type": "int"
+            },
+            "total": {
+                "type": "int"
+            }
+        }
+    },
+    "onboardingBack": "Back",
+    "onboardingContinue": "Continue",
+    "goalsTitle": "What do you want to see change?",
+    "goalsSubtitle": "Pick all that fit. We lead with the numbers that matter for you.",
+    "goalLoseFat": "Lose fat",
+    "goalLoseFatHelp": "See where the fat comes off, region by region.",
+    "goalBuildMuscle": "Build muscle",
+    "goalBuildMuscleHelp": "Watch lean mass grow on your arms, legs and trunk.",
+    "goalTrackHealth": "Track my health",
+    "goalTrackHealthHelp": "Visceral fat, bone density and how you compare.",
+    "goalsRequired": "Pick at least one to continue.",
+    "sourceDexaTitle": "Connect BodySpec",
+    "sourceHeadline": "See where you lose fat and build muscle.",
+    "sourceLead": "Your body in 3D, built from your own scans, region by region.",
+    "sourceDexaBody": "Import your DEXA scans. Full regional detail: arms, legs, trunk, visceral fat.",
+    "sourceDexaRecommended": "Most accurate",
+    "sourceDexaInviteOnly": "BodySpec sync is invite-only during the beta. Ask us for an invite, or start with photos.",
+    "sourceDexaUnavailable": "DEXA sync isn't available in this version of the app.",
+    "sourcePhotosTitle": "Estimate from photos",
+    "sourcePhotosBody": "No scan yet? Use your phone's camera. Add a DEXA later to sharpen it.",
+    "sourceContinueDexa": "Continue with BodySpec",
+    "sourceContinuePhotos": "Start photo estimate",
+    "sourcePrivacy": "Your health data stays private. You choose what we store.",
+    "consentTitle": "Your scans are health data",
+    "consentIntro": "Before we import anything, here is what happens to it.",
+    "consentPointStore": "We store your body composition: fat, lean and bone mass for each region, visceral fat and bone density.",
+    "consentPointIdentity": "We never keep your name, email or birth date from BodySpec.",
+    "consentPointToken": "Your BodySpec sign-in stays on this phone. We never see your BodySpec password.",
+    "consentPointDelete": "Delete any scan, or your whole account, at any time in Settings.",
+    "consentAgree": "I agree that the app stores and processes my DEXA scan data to build and track my 3D body.",
+    "consentContinue": "Agree and connect BodySpec",
+    "consentRequired": "Tick the box to continue.",
+    "connectSigningIn": "Signing in to BodySpec…",
+    "connectSigningInHelp": "Finish signing in to BodySpec in the window that opened.",
+    "connectImporting": "Importing your scans…",
+    "connectImportingHelp": "This takes a few seconds per scan.",
+    "syncErrorNotInBeta": "BodySpec sync is invite-only for now, and your account isn't on the list yet.",
+    "syncErrorSignIn": "Sign in to BodySpec again to keep syncing.",
+    "syncErrorForbidden": "BodySpec refused access. We've been told and will look into it.",
+    "syncErrorBusy": "BodySpec is busy right now. Try again in a few minutes.",
+    "syncErrorConsent": "We need your consent before importing scans.",
+    "syncNoScans": "Your BodySpec account has no scans yet. Book a scan, then tap Refresh on your home screen.",
+    "photosTitle": "Photo estimates are coming soon",
+    "photosBody": "We're building guided front and side photos that estimate your body composition. Until then, your 3D body needs a DEXA scan.",
+    "photosHint": "We'll let you know in the app when photo estimates are ready.",
+    "photosFinish": "Go to my home screen",
+    "revealTitle": "Meet your body",
+    "revealSubtitle": "{count, plural, =1{Built from your DEXA scan of {date}.} other{Built from the latest of your {count} DEXA scans, {date}.}}",
+    "@revealSubtitle": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            },
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "revealNeedsReview": "{count, plural, =1{One scan couldn't be read and isn't shown.} other{{count} scans couldn't be read and aren't shown.}}",
+    "@revealNeedsReview": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "revealFinish": "Explore my body"
 }

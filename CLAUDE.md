@@ -43,10 +43,11 @@ The repo is a Dart pub workspace: run `flutter pub get` once at the root.
    Only publishable values may be in app config. Secrets (Supabase secret key, BodySpec partner credentials, vendor API keys) live in Supabase edge-function secrets.
    BodySpec user tokens stay on the phone (Keychain/Keystore), never on our server.
 8. **Theme:** every color, spacing and radius comes from `context.tokens`, `AppSpacing`, `AppRadius`. The app follows the phone's light/dark setting (`ThemeMode.system`), so every screen must work in both.
-   Token values are placeholders until the UI design is approved; change values in `app_tokens.dart`, not at call sites.
+   Token values and the type scale (Archivo for headlines and numbers, Inter for text, bundled in `app_ui/fonts`) follow the design system on the UI design canvas (launch direction); change values in `app_tokens.dart` / `app_theme.dart`, not at call sites.
 9. **Imports:** Flutter 3.50 deprecates `package:flutter/material.dart`; import `package:material_ui/material_ui.dart`.
 10. **Database:** every table gets RLS enabled in the migration that creates it, per-operation policies on `auth.uid()`, and a pgTAP test in `supabase/tests/` proving one user cannot read or change another's rows. The service key is never in the app.
     Every user-owned table references `auth.users (id) on delete cascade`. Child rows carry `user_id` and a composite foreign key `(parent_id, user_id)` so they cannot point at another user's parent.
+    Server-only tables (`feature_flags`, `feature_allowlist`) are the exception: RLS on, no policies, no grants; the app asks `feature_enabled()` instead.
     Scans, regions and raw payloads are written only by `ingest_normalized_scan` (service role, from the ingest-scan edge function); the app can read them, set `photo_pair_status` and delete. Column-level grants restrict what the app may update.
 11. **Strings** shown to users go in `app/lib/l10n/arb/app_en.arb` (modules: a TODO until modules share l10n).
 
@@ -63,6 +64,7 @@ supabase test db                                  # pgTAP / RLS tests
 supabase db lint --level warning
 source tool/local_env.sh                          # exports SUPABASE_URL/KEY, writes app/config/local.json
 (cd packages/app_auth && flutter test --run-skipped --tags integration)   # Dart integration tests vs local Supabase (also app_scans)
+(cd app && flutter test --run-skipped --tags integration)                 # same, for the app's repositories (profile)
 
 cd app
 flutter run --flavor development -t lib/main_development.dart --dart-define-from-file=config/local.json
