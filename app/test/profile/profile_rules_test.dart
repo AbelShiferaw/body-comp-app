@@ -53,7 +53,7 @@ void main() {
         sex: Sex.female,
         birthYear: 1990,
         heightCm: 168.5,
-        units: Units.imperial,
+        units: Units.metric,
         goals: const {Goal.loseFat, Goal.trackHealth},
         bodySource: BodySource.dexa,
         onboardedAt: DateTime.utc(2026, 11, 19, 12),
@@ -63,7 +63,7 @@ void main() {
         'sex': 'female',
         'birth_year': 1990,
         'height_cm': 168.5,
-        'units': 'imperial',
+        'units': 'metric',
         'goals': ['lose_fat', 'track_health'],
         'body_source': 'dexa',
         'onboarded_at': '2026-11-19T12:00:00.000Z',
@@ -91,13 +91,13 @@ void main() {
       expect(edited.isOnboarded, isTrue);
     });
 
-    test('reads an empty row as an incomplete metric profile', () {
+    test('reads an empty row as an incomplete imperial profile', () {
       expect(
         profileFromRow({
           'sex': null,
           'birth_year': null,
           'height_cm': null,
-          'units': 'metric',
+          'units': 'imperial',
         }),
         const Profile(),
       );

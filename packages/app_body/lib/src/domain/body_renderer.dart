@@ -11,11 +11,22 @@ import 'package:material_ui/material_ui.dart' show BuildContext, Widget;
 /// Ice ring in light mode. Fat and Change are view modes on any style, not
 /// styles. All follow the phone's light or dark mode.
 enum BodyStyle {
+  /// Game mode's avatar look (scanner pad, glow). Not picked directly: game
+  /// mode turns it on.
   hologram,
   studio,
   midnight;
 
   static const BodyStyle defaultStyle = studio;
+}
+
+/// Unit for masses the body shows.
+enum MassUnit {
+  kg,
+  lb;
+
+  /// [kg] in this unit.
+  double of(double kg) => this == lb ? kg * Mass.lbPerKg : kg;
 }
 
 /// How the camera frames the body, shared by the renderer and anything drawn
@@ -66,6 +77,10 @@ abstract interface class BodyRenderer {
 
   /// The ray under [point] in a view of [size], in body space, for picking.
   Ray3 rayAt(Offset point, Size size);
+
+  /// Where the body-space point ([x], [y], [z]) appears in a view of
+  /// [size], or null when it is behind the camera. For pinning labels.
+  Offset? screenPointOf(double x, double y, double z, Size size);
 
   Widget build(BuildContext context);
 

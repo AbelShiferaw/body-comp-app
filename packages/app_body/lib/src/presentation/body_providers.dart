@@ -160,19 +160,22 @@ class BodyViewController extends Notifier<BodyViewState> {
 final bodyViewControllerProvider =
     NotifierProvider<BodyViewController, BodyViewState>(BodyViewController.new);
 
-/// Remembers the chosen [BodyStyle] across launches.
+/// Remembers the body look settings across launches.
 abstract interface class BodyStyleStore {
   Future<BodyStyle?> read();
   Future<void> write(BodyStyle style);
+  Future<bool?> readGameMode();
+  Future<void> writeGameMode({required bool on});
 }
 
 class SharedPreferencesBodyStyleStore implements BodyStyleStore {
-  static const _key = 'body.style';
+  static const _styleKey = 'body.style';
+  static const _gameModeKey = 'body.gameMode';
   final _prefs = SharedPreferencesAsync();
 
   @override
   Future<BodyStyle?> read() async {
-    final name = await _prefs.getString(_key);
+    final name = await _prefs.getString(_styleKey);
     for (final s in BodyStyle.values) {
       if (s.name == name) return s;
     }
@@ -180,15 +183,23 @@ class SharedPreferencesBodyStyleStore implements BodyStyleStore {
   }
 
   @override
-  Future<void> write(BodyStyle style) => _prefs.setString(_key, style.name);
+  Future<void> write(BodyStyle style) =>
+      _prefs.setString(_styleKey, style.name);
+
+  @override
+  Future<bool?> readGameMode() => _prefs.getBool(_gameModeKey);
+
+  @override
+  Future<void> writeGameMode({required bool on}) =>
+      _prefs.setBool(_gameModeKey, on);
 }
 
 final bodyStyleStoreProvider = Provider<BodyStyleStore>(
   (ref) => SharedPreferencesBodyStyleStore(),
 );
 
-/// The body style setting. [BodyStyle.defaultStyle] until the saved choice
-/// loads.
+/// The body style picked in Settings: Studio or Midnight.
+/// [BodyStyle.defaultStyle] until the saved choice loads.
 class BodyStyleController extends Notifier<BodyStyle> {
   @override
   BodyStyle build() {
@@ -199,7 +210,10 @@ class BodyStyleController extends Notifier<BodyStyle> {
   Future<void> _load() async {
     try {
       final saved = await ref.read(bodyStyleStoreProvider).read();
-      if (saved != null && ref.mounted) state = saved;
+      // Hologram is game mode now, not a style of its own.
+      if (saved != null && saved != BodyStyle.hologram && ref.mounted) {
+        state = saved;
+      }
     } on Object catch (e, s) {
       // A broken preference must not break the home screen; log and keep
       // the default.
@@ -217,6 +231,53 @@ class BodyStyleController extends Notifier<BodyStyle> {
   }
 }
 
-final bodyStyleProvider = NotifierProvider<BodyStyleController, BodyStyle>(
-  BodyStyleController.new,
+final bodyStyleSettingProvider =
+    NotifierProvider<BodyStyleController, BodyStyle>(BodyStyleController.new);
+
+/// Game mode, off by default: the hologram avatar, plus the game pieces the
+/// app shows with it (level badge, next-scan bar).
+class GameModeController extends Notifier<bool> {
+  @override
+  bool build() {
+    unawaited(_load());
+    return false;
+  }
+
+  Future<void> _load() async {
+    try {
+      final store = ref.read(bodyStyleStoreProvider);
+      // Someone who picked the old Hologram style keeps that look.
+      final on =
+          await store.readGameMode() ??
+          await store.read() == BodyStyle.hologram;
+      if (ref.mounted) state = on;
+    } on Object catch (e, s) {
+      _log.warning('Could not read the game mode setting', e, s);
+    }
+  }
+
+  Future<void> set({required bool on}) async {
+    state = on;
+    try {
+      await ref.read(bodyStyleStoreProvider).writeGameMode(on: on);
+    } on Object catch (e, s) {
+      _log.warning('Could not save the game mode setting', e, s);
+    }
+  }
+}
+
+final gameModeProvider = NotifierProvider<GameModeController, bool>(
+  GameModeController.new,
 );
+
+/// The style the body is drawn in: the hologram in game mode, otherwise the
+/// style picked in Settings.
+final bodyStyleProvider = Provider<BodyStyle>(
+  (ref) => ref.watch(gameModeProvider)
+      ? BodyStyle.hologram
+      : ref.watch(bodyStyleSettingProvider),
+);
+
+/// Unit for masses shown by the body (kg or lb). The app overrides it from
+/// the user's units setting.
+final bodyMassUnitProvider = Provider<MassUnit>((ref) => MassUnit.kg);

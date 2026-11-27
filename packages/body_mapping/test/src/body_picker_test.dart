@@ -49,6 +49,23 @@ void main() {
     expect(tapAt(0, g.maxY - 0.08), isNull);
   });
 
+  test('every part has vertices, and none are the head', () {
+    for (final part in BodyPart.values) {
+      expect(picker.verticesByPart[part], isNotEmpty, reason: part.name);
+    }
+  });
+
+  test('a label anchor sits on the front of its part', () {
+    for (final part in [BodyPart.belly, BodyPart.leftArm, BodyPart.rightLeg]) {
+      final front = picker.anchorOf(part, g, g, 0, towardX: 0, towardZ: -1);
+      final back = picker.anchorOf(part, g, g, 0, towardX: 0, towardZ: 1);
+      // The body faces -z: the front anchor is nearer the camera.
+      expect(front.z, lessThan(back.z), reason: part.name);
+      // A ray straight at it from the front picks the same part.
+      expect(tapAt(front.x, front.y), part, reason: part.name);
+    }
+  });
+
   test('parts map to their scan numbers', () {
     expect(BodyPart.belly.band, FatBand.android);
     expect(BodyPart.belly.region, isNull);

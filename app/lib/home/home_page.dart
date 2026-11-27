@@ -8,19 +8,19 @@ import 'package:app_ui/app_ui.dart';
 import 'package:body_comp/home/home_summary.dart';
 import 'package:body_comp/l10n/l10n.dart';
 import 'package:body_comp/profile/domain/profile.dart';
-import 'package:body_comp/profile/domain/profile_rules.dart';
 import 'package:body_comp/profile/presentation/profile_providers.dart';
 import 'package:body_comp/router/router.dart';
+import 'package:body_mapping/body_mapping.dart' show Mass;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Home: the user's 3D body as the hero, with the level badge, the latest
-/// scan's headline numbers and their change since the first scan above it.
+/// Home: the user's 3D body as the hero, with the latest scan's headline
+/// numbers and their change since the first scan above it.
 ///
-/// Layout follows the launch design ("Launch mix · Home" on the canvas):
-/// clean screen, game-style level badge, the body filling the rest.
+/// Layout follows the basic look ("2 · Home" on the design canvas). Game
+/// mode, a Settings switch, adds the level badge and the next-scan bar.
 class HomePage extends ConsumerStatefulWidget {
   const new({super.key, this.clock = DateTime.now});
 
@@ -85,9 +85,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     // Kept alive so Refresh knows at once whether this phone can sync.
     ref.watch(dexaSyncProvider);
     final scans = ref.watch(bodyScansProvider);
-    final units =
-        ref.watch(profileProvider.select((p) => p.value?.units)) ??
-        Units.metric;
+    final units = ref.watch(unitsProvider);
     final now = widget.clock();
     final summary = switch (scans.value) {
       final s? => HomeSummary.of(s, now: now),
@@ -103,6 +101,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           children: [
             _Header(
               summary: summary,
+              gameMode: ref.watch(gameModeProvider),
               refreshing:
                   _refreshing || ref.watch(syncRunProvider) is SyncRunning,
               onRefresh: () => unawaited(_refresh()),
@@ -127,11 +126,15 @@ class _HomePageState extends ConsumerState<HomePage> {
 class _Header extends StatelessWidget {
   const new({
     required this.summary,
+    required this.gameMode,
     required this.refreshing,
     required this.onRefresh,
   });
 
   final HomeSummary? summary;
+
+  /// Shows the level badge and the next-scan bar.
+  final bool gameMode;
   final bool refreshing;
   final VoidCallback onRefresh;
 
@@ -149,7 +152,7 @@ class _Header extends StatelessWidget {
       ),
       child: Row(
         children: [
-          if (s != null) ...[
+          if (s != null && gameMode) ...[
             LevelBadge(level: s.level),
             const SizedBox(width: AppSpacing.sm),
           ],
@@ -169,7 +172,7 @@ class _Header extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (s != null) ...[
+                if (s != null && gameMode) ...[
                   const SizedBox(height: AppSpacing.xs),
                   _NextScanBar(progress: s.nextScanProgress),
                 ],

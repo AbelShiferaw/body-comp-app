@@ -1,8 +1,8 @@
 {
     "@@locale": "en",
-    "appTitle": "Body Comp",
+    "appTitle": "Obsessed",
     "@appTitle": {
-        "description": "App name. Working title until branding is decided."
+        "description": "App name (decided Nov 22)."
     },
     "homeBodyPlaceholder": "Your 3D body appears here after your first DEXA scan",
     "@homeBodyPlaceholder": {
@@ -108,6 +108,10 @@
     "signOut": "Sign out",
     "settingsProfileSection": "Your body profile",
     "settingsAccountSection": "Account",
+    "settingsUnitsLabel": "Units",
+    "settingsUnitsHelp": "Weights and height across the app",
+    "unitsImperial": "lb · ft/in",
+    "unitsMetric": "kg · cm",
     "deleteAccount": "Delete account",
     "deleteAccountTitle": "Delete your account?",
     "deleteAccountBody": "This permanently deletes your account, profile and scan data. It cannot be undone.",

@@ -111,7 +111,7 @@ void main() {
     expect(row['sex'], 'female');
     expect(row['birth_year'], 1990);
     expect(row['height_cm'], 168.5);
-    expect(row['units'], 'metric');
+    expect(row['units'], 'imperial'); // The default: lb and ft/in.
 
     await expectLater(
       client.from('profiles').update({'height_cm': 20}).eq('id', id),

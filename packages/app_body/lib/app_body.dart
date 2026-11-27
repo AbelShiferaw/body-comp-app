@@ -13,3 +13,4 @@ export 'src/presentation/body_preview.dart';
 export 'src/presentation/body_providers.dart';
 export 'src/presentation/body_style_setting.dart';
 export 'src/presentation/body_view.dart';
+export 'src/presentation/part_pins.dart' show pinnedParts;

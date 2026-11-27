@@ -1,6 +1,7 @@
 import 'package:app_body/app_body.dart';
 import 'package:app_ui/app_ui.dart';
 import 'package:body_mapping/body_mapping.dart';
+import 'package:body_mapping/fixtures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -20,6 +21,7 @@ void main() {
     WidgetTester tester, {
     List<BodyScan>? scans,
     ThemeData? theme,
+    bool showCompare = false,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -32,7 +34,7 @@ void main() {
         ],
         child: MaterialApp(
           theme: theme ?? AppTheme.light,
-          home: const Scaffold(body: BodyView()),
+          home: Scaffold(body: BodyView(showCompare: showCompare)),
         ),
       ),
     );
@@ -63,8 +65,17 @@ void main() {
     expect(renderer.colors, isNull);
     expect(renderer.style, BodyStyle.studio);
     expect(find.byKey(const Key('body_pad')), findsNothing);
+    expect(find.text('Shape'), findsOneWidget);
+    // The basic look keeps compare controls for the Progress screen.
+    expect(find.byKey(const Key('body_slider')), findsNothing);
+    expect(find.byKey(const Key('body_exaggerate')), findsNothing);
+  });
+
+  testWidgets('compare controls show the scan pair', (tester) async {
+    await pump(tester, showCompare: true);
     expect(find.text('Jul 2, 2026'), findsOneWidget);
     expect(find.text('Nov 7, 2026'), findsOneWidget);
+    expect(find.byKey(const Key('body_slider')), findsOneWidget);
   });
 
   testWidgets('draws shapes another screen loaded before it mounted', (
@@ -156,7 +167,7 @@ void main() {
   testWidgets('exaggerate reshapes the body and shows the ×3 badge', (
     tester,
   ) async {
-    await pump(tester);
+    await pump(tester, showCompare: true);
     final uploads = renderer.shapeUploads;
     expect(find.text('×3'), findsNothing);
     await tester.tap(find.byKey(const Key('body_exaggerate')));
@@ -166,7 +177,7 @@ void main() {
   });
 
   testWidgets('scrubbing moves the blend without reshaping', (tester) async {
-    await pump(tester);
+    await pump(tester, showCompare: true);
     final uploads = renderer.shapeUploads;
     await tester.drag(
       find.byKey(const Key('body_slider')),
@@ -200,18 +211,112 @@ void main() {
     expect(renderer.highlighted, isNull);
   });
 
+  group('part pins', () {
+    String pinText(WidgetTester tester, String part) => tester
+        .widgetList<Text>(
+          find.descendant(
+            of: find.byKey(Key('body_pin_$part')),
+            matching: find.byType(Text),
+          ),
+        )
+        .map((t) => t.data)
+        .join(' · ');
+
+    testWidgets('label the arms, belly and legs for each view', (tester) async {
+      await pump(tester);
+      for (final part in pinnedParts) {
+        expect(find.byKey(Key('body_pin_${part.name}')), findsOne);
+      }
+      final belly = sampleTimeline.last.bands[FatBand.android]!;
+      final arm = sampleTimeline.last.regions[BodyRegion.leftArm]!;
+      expect(
+        pinText(tester, 'leftArm'),
+        'Left arm · ${arm.leanKg.toStringAsFixed(1)} kg lean',
+      );
+
+      await tester.tap(find.text('Fat'));
+      await tester.pumpAndSettle();
+      expect(
+        pinText(tester, 'belly'),
+        'Belly · ${belly.fatPct.toStringAsFixed(1)}% fat',
+      );
+
+      await tester.tap(find.text('Change'));
+      await tester.pumpAndSettle();
+      expect(pinText(tester, 'belly'), startsWith('Belly · '));
+      expect(pinText(tester, 'belly'), endsWith(' kg fat'));
+    });
+
+    testWidgets('labels stay on screen and never overlap', (tester) async {
+      tester.view
+        ..physicalSize = const Size(320 * 2, 568 * 2)
+        ..devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      await pump(tester);
+      final rects = [
+        for (final part in pinnedParts)
+          tester.getRect(find.byKey(Key('body_pin_${part.name}'))),
+      ];
+      for (final (i, r) in rects.indexed) {
+        expect(r.left, greaterThanOrEqualTo(0));
+        expect(r.right, lessThanOrEqualTo(320));
+        for (final other in rects.skip(i + 1)) {
+          expect(r.overlaps(other), isFalse);
+        }
+      }
+    });
+
+    testWidgets('tapping a pin opens that part, and pins hide meanwhile', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tester.tap(find.byKey(const Key('body_pin_belly')));
+      await tester.pumpAndSettle();
+      expect(renderer.highlighted, BodyPart.belly);
+      expect(find.byKey(const Key('body_partCard')), findsOne);
+      expect(find.byKey(const Key('body_pin_belly')), findsNothing);
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('body_pin_belly')), findsOne);
+    });
+
+    testWidgets('pins hide while the body is side on', (tester) async {
+      await pump(tester);
+      await tester.drag(
+        find.byKey(const Key('body_scene')),
+        const Offset(-130, 0),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('body_pin_belly')), findsNothing);
+    });
+  });
+
   testWidgets('shows the empty message with no scans', (tester) async {
     await pump(tester, scans: const []);
     expect(find.textContaining('after your first scan'), findsOneWidget);
   });
 
-  testWidgets('hologram style stands the body on a scanner pad', (
+  testWidgets('game mode stands the hologram body on a scanner pad', (
+    tester,
+  ) async {
+    store
+      ..saved = BodyStyle.midnight
+      ..gameMode = true;
+    await pump(tester, theme: AppTheme.dark);
+    expect(renderer.style, BodyStyle.hologram);
+    expect(find.byKey(const Key('body_pad')), findsOneWidget);
+  });
+
+  testWidgets('a saved Hologram style from before game mode turns it on', (
     tester,
   ) async {
     store.saved = BodyStyle.hologram;
     await pump(tester, theme: AppTheme.dark);
     expect(renderer.style, BodyStyle.hologram);
-    expect(find.byKey(const Key('body_pad')), findsOneWidget);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(BodyView)),
+    );
+    expect(container.read(bodyStyleSettingProvider), BodyStyle.studio);
   });
 
   testWidgets('uses the saved style and follows dark mode', (tester) async {
@@ -237,5 +342,14 @@ void main() {
     await tester.tap(find.text('Midnight'));
     await tester.pumpAndSettle();
     expect(store.saved, BodyStyle.midnight);
+
+    await tester.tap(find.byKey(const Key('bodyStyle_gameMode')));
+    await tester.pumpAndSettle();
+    expect(store.gameMode, isTrue);
+    // Game mode draws the hologram, so the style picker is off meanwhile.
+    final picker = tester.widget<SegmentedButton<BodyStyle>>(
+      find.byKey(const Key('bodyStyle_toggle')),
+    );
+    expect(picker.onSelectionChanged, isNull);
   });
 }

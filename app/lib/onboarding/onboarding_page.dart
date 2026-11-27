@@ -9,6 +9,7 @@ import 'package:body_comp/profile/domain/profile.dart';
 import 'package:body_comp/profile/presentation/profile_providers.dart';
 import 'package:body_comp/router/router.dart';
 import 'package:body_mapping/body_mapping.dart' as body;
+import 'package:body_mapping/body_mapping.dart' show Mass;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -705,6 +706,10 @@ class _RevealStep extends ConsumerWidget {
     final count = scans.value?.length ?? 0;
     final review = state.result?.needsReview ?? 0;
     final locale = Localizations.localeOf(context).toLanguageTag();
+    final imperial = ref.watch(unitsProvider) == Units.imperial;
+    final massUnit = imperial ? l10n.unitLb : l10n.unitKg;
+    double? mass(int? grams) =>
+        grams == null ? null : grams / 1000 * (imperial ? Mass.lbPerKg : 1);
 
     String fmt(num? x, int digits) => x == null
         ? '–'
@@ -749,16 +754,11 @@ class _RevealStep extends ConsumerWidget {
                   ),
                   (
                     l10n.metricLeanMass,
-                    _kg(latest.leanG),
-                    l10n.unitKg,
+                    mass(latest.leanG),
+                    massUnit,
                     tokens.lean,
                   ),
-                  (
-                    l10n.metricFatMass,
-                    _kg(latest.fatG),
-                    l10n.unitKg,
-                    tokens.fat,
-                  ),
+                  (l10n.metricFatMass, mass(latest.fatG), massUnit, tokens.fat),
                 ])
                   Expanded(
                     child: MetricTile(
@@ -841,8 +841,6 @@ class _RevealStep extends ConsumerWidget {
       ],
     );
   }
-
-  static double? _kg(int? grams) => grams == null ? null : grams / 1000;
 }
 
 class _PhotosStep extends StatelessWidget {

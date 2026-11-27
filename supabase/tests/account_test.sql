@@ -1,11 +1,17 @@
 -- pgTAP tests for profile fields and account deletion. Run: supabase test db
 begin;
-select plan(10);
+select plan(11);
 
 insert into auth.users (id, email)
 values
   ('11111111-1111-1111-1111-111111111111', 'alice@example.test'),
   ('22222222-2222-2222-2222-222222222222', 'bob@example.test');
+
+select is(
+  (select units from public.profiles where id = '22222222-2222-2222-2222-222222222222'),
+  'imperial',
+  'new profiles default to imperial units'
+);
 
 -- Act as Alice.
 set local role authenticated;

@@ -231,6 +231,10 @@ class FlutterSceneBodyRenderer implements BodyRenderer {
   }
 
   @override
+  Offset? screenPointOf(double x, double y, double z, Size size) =>
+      (_camera ?? _buildCamera()).worldToScreen(vm.Vector3(x, y, z), size);
+
+  @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, c) {
       _aspect = c.maxHeight > 0 ? c.maxWidth / c.maxHeight : 0;

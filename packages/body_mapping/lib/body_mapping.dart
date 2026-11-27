@@ -13,6 +13,7 @@ export 'src/body_measurer.dart';
 export 'src/body_picker.dart';
 export 'src/body_scan.dart';
 export 'src/heatmap.dart';
+export 'src/mass.dart';
 export 'src/proportion_solver.dart';
 export 'src/shape_reference.dart';
 export 'src/shape_weights.dart';

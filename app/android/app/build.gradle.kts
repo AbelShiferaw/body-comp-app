@@ -56,20 +56,20 @@ android {
         create("production") {
             dimension = "default"
             applicationIdSuffix = ""
-            manifestPlaceholders["appName"] = "Body Comp"
+            manifestPlaceholders["appName"] = "Obsessed"
             // BodySpec sign-in redirect: <application id>:/oauthredirect
             manifestPlaceholders["appAuthRedirectScheme"] = "com.abelshiferaw.bodycomp"
         }
         create("staging") {
             dimension = "default"
             applicationIdSuffix = ".stg"
-            manifestPlaceholders["appName"] = "[STG] Body Comp"
+            manifestPlaceholders["appName"] = "[STG] Obsessed"
             manifestPlaceholders["appAuthRedirectScheme"] = "com.abelshiferaw.bodycomp.stg"
         }
         create("development") {
             dimension = "default"
             applicationIdSuffix = ".dev"
-            manifestPlaceholders["appName"] = "[DEV] Body Comp"
+            manifestPlaceholders["appName"] = "[DEV] Obsessed"
             manifestPlaceholders["appAuthRedirectScheme"] = "com.abelshiferaw.bodycomp.dev"
         }
     }

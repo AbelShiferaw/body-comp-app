@@ -47,7 +47,7 @@ Profile profileFromRow(Map<String, dynamic> row) => Profile(
   },
   birthYear: row['birth_year'] as int?,
   heightCm: (row['height_cm'] as num?)?.toDouble(),
-  units: row['units'] == 'imperial' ? Units.imperial : Units.metric,
+  units: row['units'] == 'metric' ? Units.metric : Units.imperial,
   goals: {
     for (final String key in (row['goals'] as List?)?.cast<String>() ?? [])
       ?Goal.fromKey(key),

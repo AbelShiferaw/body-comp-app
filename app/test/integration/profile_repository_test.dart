@@ -55,7 +55,7 @@ void main() {
       sex: Sex.male,
       birthYear: 1994,
       heightCm: 180.3,
-      units: Units.imperial,
+      units: Units.metric,
     );
     await repo.save(id, profile);
     expect(await repo.fetch(id), profile);

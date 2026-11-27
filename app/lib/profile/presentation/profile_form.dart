@@ -16,6 +16,7 @@ class ProfileForm extends ConsumerStatefulWidget {
     required this.submitLabel,
     this.onSaved,
     this.now,
+    this.showUnits = true,
     super.key,
   });
 
@@ -25,6 +26,10 @@ class ProfileForm extends ConsumerStatefulWidget {
 
   /// Today's date, for the age check. Tests pass a fixed date.
   final DateTime? now;
+
+  /// Shows the cm / ft-in switch next to height. Settings hides it because
+  /// its own Units switch sets the same thing.
+  final bool showUnits;
 
   @override
   ConsumerState<ProfileForm> createState() => _ProfileFormState();
@@ -82,6 +87,19 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
       return null;
     }
     return Height.fromFeetInches(feet, inches);
+  }
+
+  @override
+  void didUpdateWidget(ProfileForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Settings changes Units outside the form: convert the typed height in
+    // place, so the rest of the unsaved edits stay.
+    final units = widget.initial.units;
+    if (units != oldWidget.initial.units && units != _units) {
+      final cm = _heightCm();
+      _units = units;
+      _fillHeight(cm);
+    }
   }
 
   void _switchUnits(Units units) {
@@ -203,18 +221,19 @@ class _ProfileFormState extends ConsumerState<ProfileForm> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(child: _Label(l10n.profileHeightLabel)),
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                child: _UnitToggle(
-                  key: const Key('profile_units'),
-                  options: [
-                    (Units.metric, l10n.unitCm),
-                    (Units.imperial, l10n.unitFtIn),
-                  ],
-                  selected: _units,
-                  onChanged: _switchUnits,
+              if (widget.showUnits)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: _UnitToggle(
+                    key: const Key('profile_units'),
+                    options: [
+                      (Units.metric, l10n.unitCm),
+                      (Units.imperial, l10n.unitFtIn),
+                    ],
+                    selected: _units,
+                    onChanged: _switchUnits,
+                  ),
                 ),
-              ),
             ],
           ),
           if (_units == Units.metric)

@@ -45,7 +45,7 @@ extension PumpApp on WidgetTester {
   /// Pumps the real [App] with in-memory auth, profile, scan and DEXA
   /// backends. A signed-in [user] gets [profile], onboarded by default, and
   /// [scans] for the body. [bodySpec] false is a build without a BodySpec
-  /// client id.
+  /// client id. [gameMode] turns on the Settings game mode.
   Future<Fakes> pumpApp({
     AuthUser? user,
     Profile? profile,
@@ -53,6 +53,7 @@ extension PumpApp on WidgetTester {
     bool bodySpec = true,
     List<BodyScan> scans = const [],
     bool tallPhone = true,
+    bool gameMode = false,
     Exception? profileError,
   }) async {
     if (tallPhone) useTallPhone();
@@ -69,7 +70,7 @@ extension PumpApp on WidgetTester {
           bodyDataSourceProvider.overrideWithValue(
             FixtureBodyDataSource(scans: scans),
           ),
-          bodyStyleStoreProvider.overrideWithValue(_NoStyleStore()),
+          bodyStyleStoreProvider.overrideWithValue(_NoStyleStore(gameMode)),
           bodyRendererFactoryProvider.overrideWithValue(FakeBodyRenderer.new),
           scanRepositoryProvider.overrideWithValue(fakeDexa.scans),
           consentsRepositoryProvider.overrideWithValue(fakeDexa.consents),
@@ -90,9 +91,19 @@ extension PumpApp on WidgetTester {
 }
 
 class _NoStyleStore implements BodyStyleStore {
+  new(this.gameMode);
+
+  final bool gameMode;
+
   @override
   Future<BodyStyle?> read() async => null;
 
   @override
   Future<void> write(BodyStyle style) async {}
+
+  @override
+  Future<bool?> readGameMode() async => gameMode;
+
+  @override
+  Future<void> writeGameMode({required bool on}) async {}
 }

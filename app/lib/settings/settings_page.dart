@@ -99,6 +99,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 ),
                 AsyncValue(:final value) when profile.hasValue => ProfileForm(
                   initial: value ?? const Profile(),
+                  showUnits: false,
                   submitLabel: l10n.save,
                   onSaved: () => ScaffoldMessenger.of(context)
                       .showSnackBar(SnackBar(content: Text(l10n.profileSaved))),
@@ -106,6 +107,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 _ => const LoadingView(),
               },
             ),
+            if (profile.value case final p?)
+              _Section(child: _UnitsSetting(profile: p)),
             const _Section(child: BodyStyleSetting()),
             _Section(
               title: l10n.settingsAccountSection,
@@ -143,6 +146,59 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 }
 
+/// Pounds and feet/inches (the default) or kilograms and centimetres. Saves
+/// at once, like the body style.
+class _UnitsSetting extends ConsumerWidget {
+  const new({required this.profile});
+
+  final Profile profile;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(l10n.settingsUnitsLabel),
+          subtitle: Text(l10n.settingsUnitsHelp),
+        ),
+        SegmentedButton<Units>(
+          key: const Key('settings_units'),
+          showSelectedIcon: false,
+          segments: [
+            ButtonSegment(
+              value: Units.imperial,
+              label: Text(l10n.unitsImperial),
+            ),
+            ButtonSegment(value: Units.metric, label: Text(l10n.unitsMetric)),
+          ],
+          selected: {profile.units},
+          onSelectionChanged: (s) async {
+            final messenger = ScaffoldMessenger.of(context);
+            try {
+              await ref
+                  .read(profileProvider.notifier)
+                  .save(profile.copyWith(units: s.first));
+            } on AppException catch (e) {
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    e is NetworkException
+                        ? l10n.errorNetwork
+                        : l10n.errorGeneric,
+                  ),
+                ),
+              );
+            }
+          },
+        ),
+      ],
+    );
+  }
+}
+
 /// A titled card on the settings page.
 class _Section extends StatelessWidget {
   const new({required this.child, this.title});
@@ -155,11 +211,12 @@ class _Section extends StatelessWidget {
     final tokens = context.tokens;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: tokens.surface,
+      // Material, not DecoratedBox, so switch rows inside show their ink.
+      child: Material(
+        color: tokens.surface,
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: tokens.border),
+          side: BorderSide(color: tokens.border),
         ),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.gutter),

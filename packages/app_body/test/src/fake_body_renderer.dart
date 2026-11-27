@@ -46,6 +46,12 @@ class FakeBodyRenderer implements BodyRenderer {
   @override
   Ray3 rayAt(Offset point, Size size) => nextRay;
 
+  /// A flat front view: x to the right, 1 m of height per 200 px around the
+  /// middle of the view.
+  @override
+  Offset? screenPointOf(double x, double y, double z, Size size) =>
+      Offset(size.width / 2 - x * 200, size.height / 2 - (y - 0.9) * 200);
+
   @override
   Widget build(BuildContext context) =>
       const ColoredBox(key: Key('fake_body'), color: Color(0x00000000));
@@ -56,6 +62,13 @@ class FakeBodyRenderer implements BodyRenderer {
 
 class MemoryBodyStyleStore implements BodyStyleStore {
   BodyStyle? saved;
+  bool? gameMode;
+
+  @override
+  Future<bool?> readGameMode() async => gameMode;
+
+  @override
+  Future<void> writeGameMode({required bool on}) async => gameMode = on;
 
   @override
   Future<BodyStyle?> read() async => saved;

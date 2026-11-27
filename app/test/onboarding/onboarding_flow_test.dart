@@ -90,7 +90,8 @@ void main() {
     expect(find.byType(BodyView), findsOneWidget);
     expect(find.textContaining('latest of your 2 DEXA scans'), findsOneWidget);
     expect(find.textContaining('15.4', findRichText: true), findsOneWidget);
-    expect(find.textContaining('64.9', findRichText: true), findsOneWidget);
+    // Lean mass in pounds, the default (64.9 kg).
+    expect(find.textContaining('143.1', findRichText: true), findsOneWidget);
 
     await tap(tester, 'reveal_finish');
     expect(find.byType(HomePage), findsOneWidget);

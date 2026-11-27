@@ -34,3 +34,11 @@ class ProfileController extends AsyncNotifier<Profile?> {
 final profileProvider = AsyncNotifierProvider<ProfileController, Profile?>(
   ProfileController.new,
 );
+
+/// The units the app shows: the user's setting, or pounds and feet/inches
+/// (the default) until the profile loads.
+final unitsProvider = Provider<Units>(
+  (ref) =>
+      ref.watch(profileProvider.select((p) => p.value?.units)) ??
+      Units.imperial,
+);

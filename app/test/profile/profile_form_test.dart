@@ -73,6 +73,8 @@ void main() {
     await pump(tester);
     await tester.tap(find.text('Male'));
     await tester.enterText(find.byKey(const Key('profile_birthYear')), '2015');
+    await tester.tap(find.text('cm'));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('profile_heightCm')), '90');
     await submit(tester);
     expect(find.textContaining('at least 13'), findsOneWidget);
@@ -91,19 +93,19 @@ void main() {
     await submit(tester);
     expect(
       profiles.saved.single,
-      const Profile(
-        sex: Sex.male,
-        birthYear: 1994,
-        heightCm: 180.3,
-        units: Units.imperial,
-      ),
+      const Profile(sex: Sex.male, birthYear: 1994, heightCm: 180.3),
     );
   });
 
   testWidgets('switching units keeps the typed height', (tester) async {
     await pump(
       tester,
-      initial: const Profile(sex: Sex.female, birthYear: 1990, heightCm: 168),
+      initial: const Profile(
+        sex: Sex.female,
+        birthYear: 1990,
+        heightCm: 168,
+        units: Units.metric,
+      ),
     );
     expect(find.text('168'), findsOneWidget);
     await tester.tap(find.text('ft / in'));

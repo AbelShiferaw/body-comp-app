@@ -20,7 +20,7 @@ password=$(openssl rand -base64 24 | tr -d '/+=')
 keytool -genkeypair -v -keystore "$keystore" -storetype PKCS12 \
   -alias "$alias" -keyalg RSA -keysize 4096 -validity 10000 \
   -storepass "$password" -keypass "$password" \
-  -dname "CN=Body Comp, O=Body Comp, C=US"
+  -dname "CN=Obsessed, O=Obsessed, C=US"
 
 base64 < "$keystore" | gh secret set ANDROID_KEYSTORE_BASE64 --repo "$repo"
 printf '%s' "$password" | gh secret set ANDROID_KEYSTORE_PASSWORD --repo "$repo"
