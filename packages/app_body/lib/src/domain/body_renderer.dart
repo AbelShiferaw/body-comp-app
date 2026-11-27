@@ -78,6 +78,10 @@ abstract interface class BodyRenderer {
   /// The ray under [point] in a view of [size], in body space, for picking.
   Ray3 rayAt(Offset point, Size size);
 
+  /// Where the body-space point ([x], [y], [z]) appears in a view of
+  /// [size], or null when it is behind the camera. For pinning labels.
+  Offset? screenPointOf(double x, double y, double z, Size size);
+
   Widget build(BuildContext context);
 
   void dispose();
