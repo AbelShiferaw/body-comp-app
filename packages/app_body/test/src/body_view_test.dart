@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:app_body/app_body.dart';
 import 'package:app_ui/app_ui.dart';
 import 'package:body_mapping/body_mapping.dart';
@@ -7,6 +9,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'fake_body_renderer.dart';
+
+/// Asks for reduced motion, as the phone's accessibility setting does.
+void reduceMotion(WidgetTester tester) {
+  tester.platformDispatcher.accessibilityFeaturesTestValue =
+      const FakeAccessibilityFeatures(disableAnimations: true);
+  addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+}
 
 void main() {
   late FakeBodyRenderer renderer;
@@ -23,6 +32,8 @@ void main() {
     ThemeData? theme,
     bool showCompare = false,
   }) async {
+    // The game-mode spin never settles; tests turn it on themselves.
+    reduceMotion(tester);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -305,6 +316,64 @@ void main() {
     await pump(tester, theme: AppTheme.dark);
     expect(renderer.style, BodyStyle.hologram);
     expect(find.byKey(const Key('body_pad')), findsOneWidget);
+  });
+
+  group('game mode spin', () {
+    Future<ProviderContainer> pumpGame(WidgetTester tester) async {
+      store.gameMode = true;
+      final container = await pump(tester, theme: AppTheme.dark);
+      // Back to normal motion: the avatar starts turning.
+      tester.platformDispatcher.clearAccessibilityFeaturesTestValue();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+      return container;
+    }
+
+    testWidgets('turns the avatar slowly', (tester) async {
+      await pumpGame(tester);
+      await tester.pump(const Duration(seconds: 2));
+      // A full turn takes 24 s, so 2 s is about 30 degrees.
+      expect(renderer.pose!.azimuth, closeTo(2 / 24 * 2 * math.pi, 0.05));
+    });
+
+    testWidgets('pauses after a drag, then carries on', (tester) async {
+      await pumpGame(tester);
+      await tester.pump(const Duration(seconds: 1));
+      await tester.drag(
+        find.byKey(const Key('body_scene')),
+        const Offset(-40, 0),
+      );
+      final afterDrag = renderer.pose!.azimuth;
+      await tester.pump(const Duration(seconds: 2));
+      expect(renderer.pose!.azimuth, afterDrag);
+      await tester.pump(const Duration(seconds: 2));
+      expect(renderer.pose!.azimuth, greaterThan(afterDrag));
+    });
+
+    testWidgets('stops while a part is open', (tester) async {
+      final container = await pumpGame(tester);
+      container
+          .read(bodyViewControllerProvider.notifier)
+          .select(BodyPart.belly);
+      await tester.pump();
+      final at = renderer.pose!.azimuth;
+      await tester.pump(const Duration(seconds: 2));
+      expect(renderer.pose!.azimuth, at);
+    });
+
+    testWidgets('stays still with reduced motion', (tester) async {
+      store.gameMode = true;
+      await pump(tester, theme: AppTheme.dark);
+      await tester.pump(const Duration(seconds: 2));
+      expect(renderer.pose!.azimuth, 0);
+    });
+
+    testWidgets('stays still outside game mode', (tester) async {
+      await pump(tester);
+      tester.platformDispatcher.clearAccessibilityFeaturesTestValue();
+      await tester.pump(const Duration(seconds: 2));
+      expect(renderer.pose!.azimuth, 0);
+    });
   });
 
   testWidgets('a saved Hologram style from before game mode turns it on', (

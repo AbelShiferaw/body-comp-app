@@ -45,7 +45,8 @@ extension PumpApp on WidgetTester {
   /// Pumps the real [App] with in-memory auth, profile, scan and DEXA
   /// backends. A signed-in [user] gets [profile], onboarded by default, and
   /// [scans] for the body. [bodySpec] false is a build without a BodySpec
-  /// client id. [gameMode] turns on the Settings game mode.
+  /// client id. [gameMode] turns on the Settings game mode and [bodyStyle]
+  /// is the saved body style.
   Future<Fakes> pumpApp({
     AuthUser? user,
     Profile? profile,
@@ -54,9 +55,14 @@ extension PumpApp on WidgetTester {
     List<BodyScan> scans = const [],
     bool tallPhone = true,
     bool gameMode = false,
+    BodyStyle? bodyStyle,
     Exception? profileError,
   }) async {
     if (tallPhone) useTallPhone();
+    // The game-mode spin never settles; reduced motion keeps it still.
+    platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(platformDispatcher.clearAccessibilityFeaturesTestValue);
     final auth = FakeAuthRepository(user: user);
     final profiles = FakeProfileRepository({
       ?user?.id: profile ?? completeProfile,
@@ -70,7 +76,9 @@ extension PumpApp on WidgetTester {
           bodyDataSourceProvider.overrideWithValue(
             FixtureBodyDataSource(scans: scans),
           ),
-          bodyStyleStoreProvider.overrideWithValue(_NoStyleStore(gameMode)),
+          bodyStyleStoreProvider.overrideWithValue(
+            _StyleStore(gameMode, bodyStyle),
+          ),
           bodyRendererFactoryProvider.overrideWithValue(FakeBodyRenderer.new),
           scanRepositoryProvider.overrideWithValue(fakeDexa.scans),
           consentsRepositoryProvider.overrideWithValue(fakeDexa.consents),
@@ -90,13 +98,14 @@ extension PumpApp on WidgetTester {
   }
 }
 
-class _NoStyleStore implements BodyStyleStore {
-  new(this.gameMode);
+class _StyleStore implements BodyStyleStore {
+  new(this.gameMode, this.style);
 
   final bool gameMode;
+  final BodyStyle? style;
 
   @override
-  Future<BodyStyle?> read() async => null;
+  Future<BodyStyle?> read() async => style;
 
   @override
   Future<void> write(BodyStyle style) async {}

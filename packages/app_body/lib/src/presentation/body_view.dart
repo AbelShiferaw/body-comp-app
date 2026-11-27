@@ -9,6 +9,7 @@ import 'package:app_body/src/presentation/part_pins.dart';
 import 'package:app_core/app_core.dart';
 import 'package:app_ui/app_ui.dart';
 import 'package:body_mapping/body_mapping.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -16,7 +17,9 @@ import 'package:material_ui/material_ui.dart';
 
 /// The 3D body with its controls: drag to turn, pinch to zoom, tap a part
 /// for its numbers, and a Shape / Fat / Change bar under it. Fills the space
-/// it is given.
+/// it is given. In game mode the avatar turns slowly on its own, like a
+/// character on a game's select screen; it pauses while touched or while a
+/// part is open, and stays still when the phone asks for reduced motion.
 ///
 /// With [showCompare], it also shows the scan-to-scan slider with play and
 /// the ×3 exaggerate button. Home leaves them off (the basic look); they
@@ -35,7 +38,12 @@ class BodyView extends ConsumerStatefulWidget {
 }
 
 class _BodyViewState extends ConsumerState<BodyView>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
+  /// One full turn of the game-mode spin, and how long it waits after a
+  /// touch before it carries on.
+  static const _spinTurn = Duration(seconds: 24);
+  static const _spinRest = Duration(seconds: 3);
+
   BodyRenderer? _renderer;
   bool _rendererReady = false;
   Object? _rendererError;
@@ -53,6 +61,9 @@ class _BodyViewState extends ConsumerState<BodyView>
     vsync: this,
     duration: const Duration(milliseconds: 2400),
   )..addListener(_onPlayTick);
+  late final Ticker _spin = createTicker(_onSpinTick);
+  Duration? _spinLast;
+  Duration _spinResumeAt = Duration.zero;
 
   BodyViewController get _controller =>
       ref.read(bodyViewControllerProvider.notifier);
@@ -88,9 +99,44 @@ class _BodyViewState extends ConsumerState<BodyView>
 
   @override
   void dispose() {
+    _spin.dispose();
     _play.dispose();
     _renderer?.dispose();
     super.dispose();
+  }
+
+  /// Starts or stops the game-mode spin.
+  void _setSpinning(bool on) {
+    if (on == _spin.isActive) return;
+    if (on) {
+      _spinLast = null;
+      _spinResumeAt = Duration.zero;
+      _spin.start();
+    } else {
+      _spin.stop();
+    }
+  }
+
+  /// Holds the spin while the user turns or zooms the body, and a moment
+  /// after.
+  void _holdSpin() => _spinResumeAt = (_spinLast ?? Duration.zero) + _spinRest;
+
+  void _onSpinTick(Duration elapsed) {
+    final last = _spinLast;
+    _spinLast = elapsed;
+    if (last == null || elapsed < _spinResumeAt) return;
+    final turn =
+        (elapsed - last).inMicroseconds /
+        _spinTurn.inMicroseconds *
+        2 *
+        math.pi;
+    setState(() {
+      _pose = (
+        azimuth: (_pose.azimuth + turn) % (2 * math.pi),
+        zoom: _pose.zoom,
+      );
+      _renderer?.setCamera(_pose);
+    });
   }
 
   void _onPlayTick() =>
@@ -213,6 +259,14 @@ class _BodyViewState extends ConsumerState<BodyView>
     } else {
       content = _body(context, shapes.value!, view, style);
     }
+    _setSpinning(
+      error == null &&
+          _rendererReady &&
+          shapes.value != null &&
+          style == BodyStyle.hologram &&
+          view.selected == null &&
+          !MediaQuery.disableAnimationsOf(context),
+    );
 
     return DecoratedBox(
       decoration: BoxDecoration(gradient: _background(tokens, style)),
@@ -328,8 +382,12 @@ class _BodyViewState extends ConsumerState<BodyView>
         child: GestureDetector(
           key: const Key('body_scene'),
           behavior: HitTestBehavior.opaque,
-          onScaleStart: (_) => _zoomAtScaleStart = _pose.zoom,
+          onScaleStart: (_) {
+            _holdSpin();
+            _zoomAtScaleStart = _pose.zoom;
+          },
           onScaleUpdate: (d) => setState(() {
+            _holdSpin();
             _pose = (
               azimuth: _pose.azimuth - d.focalPointDelta.dx * 0.012,
               zoom: (_zoomAtScaleStart * d.scale).clamp(1.0, 3.0),
@@ -421,7 +479,7 @@ class _BodyViewState extends ConsumerState<BodyView>
     ),
     BodyStyle.midnight => RadialGradient(
       center: const Alignment(0, -0.1),
-      radius: 0.9,
+      radius: 1.2,
       colors: [t.surfaceRaised, t.background],
     ),
   };
