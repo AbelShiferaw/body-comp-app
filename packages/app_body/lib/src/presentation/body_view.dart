@@ -173,7 +173,13 @@ class _BodyViewState extends ConsumerState<BodyView>
       metric == null
           ? null
           : mapper
-                .colorsFor(shapes.pair.from, shapes.pair.to, metric, t: view.t)
+                .colorsFor(
+                  shapes.pair.from,
+                  shapes.pair.to,
+                  metric,
+                  t: view.t,
+                  neutral: r.plainHeatColor,
+                )
                 .bake(mapper.asset),
     );
   }
@@ -182,6 +188,8 @@ class _BodyViewState extends ConsumerState<BodyView>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _renderer?.setBrightness(Theme.of(context).brightness);
+    // The neutral heatmap color follows the look.
+    _pushColors(ref.read(bodyViewControllerProvider));
   }
 
   @override
@@ -205,6 +213,7 @@ class _BodyViewState extends ConsumerState<BodyView>
       })
       ..listen(bodyStyleProvider, (prev, s) {
         _renderer?.setStyle(s);
+        _pushColors(ref.read(bodyViewControllerProvider));
         // Leaving game mode: face front again after the turntable.
         if (prev == BodyStyle.hologram && s != BodyStyle.hologram) {
           setState(() => _pose = (azimuth: 0, zoom: _pose.zoom));
@@ -305,7 +314,11 @@ class _BodyViewState extends ConsumerState<BodyView>
             ),
             child: _Legend(
               metric: metric,
-              stops: mapper.legend(metric, pair.to.sex),
+              stops: mapper.legend(
+                metric,
+                pair.to.sex,
+                neutral: _renderer?.plainHeatColor,
+              ),
               from: pair.from,
               to: pair.to,
             ),

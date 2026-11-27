@@ -45,7 +45,7 @@ void main() {
   }
 
   for (final brightness in Brightness.values) {
-    testWidgets('Midnight makes the Body tab dark (${brightness.name})', (
+    testWidgets('Midnight darkens only the body area (${brightness.name})', (
       tester,
     ) async {
       tester.platformDispatcher.platformBrightnessTestValue = brightness;
@@ -55,18 +55,20 @@ void main() {
         scans: sampleTimeline,
         bodyStyle: BodyStyle.midnight,
       );
-      Brightness themeOf(Type page) =>
-          Theme.of(tester.element(find.byType(page))).brightness;
-      expect(themeOf(HomePage), Brightness.dark);
+      Brightness themeOf(Finder f) => Theme.of(tester.element(f)).brightness;
+      expect(themeOf(find.byType(BodyView)), Brightness.dark);
+      // The header and tab bar keep the phone's setting.
+      expect(themeOf(find.byKey(const Key('home_refresh'))), brightness);
+      expect(themeOf(find.byKey(const Key('tab_body'))), brightness);
 
-      // Other tabs keep the phone's setting.
+      // Other tabs too.
       await tester.tap(find.byKey(const Key('tab_profile')));
       await tester.pumpAndSettle();
-      expect(themeOf(SettingsPage), brightness);
+      expect(themeOf(find.byType(SettingsPage)), brightness);
     });
   }
 
-  testWidgets('Midnight keeps the Body tab dark in game mode', (tester) async {
+  testWidgets('Midnight keeps the body area dark in game mode', (tester) async {
     final renderer = FakeBodyRenderer();
     await tester.pumpApp(
       user: user,
@@ -76,7 +78,7 @@ void main() {
       renderer: renderer,
     );
     expect(
-      Theme.of(tester.element(find.byType(HomePage))).brightness,
+      Theme.of(tester.element(find.byType(BodyView))).brightness,
       Brightness.dark,
     );
     // The dark hologram look.

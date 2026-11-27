@@ -92,6 +92,9 @@ class _HomePageState extends ConsumerState<HomePage> {
       null => null,
     };
     final empty = scans.hasValue && summary == null && !scans.hasError;
+    // The picked style, not the drawn one: in game mode Midnight puts the
+    // hologram on the dark screen.
+    final midnight = ref.watch(bodyStyleSettingProvider) == BodyStyle.midnight;
 
     return Scaffold(
       body: SafeArea(
@@ -111,9 +114,13 @@ class _HomePageState extends ConsumerState<HomePage> {
             Expanded(
               child: empty
                   ? const _EmptyState()
-                  : const Padding(
-                      padding: EdgeInsets.only(top: AppSpacing.sm),
-                      child: BodyView(),
+                  : Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.sm),
+                      // Midnight darkens only the body area, like the
+                      // website; the bars follow the phone's setting.
+                      child: midnight
+                          ? Theme(data: AppTheme.dark, child: const BodyView())
+                          : const BodyView(),
                     ),
             ),
           ],

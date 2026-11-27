@@ -17,6 +17,22 @@ void main() {
     expect(gain.regions[BodyRegion.trunk], palette.regress);
   });
 
+  test('a neutral override colors no-change parts, the head and legend', () {
+    const plain = Rgb(0.1, 0.2, 0.3);
+    final c = mapper.colorsFor(a, a, HeatMetric.leanChange, neutral: plain);
+    expect(c.regions[BodyRegion.leftLeg], plain);
+    expect(c.head, plain);
+    expect(
+      mapper.legend(HeatMetric.leanChange, a.sex, neutral: plain)[1].color,
+      plain,
+    );
+    // Fat % colors are untouched.
+    expect(
+      mapper.colorsFor(a, b, HeatMetric.fatPct, neutral: plain).regions,
+      mapper.colorsFor(a, b, HeatMetric.fatPct).regions,
+    );
+  });
+
   test('lean gain is drawn as progress', () {
     final more = withRegion(
       a,

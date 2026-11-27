@@ -1,32 +1,20 @@
-import 'package:app_body/app_body.dart';
 import 'package:app_ui/app_ui.dart';
 import 'package:body_comp/l10n/l10n.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The signed-in app: one tab per branch of the router's shell route, with
 /// the tab bar from the launch design (Body, Progress, Scans, Profile).
 /// Each tab keeps its own navigation stack.
-///
-/// With the Midnight body style, the Body tab (page and tab bar) is dark,
-/// like the website, whatever the phone's light/dark setting, in game mode
-/// too.
-class AppShell extends ConsumerWidget {
+class AppShell extends StatelessWidget {
   const new(this.shell, {super.key});
 
   final StatefulNavigationShell shell;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final midnight =
-        shell.currentIndex == 0 &&
-        // The picked style, not the drawn one: in game mode Midnight puts
-        // the hologram on the dark screen.
-        ref.watch(bodyStyleSettingProvider) == BodyStyle.midnight;
-    final scaffold = Scaffold(
+    return Scaffold(
       body: shell,
       bottomNavigationBar: _TabBar(
         current: shell.currentIndex,
@@ -52,11 +40,6 @@ class AppShell extends ConsumerWidget {
           ),
         ],
       ),
-    );
-    if (!midnight) return scaffold;
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
-      child: Theme(data: AppTheme.dark, child: scaffold),
     );
   }
 }
