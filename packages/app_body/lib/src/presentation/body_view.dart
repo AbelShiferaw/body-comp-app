@@ -609,6 +609,8 @@ class _Legend extends StatelessWidget {
                         blue: s.color.b,
                       ),
                       borderRadius: BorderRadius.circular(3),
+                      // Keeps a swatch in the body's own dark color visible.
+                      border: Border.all(color: tokens.textFaint),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.xs),

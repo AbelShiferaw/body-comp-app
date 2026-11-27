@@ -149,14 +149,15 @@ class FlutterSceneBodyRenderer implements BodyRenderer {
   @override
   Rgb get plainHeatColor {
     // Vertex colors multiply the heatmap material, so divide the plain
-    // look's color (glow included) by it.
+    // look's color (glow included) by it. Vertex colors are sRGB like the
+    // heatmap's, so encode the linear ratio back.
     final plain = _Look.of(_style, _brightness, heat: false);
     final heat = _Look.of(_style, _brightness, heat: true).baseColor;
-    double c(int i) =>
-        ((plain.baseColor[i] + (plain.emissive?[i] ?? 0)) / heat[i]).clamp(
-          0,
-          1,
-        );
+    double c(int i) {
+      final linear = (plain.baseColor[i] + (plain.emissive?[i] ?? 0)) / heat[i];
+      return math.pow(linear.clamp(0, 1), 1 / 2.2).toDouble();
+    }
+
     return Rgb(c(0), c(1), c(2));
   }
 
