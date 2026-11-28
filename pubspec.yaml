@@ -15,6 +15,7 @@ workspace:
   - packages/app_scans
   - packages/app_dexa_sync
   - packages/app_body
+  - packages/app_body_photos
   - packages/body_mapping
 
 dev_dependencies:

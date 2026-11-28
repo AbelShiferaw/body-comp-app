@@ -226,5 +226,128 @@
             }
         }
     },
-    "revealFinish": "Explore my body"
+    "revealFinish": "Explore my body",
+    "shapeCardTitle": "Make it look like you",
+    "@shapeCardTitle": {
+        "description": "Home card that invites the user to shape the 3D body from photos"
+    },
+    "shapeCardBody": "Your body has standard proportions for now. Two quick photos fit it to yours.",
+    "shapeCardAction": "Add photos",
+    "shapeCardDismiss": "Not now",
+    "shapeTitle": "Your shape",
+    "@shapeTitle": {
+        "description": "Screen with the body measurements the 3D body is fitted to"
+    },
+    "shapeIntro": "Your 3D body uses these measurements for its proportions. Your DEXA scan still sets the fat and lean colors.",
+    "shapeTakePhotos": "Measure from photos",
+    "shapeRetakePhotos": "Take new photos",
+    "shapeEditHint": "Tap a measurement to type in a tape value. It replaces the photo value until your next photos.",
+    "shapeSourcePhoto": "From photos · {date}",
+    "@shapeSourcePhoto": {
+        "placeholders": {
+            "date": {
+                "type": "DateTime",
+                "format": "MMMd"
+            }
+        }
+    },
+    "shapeSourceTape": "Tape · {date}",
+    "@shapeSourceTape": {
+        "placeholders": {
+            "date": {
+                "type": "DateTime",
+                "format": "MMMd"
+            }
+        }
+    },
+    "shapeSourceAverage": "Average for your height",
+    "shapeEditTitle": "{measure} by tape",
+    "@shapeEditTitle": {
+        "placeholders": {
+            "measure": {
+                "type": "String"
+            }
+        }
+    },
+    "shapeEditInvalid": "Enter a number between {min} and {max}",
+    "@shapeEditInvalid": {
+        "placeholders": {
+            "min": {
+                "type": "String"
+            },
+            "max": {
+                "type": "String"
+            }
+        }
+    },
+    "shapeSaved": "Saved. Your body now uses it.",
+    "measureShoulders": "Shoulders",
+    "measureChest": "Chest",
+    "measureWaist": "Waist",
+    "measureHips": "Hips",
+    "measureUpperArm": "Upper arm",
+    "measureThigh": "Thigh",
+    "measureCalf": "Calf",
+    "measureArmLength": "Arm length",
+    "measureLegLength": "Leg length",
+    "measureHowShoulders": "Straight across your back, from the outside of one shoulder to the other.",
+    "measureHowChest": "Around the fullest part of your chest, under your arms.",
+    "measureHowWaist": "Around your narrowest point, between ribs and hips, belly relaxed.",
+    "measureHowHips": "Around the widest part of your hips and buttocks.",
+    "measureHowUpperArm": "Around the middle of your upper arm, relaxed.",
+    "measureHowThigh": "Around the widest part of one thigh, just below the buttock.",
+    "measureHowCalf": "Around the widest part of one calf.",
+    "measureHowArmLength": "From the top of your shoulder to your wrist, arm straight.",
+    "measureHowLegLength": "From the top of your hip bone to your ankle bone.",
+    "photosShapeTitle": "Match your shape",
+    "@photosShapeTitle": {
+        "description": "Guided photo flow, intro step"
+    },
+    "photosShapePrivacy": "Your photos stay on this phone. We measure them here and keep only the measurements.",
+    "photosShapeTipsTitle": "For the best fit",
+    "photosShapeTipSpace": "Prop your phone at waist height about 8 feet (2.5 m) away, or ask a friend. Use the camera's timer.",
+    "photosShapeTipClothes": "Wear fitted clothes, like shorts and a fitted top. Hair off your neck.",
+    "photosShapeTipFrame": "Fit your whole body in the frame, head to heels, against a plain wall.",
+    "photosShapeStart": "Start",
+    "photosFrontTitle": "Front photo",
+    "@photosFrontTitle": {
+        "description": "Step title"
+    },
+    "photosFrontPose": "Face the camera. Feet hip width apart, arms held out a little from your sides so they don't touch your body.",
+    "photosSideTitle": "Side photo",
+    "photosSidePose": "Turn to your side. Stand tall, arms relaxed at your sides.",
+    "photosStep": "Step {step} of 2",
+    "@photosStep": {
+        "placeholders": {
+            "step": {
+                "type": "int"
+            }
+        }
+    },
+    "photosTake": "Take photo",
+    "photosChoose": "Choose from library",
+    "photosRetake": "Retake",
+    "photosNext": "Next",
+    "photosMeasure": "Measure",
+    "photosMeasuring": "Measuring on your phone…",
+    "photosResultTitle": "Your measurements",
+    "photosResultBody": "These shape your 3D body. You can fix any of them with a tape later.",
+    "photosSave": "Use these measurements",
+    "photosProblemNoPerson": "We couldn't find your whole body in the {photo} photo. Step back so you fit head to heels.",
+    "@photosProblemNoPerson": {
+        "placeholders": {
+            "photo": {
+                "type": "String"
+            }
+        }
+    },
+    "photosProblemLegs": "Your legs look together in the front photo. Stand with feet hip width apart.",
+    "photosProblemArms": "Your arms touch your body in the front photo. Hold them out a little from your sides.",
+    "photosProblemMismatch": "The side photo looks like a front photo. Turn sideways to the camera.",
+    "photosProblemUnreadable": "That photo couldn't be opened. Try another one.",
+    "photosProblemAccess": "Allow camera or photo access in Settings to add photos.",
+    "photosFront": "front",
+    "photosSide": "side",
+    "settingsShapeLabel": "Body shape",
+    "settingsShapeHelp": "The measurements your 3D body is fitted to"
 }

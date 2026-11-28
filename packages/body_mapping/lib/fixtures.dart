@@ -4,4 +4,5 @@
 /// BodySpec results.
 library;
 
+export 'src/fixtures/silhouette_render.dart';
 export 'src/fixtures/synthetic_scans.dart';

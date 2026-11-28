@@ -1,0 +1,29 @@
+name: app_body_photos
+description: Guided front and side body photos measured on the phone. A person segmenter cuts the body out of each photo and body_mapping's SilhouetteMeasurer turns the outlines into tape-style measurements. Photos never leave the phone.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.14.0
+  flutter: ^3.50.0
+
+dependencies:
+  app_core: any
+  body_mapping: any
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^3.5.0
+  image: ^4.5.4
+  image_picker: ^1.2.0
+  meta: ^1.17.0
+  tflite_flutter: ^0.12.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  very_good_analysis: ^11.0.0
+
+flutter:
+  assets:
+    - assets/selfie_segmenter.tflite

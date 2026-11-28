@@ -6,7 +6,9 @@ import 'package:body_comp/l10n/l10n.dart';
 import 'package:body_comp/profile/domain/profile.dart';
 import 'package:body_comp/profile/presentation/profile_form.dart';
 import 'package:body_comp/profile/presentation/profile_providers.dart';
+import 'package:body_comp/router/router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Profile and account. Signing out or deleting the account clears the user,
@@ -109,6 +111,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ),
             if (profile.value case final p?)
               _Section(child: _UnitsSetting(profile: p)),
+            _Section(
+              child: ListTile(
+                key: const Key('settings_shape'),
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.settingsShapeLabel),
+                subtitle: Text(l10n.settingsShapeHelp),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(Routes.shape),
+              ),
+            ),
             const _Section(child: BodyStyleSetting()),
             _Section(
               title: l10n.settingsAccountSection,
