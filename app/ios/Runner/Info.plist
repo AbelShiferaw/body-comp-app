@@ -40,6 +40,10 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Take front and side photos to shape your 3D body. Photos stay on your phone.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Pick front and side photos to shape your 3D body. Photos stay on your phone.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>

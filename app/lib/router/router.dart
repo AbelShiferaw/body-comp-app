@@ -8,6 +8,8 @@ import 'package:body_comp/profile/domain/profile.dart';
 import 'package:body_comp/profile/presentation/profile_providers.dart';
 import 'package:body_comp/profile/presentation/profile_setup_page.dart';
 import 'package:body_comp/settings/settings_page.dart';
+import 'package:body_comp/shape/shape_page.dart';
+import 'package:body_comp/shape/shape_photos_page.dart';
 import 'package:body_comp/shell/app_shell.dart';
 import 'package:body_comp/shell/coming_soon_page.dart';
 import 'package:body_mapping/body_mapping.dart' as body show Sex;
@@ -24,6 +26,8 @@ abstract final class Routes {
   static const scans = '/scans';
   static const settings = '/settings';
   static const onboarding = '/onboarding';
+  static const shape = '/shape';
+  static const shapePhotos = '/shape/photos';
 }
 
 typedef _Session = ({AsyncValue<AuthUser?> auth, AsyncValue<Profile?> profile});
@@ -65,6 +69,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.onboarding,
         builder: (_, _) => const OnboardingPage(),
+      ),
+      GoRoute(path: Routes.shape, builder: (_, _) => const ShapePage()),
+      GoRoute(
+        path: Routes.shapePhotos,
+        builder: (_, _) => const ShapePhotosPage(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => AppShell(shell),

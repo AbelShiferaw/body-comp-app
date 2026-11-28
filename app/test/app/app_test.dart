@@ -79,6 +79,17 @@ void main() {
       expect(find.byType(SettingsPage), findsOneWidget);
       expect(find.text('a@b.co'), findsOneWidget);
 
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('settings_signOut')),
+        300,
+        scrollable: find
+            .descendant(
+              of: find.byType(SettingsPage),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('settings_signOut')));
       await tester.pumpAndSettle();
       expect(find.byType(SignInPage), findsOneWidget);
@@ -92,12 +103,34 @@ void main() {
       await tester.tap(find.byKey(const Key('tab_profile')));
       await tester.pumpAndSettle();
 
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('settings_delete')),
+        300,
+        scrollable: find
+            .descendant(
+              of: find.byType(SettingsPage),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('settings_delete')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
       expect(fakes.auth.calls, isEmpty);
 
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('settings_delete')),
+        300,
+        scrollable: find
+            .descendant(
+              of: find.byType(SettingsPage),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('settings_delete')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('settings_confirmDelete')));

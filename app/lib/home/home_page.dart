@@ -10,6 +10,7 @@ import 'package:body_comp/l10n/l10n.dart';
 import 'package:body_comp/profile/domain/profile.dart';
 import 'package:body_comp/profile/presentation/profile_providers.dart';
 import 'package:body_comp/router/router.dart';
+import 'package:body_comp/shape/shape_card.dart';
 import 'package:body_mapping/body_mapping.dart' show Mass;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -109,8 +110,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                   _refreshing || ref.watch(syncRunProvider) is SyncRunning,
               onRefresh: () => unawaited(_refresh()),
             ),
-            if (summary != null)
+            if (summary != null) ...[
               _Headline(summary: summary, units: units, now: now),
+              const ShapeCard(),
+            ],
             Expanded(
               child: empty
                   ? const _EmptyState()

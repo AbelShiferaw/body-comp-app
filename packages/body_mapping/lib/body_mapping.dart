@@ -17,3 +17,4 @@ export 'src/mass.dart';
 export 'src/proportion_solver.dart';
 export 'src/shape_reference.dart';
 export 'src/shape_weights.dart';
+export 'src/silhouette.dart';
