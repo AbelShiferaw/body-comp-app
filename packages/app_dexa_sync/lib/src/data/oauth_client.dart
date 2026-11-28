@@ -14,8 +14,13 @@ class OAuthSettings {
     required this.clientId,
     required this.redirectUrl,
     required this.issuer,
-    this.scopes = const ['openid', 'offline_access'],
+    this.scopes = defaultScopes,
   });
+
+  /// BodySpec's results API finds the user by the profile and email claims
+  /// in the access token: without them it answers 404 "User not found in
+  /// database". `offline_access` gives the refresh token.
+  static const defaultScopes = ['openid', 'profile', 'email', 'offline_access'];
 
   final String clientId;
   final String redirectUrl;

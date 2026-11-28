@@ -27,14 +27,16 @@ curl -s -X POST "$reg" -H 'Content-Type: application/json' -d '{
   "grant_types": ["authorization_code", "refresh_token"],
   "response_types": ["code"],
   "token_endpoint_auth_method": "none",
-  "scope": "openid offline_access"
+  "scope": "openid profile email offline_access"
 }' | jq '{client_id, registration_access_token}'
 ```
 
 Put `client_id` in `app/config/<flavor>.json` as `BODYSPEC_CLIENT_ID` (see `app/config/README.md`); the other three BodySpec keys are already in the example files.
 Keep the `registration_access_token` in the password manager: it is the only way to change or delete that client later. It is not app config.
 
-The app asks only for `openid offline_access`. The spike also asked for `profile email`; we do not need either, and the BodySpec user id comes from the ID token's `sub`. If BodySpec refuses the results API without them, add them to `OAuthSettings.scopes` and note it here.
+The app asks for `openid profile email offline_access` (`OAuthSettings.defaultScopes`). BodySpec's results API finds the user by the profile and email claims in the access token: with only `openid offline_access` it answers 404 "User not found in database" (seen Nov 28 on the development client). The BodySpec user id still comes from the ID token's `sub`.
+
+A client registered with a narrower scope can be fixed in place: GET its `registration_client_uri` with the registration access token, set `"scope": "openid profile email offline_access"`, PUT it back, and keep the new registration access token BodySpec returns (the old one stops working).
 
 ## 2. Deploy the edge function
 

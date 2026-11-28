@@ -199,6 +199,7 @@
     "syncErrorNotInBeta": "BodySpec sync is invite-only for now, and your account isn't on the list yet.",
     "syncErrorSignIn": "Sign in to BodySpec again to keep syncing.",
     "syncErrorForbidden": "BodySpec refused access. We've been told and will look into it.",
+    "syncErrorNoAccount": "BodySpec couldn't find an account for this sign-in. Sign in with the account you use for your BodySpec scans.",
     "syncErrorBusy": "BodySpec is busy right now. Try again in a few minutes.",
     "syncErrorConsent": "We need your consent before importing scans.",
     "syncNoScans": "Your BodySpec account has no scans yet. Book a scan, then tap Refresh on your home screen.",

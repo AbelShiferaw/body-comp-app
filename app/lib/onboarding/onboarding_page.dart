@@ -905,6 +905,7 @@ String errorText(AppLocalizations l10n, AppException error) =>
       SyncErrorCodes.providerReauth ||
       SyncErrorCodes.notLinkedOnThisPhone => l10n.syncErrorSignIn,
       SyncErrorCodes.providerForbidden => l10n.syncErrorForbidden,
+      SyncErrorCodes.providerAccountNotFound => l10n.syncErrorNoAccount,
       SyncErrorCodes.providerBusy => l10n.syncErrorBusy,
       SyncErrorCodes.consentRequired => l10n.syncErrorConsent,
       _ => error is NetworkException ? l10n.errorNetwork : l10n.errorGeneric,
