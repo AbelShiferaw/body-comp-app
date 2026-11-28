@@ -10,6 +10,10 @@ abstract final class SyncErrorCodes {
   /// The provider refused access (HTTP 403). A [ValidationException].
   static const providerForbidden = 'provider_forbidden';
 
+  /// The provider has no account for this sign-in (HTTP 404 on the results
+  /// list). A [ValidationException].
+  static const providerAccountNotFound = 'provider_account_not_found';
+
   /// The provider kept failing (429 or 5xx after retries). A
   /// [NetworkException].
   static const providerBusy = 'provider_busy';

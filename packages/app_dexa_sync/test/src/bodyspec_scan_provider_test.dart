@@ -223,6 +223,23 @@ void main() {
     );
   });
 
+  test('a 404 on the results list means no BodySpec account', () async {
+    respond = (_) =>
+        http.Response('{"detail":"User not found in database"}', 404);
+    final p = make();
+    await p.connect();
+    await expectLater(
+      p.listScans(),
+      throwsA(
+        isA<ValidationException>().having(
+          (e) => e.code,
+          'code',
+          SyncErrorCodes.providerAccountNotFound,
+        ),
+      ),
+    );
+  });
+
   test('offline is a network error', () async {
     final p = BodySpecScanProvider(
       oauth: oauth,

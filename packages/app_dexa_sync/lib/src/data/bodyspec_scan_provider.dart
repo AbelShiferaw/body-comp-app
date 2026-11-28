@@ -254,6 +254,12 @@ class BodySpecScanProvider implements ScanProvider {
       final status = res.statusCode;
       if (status == 200) return jsonDecode(res.body);
       if (status == 404 && allowMissing) return null;
+      if (status == 404 && path == '/users/me/results/') {
+        throw const ValidationException(
+          'BodySpec has no account for this sign-in',
+          code: SyncErrorCodes.providerAccountNotFound,
+        );
+      }
       if (status == 401) {
         if (!forced) {
           forced = true;
